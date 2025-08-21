@@ -1,6 +1,84 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MealSuggestion } from '@/types/calculator';
 
+// Function to get image path based on meal name and goal
+function getMealImagePath(mealName: string, goal: 'lose' | 'maintain' | 'gain'): string {
+  const folderMap = {
+    lose: 'weightLossRecipes',
+    maintain: 'balancedRecipes', 
+    gain: 'bulkingRecipes'
+  };
+  
+  // Manual mapping of meal names to actual image file names
+  const imageMap: { [key: string]: string } = {
+    // Weight Loss Recipes
+    "Egg White Veggie Scramble": "weightLossRecipes/eggWhiteScramble.jpg",
+    "Zucchini Noodle Chicken Bowl": "weightLossRecipes/zucchiniNoodleChickenBowl.jpg",
+    "Greek Yogurt Protein Bowl": "weightLossRecipes/greekYogurtBowl.png",
+    "Tuna Stuffed Avocado": "weightLossRecipes/tunaStuffedAvocado.jpg",
+    "Turkey Lettuce Wrap Bowls": "weightLossRecipes/turkeyLettuceWrapBowls.jpg",
+    "Cottage Cheese Power Salad": "weightLossRecipes/cottageCheesePowerSalad.jpg",
+    "Baked Cod with Roasted Vegetables": "weightLossRecipes/codRoastedVeggies.jpg",
+    "High-Protein French Toast": "weightLossRecipes/frenchToast.png",
+    "Protein Pizza Toast (5 slices)": "weightLossRecipes/pizzaToast.png",
+    "High-Protein PB&J Sandwiches": "weightLossRecipes/highProteinPB.jpg",
+    "High-Fiber Thin Crust Pizza": "weightLossRecipes/thinCrustPizzas.png",
+    "Loaded Protein Wrap": "weightLossRecipes/loadedProtein.png",
+    "High-Fiber Crunch Wrap": "weightLossRecipes/crunchWrap.png",
+    "Cauliflower Fried Rice Stir-Fry": "weightLossRecipes/cauliflower_friedRice.png",
+    
+    // Balanced/Maintenance Recipes
+    "Quinoa Power Bowl": "balancedRecipes/quinoaPowerBowl.jpg",
+    "Salmon with Sweet Potato": "balancedRecipes/salmonSweetPotato.jpg",
+    "Mediterranean Chicken Bowl": "balancedRecipes/chickenBowl.jpg",
+    "Lentil Curry with Rice": "balancedRecipes/lentilCurryRice.jpg",
+    "Veggie-Packed Omelet": "balancedRecipes/veggieOmelet.png",
+    "Oreo Protein Greek Yogurt Bowl": "balancedRecipes/oreoProteinYogurt.jpg",
+    "High-Protein Burger": "balancedRecipes/proteinBurger.jpg",
+    "Power Oatmeal Bowl": "balancedRecipes/powerOatmeal.png",
+    "Overnight Protein Oats": "balancedRecipes/overnightOats.png",
+    "Quick Protein Oats (Microwave)": "balancedRecipes/quickOats.jpg",
+    "Protein Oatmeal Dessert": "balancedRecipes/oatmealDessert.jpg",
+    
+    // Bulking/Weight Gain Recipes
+    "Protein Pasta Bowl": "bulkingRecipes/proteinPasta.jpg",
+    "Muscle Gain Smoothie Bowl": "bulkingRecipes/smoothieBowl.jpg",
+    "Beef and Rice Power Bowl": "bulkingRecipes/beefRicePowerBowl.jpg",
+    "Salmon Avocado Toast Stack": "bulkingRecipes/salmonToast.jpg",
+    "Chicken Alfredo with Broccoli": "bulkingRecipes/alfredoPasta.jpg",
+    "Nut Butter Protein Smoothie": "bulkingRecipes/nutButterSmoothie.jpg",
+    "Loaded Sweet Potato": "bulkingRecipes/loadedSweetPotato.jpg",
+    "Breakfast Burrito Bowl": "bulkingRecipes/breakfastBurritoBowl.jpg",
+    "Protein Peanut Butter Cookies (8-12 cookies)": "bulkingRecipes/proteinCookies.jpg",
+    "Classic Bulking Plate": "bulkingRecipes/classicProteinPlate.jpg",
+    "Salmon and Roasted Potatoes": "bulkingRecipes/salmonPotatoes.jpg",
+    
+    // Snack Images
+    "High-Protein Bar": "snacks/proteinBar.jpg",
+    "Smart Popcorn Mini Bag": "snacks/smartPopcorn.jpg",
+    "Fresh Strawberry Bowl": "snacks/freshStrawberries.jpg",
+    "Fresh Blueberry Bowl": "snacks/freshBlueberries.jpg",
+    "Apple with Nut Butter": "snacks/applesPeanutButter.jpg",
+    "Protein Shake with Banana": "snacks/proteinShakeBanana.jpg",
+    "Raw Almonds Portion": "snacks/almonds.jpg",
+    "Greek Yogurt Cup": "snacks/greekYogurtSnack.jpg",
+    "Sugar-Free Jello Cup": "snacks/jelloSnack.jpg",
+    "Zero Calorie Sparkling Drink": "snacks/sparklingDrink.jpg",
+    "Protein Coffee": "snacks/protienCoffee.jpg",
+    "Celery Sticks": "snacks/celeryBabyCarrots.jpg",
+    "Baby Carrots": "snacks/celeryBabyCarrots.jpg",
+    "Greek Yogurt Protein Ranch Dip": "snacks/proteinDipRanch.jpg"
+  };
+  
+  // Check if we have a specific image for this meal
+  if (imageMap[mealName]) {
+    return `/assets/images/${imageMap[mealName]}`;
+  }
+  
+  // For snacks and meals without images, return null
+  return '';
+}
+
 // Comprehensive meal database organized by goal - based on nutrition research and recipe analysis
 const mealDatabase: MealSuggestion[] = [
   // WEIGHT LOSS MEALS (250-400 calories) - High protein, high fiber, high volume, low calorie density
@@ -206,17 +284,6 @@ const mealDatabase: MealSuggestion[] = [
     difficulty: "medium"
   },
   {
-    name: "Turkey and Veggie Wrap",
-    calories: 380,
-    protein: 28,
-    carbs: 42,
-    fats: 12,
-    ingredients: ["Whole wheat tortilla (large)", "Turkey breast (100g)", "Hummus (2 tbsp)", "Bell peppers (60g)", "Spinach (50g)", "Carrots (40g)"],
-    instructions: ["Spread hummus on tortilla", "Layer turkey and vegetables", "Roll tightly", "Cut in half to serve"],
-    prepTime: 8,
-    difficulty: "easy"
-  },
-  {
     name: "Veggie-Packed Omelet",
     calories: 420,
     protein: 28,
@@ -234,8 +301,8 @@ const mealDatabase: MealSuggestion[] = [
     carbs: 41,
     fats: 8,
     ingredients: ["Plain Greek yogurt (250g)", "Vanilla unsweetened almond milk (20ml)", "Protein powder cookies & cream (30g)", "Oreo Thins (4 cookies)", "Oreo pudding mix (8g)"],
-    instructions: ["Mix yogurt, almond milk, protein powder, and pudding mix", "Crush 2 Oreo Thins and fold into mixture", "Refrigerate 30 min to thicken", "Top with remaining 2 crushed Oreo Thins before serving"],
-    prepTime: 35,
+    instructions: ["Mix yogurt, almond milk, protein powder, and pudding mix", "Crush 2 Oreo Thins and fold into mixture", "Refrigerate 10 min to thicken (Optional)", "Top with remaining 2 crushed Oreo Thins before serving"],
+    prepTime: 15,
     difficulty: "easy"
   },
   {
@@ -362,17 +429,6 @@ const mealDatabase: MealSuggestion[] = [
     difficulty: "easy"
   },
   {
-    name: "Bulking Pasta with Ground Beef",
-    calories: 820,
-    protein: 48,
-    carbs: 88,
-    fats: 26,
-    ingredients: ["Penne pasta (120g dry)", "90/10 ground beef (120g)", "2% mozzarella cheese (40g)", "Marinara sauce (150g)", "Olive oil (2 tbsp)", "Garlic", "Italian seasoning", "Onion (small)"],
-    instructions: ["Cook pasta until al dente, reserve pasta water", "Heat olive oil, sauté diced onion and garlic", "Brown ground beef with seasonings", "Add marinara sauce and simmer", "Toss pasta with sauce", "Top with mozzarella cheese", "Add pasta water if needed for consistency"],
-    prepTime: 25,
-    difficulty: "easy"
-  },
-  {
     name: "Salmon and Roasted Potatoes",
     calories: 680,
     protein: 42,
@@ -382,12 +438,201 @@ const mealDatabase: MealSuggestion[] = [
     instructions: ["Preheat oven to 425°F", "Quarter potatoes, toss with 2 tbsp olive oil, salt, pepper", "Roast potatoes 25 min until golden", "Season salmon with salt, pepper, lemon", "Heat remaining oil and butter in oven-safe pan", "Sear salmon 3-4 min, flip, add garlic and rosemary", "Transfer to oven for 8-10 min", "Serve together"],
     prepTime: 35,
     difficulty: "medium"
+  },
+
+  // SNACK OPTIONS (0-400 calories) - Quick, convenient, portion-controlled
+  {
+    name: "High-Protein Bar",
+    calories: 220,
+    protein: 20,
+    carbs: 18,
+    fats: 6,
+    ingredients: ["Quest Bar or similar protein bar (under 250 cal)"],
+    instructions: ["Unwrap and enjoy", "Great for on-the-go protein"],
+    prepTime: 1,
+    difficulty: "easy"
+  },
+  {
+    name: "Smart Popcorn Mini Bag",
+    calories: 100,
+    protein: 3,
+    carbs: 20,
+    fats: 2,
+    ingredients: ["Smart popcorn Orville Redenbacher mini bag (100 cal)"],
+    instructions: ["Open bag and enjoy", "High volume, satisfying crunch"],
+    prepTime: 1,
+    difficulty: "easy"
+  },
+  {
+    name: "Fresh Strawberry Bowl",
+    calories: 100,
+    protein: 1,
+    carbs: 24,
+    fats: 0,
+    ingredients: ["Fresh strawberries (300g)", "Optional: stevia or monk fruit sweetener"],
+    instructions: ["Wash and hull strawberries", "Cut into halves if desired", "Add sweetener if needed", "Enjoy this high-volume, nutrient-dense snack"],
+    prepTime: 5,
+    difficulty: "easy"
+  },
+  {
+    name: "Fresh Blueberry Bowl",
+    calories: 170,
+    protein: 1,
+    carbs: 44,
+    fats: 0,
+    ingredients: ["Fresh blueberries (300g)"],
+    instructions: ["Wash blueberries thoroughly", "Enjoy this antioxidant-rich, high-volume snack", "Great for satisfying sweet cravings"],
+    prepTime: 2,
+    difficulty: "easy"
+  },
+  {
+    name: "Apple with Nut Butter",
+    calories: 250,
+    protein: 6,
+    carbs: 32,
+    fats: 12,
+    ingredients: ["Medium apple (150g)", "Natural almond or peanut butter (1 tbsp)"],
+    instructions: ["Wash and slice apple", "Measure out 1 tbsp nut butter for dipping", "Perfect balance of fiber, protein, and healthy fats"],
+    prepTime: 3,
+    difficulty: "easy"
+  },
+  {
+    name: "Protein Shake with Banana",
+    calories: 280,
+    protein: 26,
+    carbs: 35,
+    fats: 3,
+    ingredients: ["Protein powder (1 scoop)", "Medium banana", "Unsweetened almond milk (200ml)", "Ice cubes"],
+    instructions: ["Add all ingredients to blender", "Blend until smooth", "Perfect post-workout or between-meal protein boost"],
+    prepTime: 3,
+    difficulty: "easy"
+  },
+  {
+    name: "Raw Almonds Portion",
+    calories: 160,
+    protein: 7,
+    carbs: 6,
+    fats: 14,
+    ingredients: ["Raw almonds (23 pieces / 28g)"],
+    instructions: ["Measure out 23 almonds", "Eat slowly to maximize satiety", "Great source of healthy fats and protein"],
+    prepTime: 1,
+    difficulty: "easy"
+  },
+  {
+    name: "Greek Yogurt Cup",
+    calories: 150,
+    protein: 20,
+    carbs: 9,
+    fats: 4,
+    ingredients: ["Plain Greek yogurt 0% fat (150g)", "Optional: berries or stevia"],
+    instructions: ["Measure yogurt into bowl", "Add berries or sweetener if desired", "High protein, low calorie, very filling"],
+    prepTime: 2,
+    difficulty: "easy"
+  },
+  {
+    name: "Sugar-Free Jello Cup",
+    calories: 10,
+    protein: 1,
+    carbs: 1,
+    fats: 0,
+    ingredients: ["Sugar-free jello cup or homemade with gelatin"],
+    instructions: ["Chill until set if homemade", "Perfect for sweet cravings with almost no calories"],
+    prepTime: 1,
+    difficulty: "easy"
+  },
+  {
+    name: "Zero Calorie Sparkling Drink",
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fats: 0,
+    ingredients: ["LaCroix, Bubly, or similar zero-calorie sparkling water"],
+    instructions: ["Chill if desired", "Great for hydration and satisfying fizzy cravings"],
+    prepTime: 1,
+    difficulty: "easy"
+  },
+  {
+    name: "Protein Coffee",
+    calories: 120,
+    protein: 15,
+    carbs: 8,
+    fats: 2,
+    ingredients: ["Hot coffee (240ml)", "Protein powder (half scoop)", "2% milk (60ml)"],
+    instructions: ["Brew coffee", "Mix protein powder with small amount of cold milk first", "Add to hot coffee and stir well", "Perfect morning or afternoon protein boost"],
+    prepTime: 5,
+    difficulty: "easy"
+  },
+  {
+    name: "Celery Sticks and Baby Carrots",
+    calories: 50,
+    protein: 1,
+    carbs: 4,
+    fats: 0,
+    ingredients: ["Fresh celery stalks (100g)", "Baby Carrots (100g), Optional: hummus (extra 100 cal)"],
+    instructions: ["Wash and cut celery into sticks", "Wash and cut baby carrots into sticks", "Optional: add hummus for extra flavor", "Ultra-low calorie, high volume, great crunch"],
+    prepTime: 3,
+    difficulty: "easy"
+  },
+  {
+    name: "Greek Yogurt Protein Ranch Dip",
+    calories: 120,
+    protein: 12,
+    carbs: 6,
+    fats: 1,
+    ingredients: ["Plain Greek yogurt (100g)", "Ranch seasoning packet (1/2 packet)", "Celery or carrots (100g) for dipping"],
+    instructions: ["Mix Greek yogurt with ranch seasoning", "Let sit 10 min for flavors to blend", "Use with celery or carrots for dipping", "High protein, low calorie alternative to regular ranch"],
+    prepTime: 12,
+    difficulty: "easy"
+  },
+  {
+    name: "Power Oatmeal Bowl",
+    calories: 750,
+    protein: 45,
+    carbs: 97,
+    fats: 25,
+    ingredients: ["Oatmeal (80g/1 cup)", "Protein powder (1 scoop/25g)", "Peanut butter (32g/2 tbsp)", "2% milk (240ml)", "Water (120ml)", "Banana (1 medium)", "Raw honey (14g/2 tbsp)"],
+    instructions: ["Cook oatmeal with half water, half 2% milk", "Stir in protein powder while hot", "Mix in peanut butter until creamy", "Top with sliced banana", "Drizzle with honey", "Mix well and enjoy"],
+    prepTime: 10,
+    difficulty: "easy"
+  },
+  {
+    name: "Overnight Protein Oats",
+    calories: 440,
+    protein: 40,
+    carbs: 59,
+    fats: 8,
+    ingredients: ["Oatmeal (40g/½ cup)", "Protein powder (1 scoop)", "Powdered peanut butter (16g/1 tbsp)", "Almond milk or 2% milk (120ml/½ cup)", "Banana (1 medium)", "Cinnamon (optional)"],
+    instructions: ["Mix oats, protein powder, and powdered PB in container", "Add milk and stir until combined", "Top with sliced banana and cinnamon", "Cover and refrigerate overnight", "Eat cold in the morning - do not microwave", "Perfect grab-and-go breakfast"],
+    prepTime: 5,
+    difficulty: "easy"
+  },
+  {
+    name: "Quick Protein Oats (Microwave)",
+    calories: 450,
+    protein: 38,
+    carbs: 62,
+    fats: 9,
+    ingredients: ["Oatmeal (50g)", "Protein powder (1 scoop)", "Powdered peanut butter (16g/1 tbsp)", "2% milk (150ml)", "Blueberries (80g)", "Honey (10g)", "Salt and cinnamon"],
+    instructions: ["Mix protein powder with small amount of water to make paste", "Add powdered PB and mix", "Stir in oats and milk", "Add blueberries, honey, salt, and cinnamon", "Microwave for 90 seconds", "Stir and microwave 30 more seconds if needed"],
+    prepTime: 7,
+    difficulty: "easy"
+  },
+  {
+    name: "Protein Oatmeal Dessert",
+    calories: 580,
+    protein: 46,
+    carbs: 61,
+    fats: 19,
+    ingredients: ["Oatmeal (60g)", "Protein powder (1 scoop)", "Natural peanut butter (25g)", "Non-fat Greek yogurt (80g/2 tbsp)", "Frozen blueberries (60g)", "Salt and cinnamon (optional)"],
+    instructions: ["Mix protein powder with water to create pudding-like consistency", "Stir in peanut butter until combined", "Add dry oatmeal and mix (should be fairly dry)", "Fold in Greek yogurt until creamy", "Mix in frozen blueberries", "Add salt and cinnamon to taste", "Place in freezer for 10-15 minutes", "Enjoy as a crunchy, cool oatmeal dessert"],
+    prepTime: 20,
+    difficulty: "medium"
   }
 ];
 
 export async function POST(request: NextRequest) {
   try {
-    const { targetCalories, goal, dietaryPreferences } = await request.json();
+    const { targetCalories, goal, dietaryPreferences, mealType } = await request.json();
 
     if (!targetCalories || targetCalories < 100 || targetCalories > 1500) {
       return NextResponse.json(
@@ -396,14 +641,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enhanced goal-based filtering with smart calorie ranges
+    // Categorize meals by type for logical filtering
+    const mealCategories = {
+      breakfast: [
+        "High-Protein French Toast", "Egg White Veggie Scramble", "Greek Yogurt Protein Bowl",
+        "Oreo Protein Greek Yogurt Bowl", "Muscle Gain Smoothie Bowl", "Breakfast Burrito Bowl",
+        "Greek Yogurt Cup", "Protein Coffee", "Nut Butter Protein Smoothie",
+        "Power Oatmeal Bowl", "Overnight Protein Oats", "Quick Protein Oats (Microwave)", 
+        "Protein Oatmeal Dessert"
+      ],
+      lunch: [
+        "Quinoa Power Bowl", "Mediterranean Chicken Bowl", "Lentil Curry with Rice",
+        "Turkey Lettuce Wrap Bowls", "Cottage Cheese Power Salad", "Zucchini Noodle Chicken Bowl",
+        "High-Fiber Thin Crust Pizza", "Loaded Protein Wrap", "High-Fiber Crunch Wrap",
+        "High-Protein Burger", "Tuna Stuffed Avocado", "Protein Pasta Bowl"
+      ],
+      dinner: [
+        "Salmon with Sweet Potato", "Baked Cod with Roasted Vegetables", "Chicken Alfredo with Broccoli",
+        "Beef and Rice Power Bowl", "Loaded Sweet Potato", "Cauliflower Fried Rice Stir-Fry",
+        "Classic Bulking Plate", "Salmon and Roasted Potatoes", "Veggie-Packed Omelet"
+      ],
+      snack: [
+        "High-Protein Bar", "Smart Popcorn Mini Bag", "Fresh Strawberry Bowl", "Fresh Blueberry Bowl",
+        "Apple with Nut Butter", "Protein Shake with Banana", "Raw Almonds Portion",
+        "Sugar-Free Jello Cup", "Zero Calorie Sparkling Drink", "Celery Sticks", "Baby Carrots",
+        "Greek Yogurt Protein Ranch Dip", "High-Protein PB&J Sandwiches", "Protein Pizza Toast (5 slices)",
+        "Protein Peanut Butter Cookies (8-12 cookies)", "Salmon Avocado Toast Stack"
+      ]
+    };
+
+    // Enhanced filtering with meal type and goal-based logic
     let filteredMeals: MealSuggestion[] = [];
     let calorieRange = 150; // More flexible range
     
-    // First, filter by goal-appropriate calorie ranges
+    // First filter by meal type if provided
+    let candidateMeals = mealDatabase;
+    if (mealType && mealCategories[mealType as keyof typeof mealCategories]) {
+      const mealTypeNames = mealCategories[mealType as keyof typeof mealCategories];
+      candidateMeals = mealDatabase.filter(meal => mealTypeNames.includes(meal.name));
+    }
+    
+    // Then filter by goal-appropriate calorie ranges
     if (goal === 'lose') {
       // Weight loss: prefer 250-400 cal meals, high protein density
-      filteredMeals = mealDatabase.filter(meal => 
+      filteredMeals = candidateMeals.filter(meal => 
         meal.calories <= 400 && 
         meal.calories >= Math.max(250, targetCalories - calorieRange) &&
         meal.calories <= targetCalories + calorieRange
@@ -412,7 +693,7 @@ export async function POST(request: NextRequest) {
       filteredMeals.sort((a, b) => (b.protein / b.calories) - (a.protein / a.calories));
     } else if (goal === 'gain') {
       // Weight gain: prefer 600-800 cal meals, calorie dense
-      filteredMeals = mealDatabase.filter(meal => 
+      filteredMeals = candidateMeals.filter(meal => 
         meal.calories >= 600 && 
         meal.calories >= targetCalories - calorieRange &&
         meal.calories <= targetCalories + calorieRange
@@ -420,9 +701,8 @@ export async function POST(request: NextRequest) {
       // Sort by calorie density for weight gain
       filteredMeals.sort((a, b) => b.calories - a.calories);
     } else {
-      // Maintenance: prefer 400-600 cal meals, balanced
-      filteredMeals = mealDatabase.filter(meal => 
-        meal.calories >= 350 && meal.calories <= 650 &&
+      // Maintenance: flexible access to both weight loss and gain recipes based on calorie target
+      filteredMeals = candidateMeals.filter(meal => 
         meal.calories >= targetCalories - calorieRange &&
         meal.calories <= targetCalories + calorieRange
       );
@@ -457,9 +737,15 @@ export async function POST(request: NextRequest) {
     // Return top 4 suggestions for better variety
     const suggestions = filteredMeals.slice(0, 4);
 
+    // Add image paths to suggestions based on goal
+    const suggestionsWithImages = suggestions.map(meal => ({
+      ...meal,
+      image: getMealImagePath(meal.name, goal || 'maintain')
+    }));
+
     return NextResponse.json({
-      suggestions,
-      message: `Found ${suggestions.length} meal suggestions for ${targetCalories} calories`,
+      suggestions: suggestionsWithImages,
+      message: `Found ${suggestionsWithImages.length} meal suggestions for ${targetCalories} calories`,
       targetCalories
     });
 

@@ -16,7 +16,7 @@ export default function ComparisonTool({ userData, ourResult }: ComparisonToolPr
   const calculators = [
     {
       name: 'CalorieScope',
-      subtitle: '(Our Formula)',
+      subtitle: '(7-Component Formula)',
       value: comparison.ourCalculator,
       difference: 0,
       color: 'text-primary-600',
@@ -25,8 +25,18 @@ export default function ComparisonTool({ userData, ourResult }: ComparisonToolPr
       isOurs: true
     },
     {
+      name: 'MyFitnessPal',
+      subtitle: '(Mifflin-St Jeor)',
+      value: comparison.myFitnessPal,
+      difference: comparison.difference.myFitnessPal,
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      isOurs: false
+    },
+    {
       name: 'Calculator.net',
-      subtitle: '(Basic Multiplier)',
+      subtitle: '(Mifflin-St Jeor)',
       value: comparison.calculatorNet,
       difference: comparison.difference.calculatorNet,
       color: 'text-gray-600',
@@ -35,10 +45,20 @@ export default function ComparisonTool({ userData, ourResult }: ComparisonToolPr
       isOurs: false
     },
     {
-      name: 'MyFitnessPal',
-      subtitle: '(Conservative)',
-      value: comparison.myFitnessPal,
-      difference: comparison.difference.myFitnessPal,
+      name: 'Sailrabbit',
+      subtitle: '(Multi-Formula Avg)',
+      value: comparison.sailrabbit,
+      difference: comparison.difference.sailrabbit,
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      isOurs: false
+    },
+    {
+      name: 'TDEE Calculator',
+      subtitle: '(Mifflin-St Jeor)',
+      value: comparison.tdeeCalculatorNet,
+      difference: comparison.difference.tdeeCalculatorNet,
       color: 'text-gray-600',
       bgColor: 'bg-gray-50',
       borderColor: 'border-gray-200',
@@ -119,24 +139,37 @@ export default function ComparisonTool({ userData, ourResult }: ComparisonToolPr
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="p-5 bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl border border-primary-200"
+        className="p-5 bg-gradient-to-r from-primary-50 to-amber-50 rounded-xl border border-primary-200"
       >
-        <h4 className="font-semibold text-primary-900 mb-3">Why The Difference Matters</h4>
+        <h4 className="font-semibold text-primary-900 mb-3">Formula Comparison & Accuracy</h4>
         <div className="space-y-3 text-sm text-primary-800">
           <div className="flex gap-3">
-            <span className="font-semibold min-w-[80px]">Basic Calculators:</span>
-            <span>Use simple activity level multipliers (1.2x, 1.5x, etc.)</span>
+            <span className="font-semibold min-w-[140px]">Standard Calculators:</span>
+            <span>Use BMR × activity multiplier (1.2-1.9) only</span>
           </div>
           <div className="flex gap-3">
-            <span className="font-semibold min-w-[80px]">Our Formula:</span>
-            <span>Accounts for job activity, steps, muscle mass, and recovery needs</span>
+            <span className="font-semibold min-w-[140px]">Sailrabbit Approach:</span>
+            <span>Averages multiple BMR formulas for better accuracy</span>
           </div>
           <div className="flex gap-3">
-            <span className="font-semibold min-w-[80px]">Impact:</span>
+            <span className="font-semibold min-w-[140px]">Our 7-Component:</span>
+            <span>BMR + NEAT (steps) + EAT (exercise) + TEF + job activity + muscle mass + metabolic adaptation</span>
+          </div>
+          <div className="flex gap-3 pt-2 border-t border-primary-200">
+            <span className="font-semibold min-w-[140px]">Average Difference:</span>
             <span>
-              {Math.abs(comparison.difference.calculatorNet)} calorie difference = 
-              {' '}{(Math.abs(comparison.difference.calculatorNet) * 7 / 3500).toFixed(1)} lbs 
-              per month if following wrong target
+              {Math.round(
+                (Math.abs(comparison.difference.myFitnessPal) + 
+                 Math.abs(comparison.difference.calculatorNet) + 
+                 Math.abs(comparison.difference.sailrabbit) + 
+                 Math.abs(comparison.difference.tdeeCalculatorNet)) / 4
+              )} calories/day = {' '}
+              {(
+                ((Math.abs(comparison.difference.myFitnessPal) + 
+                  Math.abs(comparison.difference.calculatorNet) + 
+                  Math.abs(comparison.difference.sailrabbit) + 
+                  Math.abs(comparison.difference.tdeeCalculatorNet)) / 4) * 30 / 3500
+              ).toFixed(1)} lbs/month impact
             </span>
           </div>
         </div>

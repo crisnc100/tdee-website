@@ -16,12 +16,11 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-bold mb-4 flex items-center">
               <Heart className="w-5 h-5 mr-2 text-red-500" />
-              About This Calculator
+              7-Component Formula
             </h3>
             <p className="text-gray-300 leading-relaxed">
-              Created by Cristian Ortega, a Certified Personal Trainer, using a 
-              proprietary 7-component formula that accounts for factors other 
-              calculators miss.
+              Our proprietary formula accounts for muscle mass, NEAT, recovery,
+              and factors other calculators miss for maximum accuracy.
             </p>
           </div>
 
@@ -39,21 +38,21 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-bold mb-4 flex items-center">
               <Star className="w-5 h-5 mr-2 text-yellow-500" />
-              Why More Accurate?
+              Free Forever
             </h3>
             <p className="text-gray-300 leading-relaxed">
-              Unlike basic multiplier calculators, we factor in muscle mass, 
-              job activity, NEAT, and recovery needs for personalized results.
+              Access all features including AI coaching, meal plans, and 
+              progress tracking without any cost or subscription.
             </p>
           </div>
         </div>
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
           <p className="text-gray-400">
-            © 2024 TDEE Calculator Pro. Built with precision, powered by science.
+            © 2024 CalorieScope. Built with precision, powered by science.
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            Want personalized coaching? <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Get in touch</span>
+            Questions or feedback? <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Let us know</span>
           </p>
         </div>
       </div>

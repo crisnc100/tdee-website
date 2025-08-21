@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, BarChart3, Share2, Users, Target, TrendingUp, ChefHat, Brain } from 'lucide-react';
+import { Calculator, BarChart3, Share2, Users, Target, TrendingUp, ChefHat, Brain, BookOpen } from 'lucide-react';
 import { UserData, TDEEResult } from '@/types/calculator';
 import { calculateTDEE, generateShareableId } from '@/lib/calculator';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -14,7 +14,12 @@ import SocialShare from './SocialShare';
 import MacroCalculator from '../ai/MacroCalculator';
 import MealSuggestions from '../ai/MealSuggestions';
 import AICoaching from '../ai/AICoaching';
-import WeightTracker from '../tracking/WeightTracker';
+import ProgressTracker from '../tracking/ProgressTracker';
+import WeeklyCheckIn from '../progress/WeeklyCheckIn';
+import SuccessStories from '../education/SuccessStories';
+import MythBusters from '../education/MythBusters';
+import QuickTips from '../education/QuickTips';
+import QuickAccess from './QuickAccess';
 
 const initialUserData: UserData = {
   age: 0,
@@ -46,12 +51,25 @@ export default function TDEECalculator() {
 
   useEffect(() => {
     setIsClient(true);
+    // Check URL parameters for specific tabs
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'tracking') {
+      // Only auto-load results if explicitly navigating to tracking tab
+      const storedResult = localStorage.getItem('tdee-last-result');
+      if (storedResult) {
+        const parsed = JSON.parse(storedResult);
+        setResult(parsed);
+        setShowResults(true);
+        setActiveTab('tracking');
+      }
+    }
   }, []);
   const [result, setResult] = useState<TDEEResult | null>(null);
   const [shareId, setShareId] = useState<string>('');
   const [showResults, setShowResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'calculator' | 'comparison' | 'macros' | 'meals' | 'coaching' | 'tracking' | 'share'>('calculator');
+  const [activeTab, setActiveTab] = useState<'calculator' | 'comparison' | 'macros' | 'meals' | 'coaching' | 'tracking' | 'education' | 'share'>('calculator');
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const handleCalculate = async () => {
@@ -63,11 +81,30 @@ export default function TDEECalculator() {
       block: 'start' 
     });
     
+    // Increment the calculation count
+    try {
+      await fetch('/api/count', { method: 'POST' });
+    } catch (error) {
+      console.error('Failed to increment count:', error);
+    }
+    
     // Add a realistic delay for loading animation
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     const calculatedResult = calculateTDEE(userData);
     setResult(calculatedResult);
+    
+    // Store last result and user data for quick access
+    localStorage.setItem('tdee-last-result', JSON.stringify(calculatedResult));
+    localStorage.setItem('tdee-last-user-data', JSON.stringify(userData));
+    
+    // Track first calculation date for check-ins
+    if (!localStorage.getItem('tdee-first-calculation-date')) {
+      localStorage.setItem('tdee-first-calculation-date', new Date().toISOString());
+    } else {
+      // Update the last calculation date for returning users
+      localStorage.setItem('tdee-last-calculation-date', new Date().toISOString());
+    }
     
     // Generate shareable ID and store result
     const id = generateShareableId();
@@ -88,17 +125,24 @@ export default function TDEECalculator() {
     setActiveTab('calculator');
   };
 
+  const handleQuickAccessViewResults = (storedResult: TDEEResult) => {
+    setResult(storedResult);
+    setShowResults(true);
+    setActiveTab('calculator');
+  };
+
+  const handleQuickAccessRecalculate = () => {
+    // Keep the form populated with previous data but don't show results
+    setShowResults(false);
+    setResult(null);
+    setActiveTab('calculator');
+  };
+
   const todaysCount = generateDemoCount();
 
   return (
     <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/30">
-      {/* Social proof */}
-      <div className="p-4 bg-gradient-to-r from-primary-50 to-accent-50 rounded-t-lg border-b border-gray-100">
-        <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-          <Users className="w-4 h-4" />
-          <span>{todaysCount.toLocaleString()} calculations today</span>
-        </div>
-      </div>
+   
 
       {/* Calculator */}
       <div className="p-6" ref={resultsRef}>
@@ -138,6 +182,14 @@ export default function TDEECalculator() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-4xl mx-auto"
           >
+            {/* Quick Access for Returning Users */}
+            {isClient && (
+              <QuickAccess 
+                onViewResults={handleQuickAccessViewResults}
+                onRecalculate={handleQuickAccessRecalculate}
+              />
+            )}
+            
             <div className="flex items-center justify-center mb-8">
               <Calculator className="w-6 h-6 text-primary-600 mr-3" />
               <h2 className="text-2xl font-bold text-gray-900">Your Information</h2>
@@ -181,6 +233,12 @@ export default function TDEECalculator() {
 
             {result && (
               <>
+                {/* Weekly Check-in (shows when applicable) */}
+                <WeeklyCheckIn userData={userData} tdeeResult={result} />
+                
+                {/* Quick Tips */}
+                <QuickTips userData={userData} />
+                
                 {/* Main TDEE Display */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -227,6 +285,7 @@ export default function TDEECalculator() {
                     { id: 'meals', label: 'Meals', icon: ChefHat },
                     { id: 'coaching', label: 'AI Coach', icon: Brain },
                     { id: 'tracking', label: 'Track', icon: TrendingUp },
+                    { id: 'education', label: 'Learn', icon: BookOpen },
                     { id: 'share', label: 'Share', icon: Share2 }
                   ].map(({ id, label, icon: Icon }) => (
                     <button
@@ -314,7 +373,21 @@ export default function TDEECalculator() {
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.4 }}
                     >
-                      <WeightTracker currentTDEE={result.tdee} />
+                      <ProgressTracker userData={userData} currentTDEE={result.tdee} />
+                    </motion.div>
+                  )}
+                  
+                  {activeTab === 'education' && (
+                    <motion.div
+                      key="education-tab"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.4 }}
+                      className="space-y-8"
+                    >
+                      <SuccessStories userData={userData} />
+                      <MythBusters />
                     </motion.div>
                   )}
                   

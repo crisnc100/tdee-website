@@ -196,29 +196,80 @@ export function calculateComparison(userData: UserData): ComparisonData {
     height = userData.height * 2.54; // inches to cm
   }
   
-  // Calculator.net style calculation (basic multipliers)
-  const bmr = userData.gender === 'male' 
+  // Mifflin-St Jeor BMR (used by MyFitnessPal, Calculator.net, TDEECalculator.net)
+  const mifflinBMR = userData.gender === 'male' 
     ? 10 * weight + 6.25 * height - 5 * userData.age + 5
     : 10 * weight + 6.25 * height - 5 * userData.age - 161;
   
+  // Harris-Benedict Revised BMR (alternative formula offered by Calculator.net & Sailrabbit)
+  const harrisBenedictBMR = userData.gender === 'male'
+    ? 13.397 * weight + 4.799 * height - 5.677 * userData.age + 88.362
+    : 9.247 * weight + 3.098 * height - 4.330 * userData.age + 447.593;
+  
+  // Standard activity multipliers used by all major calculators
   const activityMultipliers = {
-    sedentary: 1.2,
-    lightly_active: 1.375,
-    moderately_active: 1.55,
-    very_active: 1.725,
-    extra_active: 1.9
+    sedentary: 1.2,        // Little to no exercise
+    lightly_active: 1.375, // Exercise 1-3 times/week  
+    moderately_active: 1.55, // Exercise 3-5 times/week
+    very_active: 1.725,    // Exercise 6-7 times/week
+    extra_active: 1.9      // Very intense exercise daily
   };
   
-  const calculatorNet = Math.round(bmr * activityMultipliers[userData.activityLevel]);
-  const myFitnessPal = Math.round(bmr * activityMultipliers[userData.activityLevel] * 0.95); // Slightly more conservative
+  // Determine activity level for comparison calculators
+  let activityLevel: keyof typeof activityMultipliers = 'moderately_active';
+  
+  if (userData.calculatorMode === 'simple') {
+    // Map our exercise levels to standard activity levels
+    switch(userData.exerciseLevel) {
+      case 'sedentary': activityLevel = 'sedentary'; break;
+      case 'lightly': activityLevel = 'lightly_active'; break;
+      case 'moderately': activityLevel = 'moderately_active'; break;
+      case 'very': activityLevel = 'very_active'; break;
+      case 'extra': activityLevel = 'extra_active'; break;
+      default: activityLevel = 'moderately_active';
+    }
+  } else {
+    // For advanced mode, calculate based on exercise frequency
+    const exerciseCount = userData.exercises?.length || 0;
+    const totalSteps = userData.daily_steps || 5000;
+    
+    if (exerciseCount === 0 && totalSteps < 5000) {
+      activityLevel = 'sedentary';
+    } else if (exerciseCount <= 2 || totalSteps < 7500) {
+      activityLevel = 'lightly_active';
+    } else if (exerciseCount <= 4 || totalSteps < 10000) {
+      activityLevel = 'moderately_active';
+    } else if (exerciseCount <= 6 || totalSteps < 12500) {
+      activityLevel = 'very_active';
+    } else {
+      activityLevel = 'extra_active';
+    }
+  }
+  
+  // MyFitnessPal: Mifflin-St Jeor with standard multipliers
+  const myFitnessPal = Math.round(mifflinBMR * activityMultipliers[activityLevel]);
+  
+  // Calculator.net: Mifflin-St Jeor (default) with standard multipliers
+  const calculatorNet = Math.round(mifflinBMR * activityMultipliers[activityLevel]);
+  
+  // Sailrabbit: Average of multiple formulas (Mifflin + Harris-Benedict)
+  // They average multiple formulas for more accuracy
+  const sailrabbitAvg = Math.round(((mifflinBMR + harrisBenedictBMR) / 2) * activityMultipliers[activityLevel]);
+  
+  // TDEECalculator.net: Mifflin-St Jeor with standard multipliers
+  const tdeeCalculatorNet = Math.round(mifflinBMR * activityMultipliers[activityLevel]);
 
   return {
     ourCalculator: ourResult.tdee,
     calculatorNet,
     myFitnessPal,
+    sailrabbit: sailrabbitAvg,
+    tdeeCalculatorNet,
     difference: {
       calculatorNet: ourResult.tdee - calculatorNet,
-      myFitnessPal: ourResult.tdee - myFitnessPal
+      myFitnessPal: ourResult.tdee - myFitnessPal,
+      sailrabbit: ourResult.tdee - sailrabbitAvg,
+      tdeeCalculatorNet: ourResult.tdee - tdeeCalculatorNet
     }
   };
 }

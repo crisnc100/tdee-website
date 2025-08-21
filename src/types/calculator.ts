@@ -17,6 +17,7 @@ export interface UserData {
   heightInches?: number; // remaining inches for imperial display
   jobActivity: 'desk' | 'standing' | 'walking' | 'physical' | 'heavy_physical';
   steps: number;
+  goal?: 'lose' | 'maintain' | 'gain'; // User's fitness goal
   
   // Mode selector
   calculatorMode: 'simple' | 'advanced';
@@ -67,9 +68,13 @@ export interface ComparisonData {
   ourCalculator: number;
   calculatorNet: number;
   myFitnessPal: number;
+  sailrabbit: number;
+  tdeeCalculatorNet: number;
   difference: {
     calculatorNet: number;
     myFitnessPal: number;
+    sailrabbit: number;
+    tdeeCalculatorNet: number;
   };
 }
 
@@ -91,6 +96,7 @@ export interface MealSuggestion {
   instructions: string[];
   prepTime: number;
   difficulty: 'easy' | 'medium' | 'hard';
+  image?: string;
 }
 
 export interface TrackingData {

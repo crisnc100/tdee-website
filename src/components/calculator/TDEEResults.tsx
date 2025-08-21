@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { TDEEResult } from '@/types/calculator';
 import { Target, TrendingUp, TrendingDown, Minus, Activity, Zap } from 'lucide-react';
+import ComponentExplainer from '../education/ComponentExplainer';
 
 interface TDEEResultsProps {
   result: TDEEResult;
@@ -61,12 +62,12 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
   ];
 
   const components = [
-    { label: 'Base Metabolic Rate', value: result.components.bmr, icon: Activity },
-    { label: 'Muscle Factor', value: result.components.muscleFactor, icon: Zap },
-    { label: 'Job Activity', value: result.components.jobActivity, icon: Target },
-    { label: 'NEAT (Steps)', value: result.components.neat, icon: TrendingUp },
-    { label: 'Exercise', value: result.components.exercise, icon: Activity },
-    { label: 'Muscle Recovery', value: result.components.muscleRecovery, icon: Zap }
+    { label: 'Base Metabolic Rate', value: result.components.bmr, icon: Activity, explainer: 'bmr' as const },
+    { label: 'Muscle Factor', value: result.components.muscleFactor, icon: Zap, explainer: 'muscle' as const },
+    { label: 'Job Activity', value: result.components.jobActivity, icon: Target, explainer: 'job' as const },
+    { label: 'NEAT (Steps)', value: result.components.neat, icon: TrendingUp, explainer: 'neat' as const },
+    { label: 'Exercise', value: result.components.exercise, icon: Activity, explainer: 'exercise' as const },
+    { label: 'Muscle Recovery', value: result.components.muscleRecovery, icon: Zap, explainer: null }
   ];
 
   return (
@@ -105,6 +106,9 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
               <div className="flex items-center gap-3">
                 <component.icon className="w-4 h-4 text-primary-600" />
                 <span className="text-sm font-medium text-gray-700">{component.label}</span>
+                {component.explainer && (
+                  <ComponentExplainer component={component.explainer} value={component.value} />
+                )}
               </div>
               <span className="text-sm font-semibold text-gray-900">
                 +{component.value} cal
