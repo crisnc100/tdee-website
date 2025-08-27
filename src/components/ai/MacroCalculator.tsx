@@ -3,7 +3,23 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MacroSplit } from '@/types/calculator';
-import { Calculator, Loader2, Target, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { 
+  Calculator, 
+  Loader2, 
+  Target, 
+  TrendingUp, 
+  TrendingDown, 
+  Info,
+  Clock,
+  DollarSign,
+  Zap,
+  Brain,
+  Sparkles,
+  Star,
+  AlertCircle
+} from 'lucide-react';
+import { AI_MODELS, AIModelId } from '@/types/ai';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
 
 interface MacroCalculatorProps {
   defaultCalories: number;
@@ -20,6 +36,17 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
   const [insights, setInsights] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showProteinInfo, setShowProteinInfo] = useState(false);
+  
+  // AI Performance Indicators
+  const [aiPerformance, setAiPerformance] = useState<{
+    modelUsed?: AIModelId;
+    responseTime?: number;
+    estimatedCost?: number;
+    confidence?: number;
+    usedFallback?: boolean;
+  }>({});
+  
+  const { preferences, trackModelUsage } = useUserPreferences();
 
   // Auto-adjust calories when goal changes (unless user manually overrode)
   const handleGoalChange = (newGoal: 'lose' | 'maintain' | 'gain') => {
@@ -49,11 +76,18 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
 
   const handleCalculate = async () => {
     setLoading(true);
+    const startTime = Date.now();
+    
     try {
       const response = await fetch('/api/ai/macros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ calories: targetCalories, goal, userData })
+        body: JSON.stringify({ 
+          calories: targetCalories, 
+          goal, 
+          userData,
+          userPreferences: preferences
+        })
       });
 
       if (response.ok) {
@@ -62,9 +96,33 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
         setRecommended(data.recommended);
         setMessage(data.message);
         setInsights(data.insights || []);
+        
+        // Track AI performance metrics
+        const responseTime = Date.now() - startTime;
+        const performance = {
+          modelUsed: data.modelUsed,
+          responseTime,
+          estimatedCost: data.estimatedCost || 0,
+          confidence: data.confidence || 0.8,
+          usedFallback: data.usedFallback || false
+        };
+        setAiPerformance(performance);
+        
+        // Track usage for analytics
+        if (data.modelUsed) {
+          trackModelUsage(data.modelUsed, responseTime, data.estimatedCost || 0, true);
+        }
       }
     } catch (error) {
       console.error('Failed to calculate macros:', error);
+      
+      // Track failed attempt
+      const responseTime = Date.now() - startTime;
+      setAiPerformance({
+        responseTime,
+        usedFallback: true,
+        confidence: 0.3
+      });
     } finally {
       setLoading(false);
     }
@@ -85,12 +143,61 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
-          <Calculator className="w-5 h-5" />
-          Macro Calculator
-        </h3>
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Calculator className="w-5 h-5" />
+            AI Macro Calculator
+          </h3>
+          
+          {/* AI Performance Indicators */}
+          {aiPerformance.modelUsed && (
+            <div className="flex items-center gap-2">
+              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                aiPerformance.usedFallback 
+                  ? 'bg-orange-100 text-orange-700'
+                  : AI_MODELS[aiPerformance.modelUsed]?.pricing.isFree
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-purple-100 text-purple-700'
+              }`}>
+                {aiPerformance.usedFallback ? (
+                  <AlertCircle className="w-3 h-3" />
+                ) : AI_MODELS[aiPerformance.modelUsed]?.pricing.isFree ? (
+                  <Sparkles className="w-3 h-3" />
+                ) : (
+                  <Zap className="w-3 h-3" />
+                )}
+                {aiPerformance.usedFallback 
+                  ? 'Fallback Mode'
+                  : AI_MODELS[aiPerformance.modelUsed]?.name
+                }
+              </div>
+              
+              {aiPerformance.responseTime && (
+                <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                  <Clock className="w-3 h-3" />
+                  {(aiPerformance.responseTime / 1000).toFixed(1)}s
+                </div>
+              )}
+              
+              {preferences.showCostEstimates && aiPerformance.estimatedCost !== undefined && (
+                <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                  <DollarSign className="w-3 h-3" />
+                  {aiPerformance.estimatedCost === 0 ? 'Free' : `$${aiPerformance.estimatedCost.toFixed(4)}`}
+                </div>
+              )}
+              
+              {aiPerformance.confidence && (
+                <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                  <Star className="w-3 h-3" />
+                  {Math.round(aiPerformance.confidence * 100)}%
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        
         <p className="text-sm text-gray-600">
-          Get personalized macro splits based on your goal
+          Get personalized macro splits powered by AI analysis
         </p>
       </div>
 
@@ -173,7 +280,18 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
         >
           {message && (
             <div className="p-3 bg-primary-50 rounded-lg border border-primary-200">
-              <p className="text-sm text-primary-800">{message}</p>
+              <div className="flex items-start gap-2">
+                <Brain className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-primary-800">{message}</p>
+                  {aiPerformance.modelUsed && !aiPerformance.usedFallback && (
+                    <p className="text-xs text-primary-600 mt-1">
+                      Generated by {AI_MODELS[aiPerformance.modelUsed]?.name} 
+                      {aiPerformance.responseTime && ` in ${(aiPerformance.responseTime / 1000).toFixed(1)}s`}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -256,8 +374,13 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
               className="mt-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"
             >
               <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Target className="w-4 h-4 text-orange-600" />
-                Personalized Tips
+                <Brain className="w-4 h-4 text-orange-600" />
+                AI-Powered Insights
+                {aiPerformance.confidence && (
+                  <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded-full">
+                    {Math.round(aiPerformance.confidence * 100)}% confidence
+                  </span>
+                )}
               </h4>
               <div className="space-y-2">
                 {insights.map((insight, index) => (
@@ -273,6 +396,18 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
                   </motion.p>
                 ))}
               </div>
+              
+              {/* Performance Footer */}
+              {aiPerformance.modelUsed && (
+                <div className="mt-3 pt-3 border-t border-orange-200">
+                  <p className="text-xs text-orange-700 flex items-center gap-2">
+                    <Sparkles className="w-3 h-3" />
+                    Powered by {aiPerformance.usedFallback ? 'Smart Analysis' : AI_MODELS[aiPerformance.modelUsed]?.name}
+                    {!aiPerformance.usedFallback && aiPerformance.estimatedCost === 0 && ' (Free)'}
+                    {aiPerformance.responseTime && ` • Generated in ${(aiPerformance.responseTime / 1000).toFixed(1)}s`}
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
         </motion.div>

@@ -38,19 +38,19 @@ const tips: Tip[] = [
   {
     text: "Evening casein protein (20g) supports overnight muscle recovery.",
     category: 'evening',
-    relevantFor: (userData) => userData.exercises && userData.exercises.length > 0
+    relevantFor: (userData) => !!(userData.exercises && userData.exercises.length > 0)
   },
   
   // Exercise Tips
   {
     text: "Progressive overload: Add 5lbs or 1 rep each week for continuous gains.",
     category: 'exercise',
-    relevantFor: (userData) => userData.exercises?.some(e => e.type === 'weight_lifting')
+    relevantFor: (userData) => !!(userData.exercises?.some(e => e.type === 'weight_lifting'))
   },
   {
     text: "HIIT burns calories for 24-48 hours post-workout (EPOC effect).",
     category: 'exercise',
-    relevantFor: (userData) => userData.exercises?.some(e => e.type === 'hiit')
+    relevantFor: (userData) => !!(userData.exercises?.some(e => e.type === 'hiit'))
   },
   {
     text: "Walk during phone calls - easy way to add 2000+ steps daily.",

@@ -220,18 +220,19 @@ export function calculateComparison(userData: UserData): ComparisonData {
   
   if (userData.calculatorMode === 'simple') {
     // Map our exercise levels to standard activity levels
-    switch(userData.exerciseLevel) {
-      case 'sedentary': activityLevel = 'sedentary'; break;
-      case 'lightly': activityLevel = 'lightly_active'; break;
-      case 'moderately': activityLevel = 'moderately_active'; break;
-      case 'very': activityLevel = 'very_active'; break;
-      case 'extra': activityLevel = 'extra_active'; break;
+    switch(userData.simpleExerciseLevel) {
+      case 'none': activityLevel = 'sedentary'; break;
+      case 'very_light': activityLevel = 'lightly_active'; break;
+      case 'light': activityLevel = 'lightly_active'; break;
+      case 'moderate': activityLevel = 'moderately_active'; break;
+      case 'active': activityLevel = 'very_active'; break;
+      case 'very_active': activityLevel = 'extra_active'; break;
       default: activityLevel = 'moderately_active';
     }
   } else {
     // For advanced mode, calculate based on exercise frequency
     const exerciseCount = userData.exercises?.length || 0;
-    const totalSteps = userData.daily_steps || 5000;
+    const totalSteps = userData.steps || 5000;
     
     if (exerciseCount === 0 && totalSteps < 5000) {
       activityLevel = 'sedentary';

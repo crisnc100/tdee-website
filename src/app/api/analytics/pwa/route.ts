@@ -79,7 +79,7 @@ export async function GET() {
         installs: totalInstalls || 0,
         prompts: totalPrompts || 0,
         dismissals: totalDismissals || 0,
-        conversionRate: totalPrompts ? ((totalInstalls || 0) / (totalPrompts || 1) * 100).toFixed(2) : 0
+        conversionRate: totalPrompts ? (((totalInstalls as number) || 0) / ((totalPrompts as number) || 1) * 100).toFixed(2) : 0
       },
       platforms: {
         ios: iosInstalls || 0,

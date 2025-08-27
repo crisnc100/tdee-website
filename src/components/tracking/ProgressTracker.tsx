@@ -226,18 +226,18 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
   const stats = getProgressStats();
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Progress Tracker</h2>
-          <p className="text-sm text-gray-600 mt-1">Track your journey to your goals</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Progress Tracker</h2>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">Track your journey to your goals</p>
         </div>
         
         <div className="flex gap-2">
           <button
             onClick={() => setShowAddForm(true)}
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-1 sm:gap-2 text-sm sm:text-base"
           >
             <Plus className="w-4 h-4" />
             Add Entry
@@ -246,7 +246,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-6 border-b border-gray-200 overflow-x-auto">
         {[
           { id: 'dashboard', label: 'Dashboard', icon: Activity },
           { id: 'history', label: 'History', icon: Calendar },
@@ -273,7 +273,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
         <div className="space-y-6">
           {/* Quick Stats */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -332,21 +332,23 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
           )}
 
           {/* Chart Section */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Progress Chart</h3>
-              <div className="flex gap-2">
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Progress Chart</h3>
+              <div className="flex gap-1 sm:gap-2">
                 {['weight', 'bodyFat', 'measurements'].map((metric) => (
                   <button
                     key={metric}
                     onClick={() => setSelectedMetric(metric as any)}
-                    className={`px-3 py-1 rounded-lg text-sm transition-all ${
+                    className={`px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm transition-all ${
                       selectedMetric === metric
                         ? 'bg-amber-500 text-white'
                         : 'bg-white text-gray-600 hover:bg-gray-100'
                     }`}
                   >
-                    {metric === 'bodyFat' ? 'Body Fat' : metric.charAt(0).toUpperCase() + metric.slice(1)}
+                    {metric === 'weight' ? 'Weight' : 
+                     metric === 'bodyFat' ? 'Body Fat' : 
+                     'Measures'}
                   </button>
                 ))}
               </div>
@@ -473,27 +475,27 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
                       </span>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm">
                     {entry.weight && (
-                      <div>
+                      <div className="truncate">
                         <span className="text-gray-500">Weight:</span>
                         <span className="ml-1 font-medium">{entry.weight} {userData.units === 'imperial' ? 'lbs' : 'kg'}</span>
                       </div>
                     )}
                     {entry.bodyFat && (
-                      <div>
+                      <div className="truncate">
                         <span className="text-gray-500">Body Fat:</span>
                         <span className="ml-1 font-medium">{entry.bodyFat}%</span>
                       </div>
                     )}
                     {entry.adherence !== undefined && (
-                      <div>
+                      <div className="truncate">
                         <span className="text-gray-500">Adherence:</span>
                         <span className="ml-1 font-medium">{entry.adherence}%</span>
                       </div>
                     )}
                     {entry.calories && (
-                      <div>
+                      <div className="truncate">
                         <span className="text-gray-500">Calories:</span>
                         <span className="ml-1 font-medium">{entry.calories}</span>
                       </div>
@@ -634,7 +636,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
               {comparisonPhotos.before && comparisonPhotos.after && (
                 <div className="mt-4 p-4 bg-white rounded-lg">
                   <h5 className="font-medium text-gray-900 mb-2">Progress Summary</h5>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
                     {comparisonPhotos.before.weight && comparisonPhotos.after.weight && (
                       <div>
                         <span className="text-gray-500">Weight Change:</span>
@@ -682,7 +684,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
               )}
             </div>
             {getEntriesWithPhotos().length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {getEntriesWithPhotos().reverse().map((entry) => (
                   <motion.div
                     key={entry.id}
@@ -817,7 +819,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
               </div>
               <button
                 onClick={() => setShowAddGoalForm(true)}
-                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
+                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-1 sm:gap-2 text-sm sm:text-base"
               >
                 <Target className="w-4 h-4" />
                 Set New Goal
@@ -1317,7 +1319,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Measurements ({userData.units === 'imperial' ? 'inches' : 'cm'})
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <input
                       type="number"
                       step="0.1"
@@ -1326,7 +1328,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
                         ...newEntry,
                         measurements: { ...newEntry.measurements, waist: parseFloat(e.target.value) }
                       })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                      className="px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-xs sm:text-sm"
                     />
                     <input
                       type="number"
@@ -1336,7 +1338,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
                         ...newEntry,
                         measurements: { ...newEntry.measurements, chest: parseFloat(e.target.value) }
                       })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                      className="px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-xs sm:text-sm"
                     />
                     <input
                       type="number"
@@ -1346,7 +1348,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
                         ...newEntry,
                         measurements: { ...newEntry.measurements, arms: parseFloat(e.target.value) }
                       })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                      className="px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-xs sm:text-sm"
                     />
                     <input
                       type="number"
@@ -1356,7 +1358,7 @@ export default function ProgressTracker({ userData, currentTDEE }: ProgressTrack
                         ...newEntry,
                         measurements: { ...newEntry.measurements, thighs: parseFloat(e.target.value) }
                       })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                      className="px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-xs sm:text-sm"
                     />
                   </div>
                 </div>

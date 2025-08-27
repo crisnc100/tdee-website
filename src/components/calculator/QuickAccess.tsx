@@ -59,11 +59,36 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
           if (dateToUse) {
             const date = new Date(dateToUse);
             const now = new Date();
-            const diffTime = Math.abs(now.getTime() - date.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Reset time parts to compare just the dates
+            date.setHours(0, 0, 0, 0);
+            now.setHours(0, 0, 0, 0);
+            
+            const diffTime = now.getTime() - date.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             
             if (diffDays === 0) {
-              setLastCalculatedDate('Today');
+              // Check if it was actually calculated today or just within 24 hours
+              const actualDate = new Date(dateToUse);
+              const actualNow = new Date();
+              const hoursDiff = Math.floor((actualNow.getTime() - actualDate.getTime()) / (1000 * 60 * 60));
+              
+              if (hoursDiff < 1) {
+                const minutesDiff = Math.floor((actualNow.getTime() - actualDate.getTime()) / (1000 * 60));
+                if (minutesDiff < 1) {
+                  setLastCalculatedDate('Just now');
+                } else if (minutesDiff === 1) {
+                  setLastCalculatedDate('1 minute ago');
+                } else if (minutesDiff < 60) {
+                  setLastCalculatedDate(`${minutesDiff} minutes ago`);
+                }
+              } else if (hoursDiff === 1) {
+                setLastCalculatedDate('1 hour ago');
+              } else if (hoursDiff < 24) {
+                setLastCalculatedDate(`${hoursDiff} hours ago`);
+              } else {
+                setLastCalculatedDate('Today');
+              }
             } else if (diffDays === 1) {
               setLastCalculatedDate('Yesterday');
             } else if (diffDays < 7) {

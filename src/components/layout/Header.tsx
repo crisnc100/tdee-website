@@ -1,9 +1,34 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Calculator, Target, TrendingUp } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calculator, Target, TrendingUp, Settings, Brain, User, Menu, X } from 'lucide-react';
 
-export default function Header() {
+interface HeaderProps {
+  onSettingsClick?: () => void;
+}
+
+export default function Header({ onSettingsClick }: HeaderProps) {
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close settings menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target as Node)) {
+        setShowSettingsMenu(false);
+      }
+    };
+
+    if (showSettingsMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSettingsMenu]);
+  
   return (
     <motion.header 
       initial={{ opacity: 0, y: -20 }}
@@ -42,7 +67,7 @@ export default function Header() {
             Install
           </button>
 
-          {/* Desktop Features and Install */}
+          {/* Desktop Features and Actions */}
           <div className="hidden md:flex items-center space-x-6">
             <div className="flex items-center space-x-2 text-gray-600">
               <Target className="w-4 h-4" />
@@ -52,6 +77,79 @@ export default function Header() {
               <TrendingUp className="w-4 h-4" />
               <span className="text-sm">7-Component Analysis</span>
             </div>
+            
+            {/* Settings Dropdown */}
+            <div className="relative" ref={settingsMenuRef}>
+              <button
+                onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+                title="Settings & AI Models"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+
+              <AnimatePresence>
+                {showSettingsMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                  >
+                    <div className="p-4 border-b border-gray-100">
+                      <h3 className="font-semibold text-gray-900">Settings & Preferences</h3>
+                      <p className="text-sm text-gray-600">Customize your experience</p>
+                    </div>
+                    
+                    <div className="p-2">
+                      <button
+                        onClick={() => {
+                          onSettingsClick?.();
+                          setShowSettingsMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                      >
+                        <Brain className="w-4 h-4 text-purple-600" />
+                        <div>
+                          <div className="font-medium">AI Model Settings</div>
+                          <div className="text-xs text-gray-500">Configure AI preferences</div>
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          onSettingsClick?.();
+                          setShowSettingsMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                      >
+                        <User className="w-4 h-4 text-blue-600" />
+                        <div>
+                          <div className="font-medium">Profile Settings</div>
+                          <div className="text-xs text-gray-500">Personal preferences</div>
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          onSettingsClick?.();
+                          setShowSettingsMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                      >
+                        <Settings className="w-4 h-4 text-gray-600" />
+                        <div>
+                          <div className="font-medium">All Settings</div>
+                          <div className="text-xs text-gray-500">Complete settings page</div>
+                        </div>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button
               id="install-app-header-desktop"
               className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all flex items-center gap-2"

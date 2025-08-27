@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MealSuggestion } from '@/types/calculator';
+import { getMealSuggestions } from '@/lib/aiService';
+import { selectOptimalModel } from '@/lib/modelSelector';
+import { DEFAULT_USER_PREFERENCES, UserAIPreferences } from '@/types/ai';
 
 // Function to get image path based on meal name and goal
 function getMealImagePath(mealName: string, goal: 'lose' | 'maintain' | 'gain'): string {
@@ -77,6 +80,85 @@ function getMealImagePath(mealName: string, goal: 'lose' | 'maintain' | 'gain'):
   
   // For snacks and meals without images, return null
   return '';
+}
+
+function parseAIMealSuggestions(aiResponse: string): any[] {
+  // Parse AI-generated meal suggestions into structured format
+  const meals: any[] = [];
+  const lines = aiResponse.split('\n').filter(line => line.trim());
+  
+  let currentMeal: any = null;
+  let section = '';
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    
+    // Detect meal titles (usually standalone or start with number/bullet)
+    if (/^\d+\.|\*\*.*\*\*|^[A-Z][^:]*(?:Bowl|Salad|Wrap|Toast|Pasta|Chicken|Beef|Salmon)/i.test(trimmed)) {
+      // Save previous meal if exists
+      if (currentMeal && currentMeal.name) {
+        meals.push(currentMeal);
+      }
+      
+      // Start new meal
+      currentMeal = {
+        name: trimmed.replace(/^\d+\.\s*/, '').replace(/\*\*/g, '').trim(),
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fats: 0,
+        ingredients: [],
+        instructions: [],
+        prepTime: 15,
+        difficulty: 'medium'
+      };
+      section = 'name';
+    }
+    
+    // Detect sections
+    if (/ingredients?:/i.test(trimmed)) {
+      section = 'ingredients';
+      continue;
+    } else if (/instructions?:|preparation:|method:/i.test(trimmed)) {
+      section = 'instructions';
+      continue;
+    } else if (/macro|nutrition|calories?:/i.test(trimmed)) {
+      section = 'macros';
+      continue;
+    }
+    
+    // Parse content based on current section
+    if (currentMeal) {
+      if (section === 'ingredients' && trimmed.startsWith('-')) {
+        currentMeal.ingredients.push(trimmed.substring(1).trim());
+      } else if (section === 'instructions' && trimmed.startsWith('-')) {
+        currentMeal.instructions.push(trimmed.substring(1).trim());
+      } else if (section === 'macros') {
+        // Extract macro numbers
+        const caloriesMatch = trimmed.match(/(\d+)\s*cal/i);
+        const proteinMatch = trimmed.match(/(\d+)g?\s*protein/i);
+        const carbsMatch = trimmed.match(/(\d+)g?\s*carb/i);
+        const fatsMatch = trimmed.match(/(\d+)g?\s*fat/i);
+        
+        if (caloriesMatch) currentMeal.calories = parseInt(caloriesMatch[1]);
+        if (proteinMatch) currentMeal.protein = parseInt(proteinMatch[1]);
+        if (carbsMatch) currentMeal.carbs = parseInt(carbsMatch[1]);
+        if (fatsMatch) currentMeal.fats = parseInt(fatsMatch[1]);
+      }
+    }
+  }
+  
+  // Add final meal
+  if (currentMeal && currentMeal.name) {
+    meals.push(currentMeal);
+  }
+  
+  // Return valid meals with reasonable data
+  return meals.filter(meal => 
+    meal.name && 
+    meal.name.length > 3 && 
+    (meal.calories > 50 || meal.ingredients.length > 0)
+  ).slice(0, 3); // Limit to 3 AI suggestions
 }
 
 // Comprehensive meal database organized by goal - based on nutrition research and recipe analysis
@@ -632,7 +714,7 @@ const mealDatabase: MealSuggestion[] = [
 
 export async function POST(request: NextRequest) {
   try {
-    const { targetCalories, goal, dietaryPreferences, mealType } = await request.json();
+    const { targetCalories, goal, dietaryPreferences, mealType, userPreferences, useAI } = await request.json();
 
     if (!targetCalories || targetCalories < 100 || targetCalories > 1500) {
       return NextResponse.json(
@@ -743,8 +825,72 @@ export async function POST(request: NextRequest) {
       image: getMealImagePath(meal.name, goal || 'maintain')
     }));
 
+    // Enhanced AI-powered meal suggestions with smart model selection
+    let aiSuggestions = null;
+    let aiMeta = null;
+    let optimizationData = null;
+
+    if (useAI && process.env.OPENROUTER_API_KEY) {
+      try {
+        const aiPreferences: UserAIPreferences = {
+          ...DEFAULT_USER_PREFERENCES,
+          ...userPreferences,
+          preferFreeModels: true,
+          maxCostPerRequest: 0.003, // 0.3 cents max for meal planning (optimized)
+          qualityPreference: 'balanced' as const,
+          allowExperimental: true // Allow experimental models for meal planning
+        };
+
+        // Smart model selection for meal planning
+        const modelDecision = selectOptimalModel({
+          taskType: 'meal-planning',
+          userPreferences: aiPreferences,
+          complexity: 0.6, // Medium complexity for meal planning
+          context: {
+            urgency: 'medium', // Meal planning is moderately time-sensitive
+            userType: 'returning'
+          }
+        });
+
+        optimizationData = {
+          selectedModel: modelDecision.selectedModel,
+          reason: modelDecision.reason,
+          estimatedCost: modelDecision.estimatedCost,
+          costSavings: modelDecision.costSavings,
+          optimizationScore: modelDecision.optimizationScore
+        };
+
+        console.log(`[Meals API] Selected model: ${modelDecision.selectedModel} for meal planning`);
+
+        const aiResponse = await getMealSuggestions(
+          targetCalories,
+          goal || 'maintain',
+          dietaryPreferences,
+          aiPreferences
+        );
+
+        aiSuggestions = parseAIMealSuggestions(aiResponse.content);
+        aiMeta = {
+          model: aiResponse.modelUsed,
+          responseTime: aiResponse.responseTime,
+          cost: aiResponse.estimatedCost,
+          usedFallback: aiResponse.usedFallback,
+          optimization: optimizationData
+        };
+      } catch (aiError) {
+        console.error('AI meal suggestions error:', aiError);
+        // Continue with database suggestions only
+        aiMeta = {
+          error: 'AI meal suggestions temporarily unavailable',
+          optimization: optimizationData
+        };
+      }
+    }
+
     return NextResponse.json({
       suggestions: suggestionsWithImages,
+      aiSuggestions,
+      aiMeta,
       message: `Found ${suggestionsWithImages.length} meal suggestions for ${targetCalories} calories`,
       targetCalories
     });

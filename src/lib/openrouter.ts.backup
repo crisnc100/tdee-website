@@ -1,0 +1,313 @@
+import { AIModelId, AI_MODELS } from '@/types/ai';
+
+interface OpenRouterResponse {
+  choices: Array<{
+    message: {
+      content: string;
+    };
+  }>;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+interface OpenRouterRequest {
+  model: string;
+  messages: Array<{
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+  }>;
+  temperature?: number;
+  max_tokens?: number;
+}
+
+/**
+ * Enhanced OpenRouter integration with multi-model support
+ */
+export interface OpenRouterCallOptions {
+  model?: string | AIModelId;
+  temperature?: number;
+  max_tokens?: number;
+  enableFallback?: boolean;
+  preferredModels?: AIModelId[];
+}
+
+/**
+ * Enhanced OpenRouter response with usage metrics
+ */
+export interface EnhancedOpenRouterResponse {
+  content: string;
+  model: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  cost_estimate?: number;
+}
+
+/**
+ * Main OpenRouter call function with intelligent model selection
+ */
+export async function callOpenRouter(
+  messages: OpenRouterRequest['messages'],
+  options: OpenRouterCallOptions = {}
+): Promise<string> {
+  const enhancedResponse = await callOpenRouterEnhanced(messages, options);
+  return enhancedResponse.content;
+}
+
+/**
+ * Enhanced OpenRouter call with detailed response metadata
+ */
+export async function callOpenRouterEnhanced(
+  messages: OpenRouterRequest['messages'],
+  options: OpenRouterCallOptions = {}
+): Promise<EnhancedOpenRouterResponse> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('OpenRouter API key not configured');
+  }
+
+  // Determine the best model to use
+  const selectedModel = selectBestModel(options);
+  const modelConfig = getModelFromIdentifier(selectedModel);
+  
+  console.log(`[OpenRouter] Using model: ${selectedModel} (${modelConfig?.name || 'Unknown'})`);
+
+  try {
+    const response = await makeOpenRouterRequest(messages, {
+      ...options,
+      model: selectedModel
+    });
+    
+    return {
+      ...response,
+      model: selectedModel
+    };
+  } catch (error) {
+    console.error(`[OpenRouter] Primary model ${selectedModel} failed:`, error);
+    
+    // Attempt fallback if enabled
+    if (options.enableFallback !== false && options.preferredModels) {
+      for (const fallbackModel of options.preferredModels.slice(1)) {
+        try {
+          console.log(`[OpenRouter] Attempting fallback to ${fallbackModel}`);
+          const fallbackResponse = await makeOpenRouterRequest(messages, {
+            ...options,
+            model: getModelFromIdentifier(fallbackModel)?.openRouterModel || fallbackModel
+          });
+          
+          return {
+            ...fallbackResponse,
+            model: fallbackModel
+          };
+        } catch (fallbackError) {
+          console.error(`[OpenRouter] Fallback model ${fallbackModel} also failed:`, fallbackError);
+          continue;
+        }
+      }
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Make the actual request to OpenRouter
+ */
+async function makeOpenRouterRequest(
+  messages: OpenRouterRequest['messages'],
+  options: OpenRouterCallOptions
+): Promise<EnhancedOpenRouterResponse> {
+  const apiKey = process.env.OPENROUTER_API_KEY!;
+  const model = typeof options.model === 'string' ? options.model : getModelFromIdentifier(options.model)?.openRouterModel;
+  
+  if (!model) {
+    throw new Error(`Invalid model identifier: ${options.model}`);
+  }
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://tdee-calculator.com',
+      'X-Title': process.env.OPENROUTER_APP_NAME || 'Multi-AI TDEE Calculator Pro',
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: options.temperature || 0.7,
+      max_tokens: options.max_tokens || 500,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+  }
+
+  const data: OpenRouterResponse = await response.json();
+  
+  if (!data.choices?.[0]?.message?.content) {
+    throw new Error('Invalid response from OpenRouter API');
+  }
+
+  return {
+    content: data.choices[0].message.content,
+    model: model,
+    usage: data.usage,
+    cost_estimate: estimateCost(model, data.usage)
+  };
+}
+
+/**
+ * Select the best model based on options and availability
+ */
+function selectBestModel(options: OpenRouterCallOptions): string {
+  // If specific model requested, use it
+  if (options.model) {
+    const modelConfig = getModelFromIdentifier(options.model);
+    if (modelConfig) {
+      return modelConfig.openRouterModel;
+    }
+    // If it's already an OpenRouter model string, use it
+    if (typeof options.model === 'string') {
+      return options.model;
+    }
+  }
+
+  // If preferred models list provided, use first available
+  if (options.preferredModels && options.preferredModels.length > 0) {
+    const firstModel = getModelFromIdentifier(options.preferredModels[0]);
+    if (firstModel) {
+      return firstModel.openRouterModel;
+    }
+  }
+
+  // Check environment variable for preferred models
+  const envModels = process.env.OPENROUTER_MODELS?.split(',').map(m => m.trim());
+  if (envModels && envModels.length > 0) {
+    return envModels[0];
+  }
+
+  // Default to cost-efficient model (GPT-OSS-120B)
+  return AI_MODELS['gpt-oss-120b'].openRouterModel;
+}
+
+/**
+ * Get model configuration from various identifier formats
+ */
+function getModelFromIdentifier(identifier?: string | AIModelId): typeof AI_MODELS[AIModelId] | null {
+  if (!identifier) return null;
+  
+  // Check if it's a direct AI model ID
+  if (identifier in AI_MODELS) {
+    return AI_MODELS[identifier as AIModelId];
+  }
+  
+  // Check if it's an OpenRouter model string that matches one of our models
+  for (const modelId of Object.keys(AI_MODELS) as AIModelId[]) {
+    const model = AI_MODELS[modelId];
+    if (model.openRouterModel === identifier) {
+      return model;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Estimate cost based on model and usage
+ */
+function estimateCost(model: string, usage?: { prompt_tokens: number; completion_tokens: number }): number {
+  if (!usage) return 0;
+  
+  const modelConfig = getModelFromIdentifier(model);
+  if (!modelConfig || modelConfig.pricing.isFree) return 0;
+  
+  const inputCost = (usage.prompt_tokens / 1_000_000) * modelConfig.pricing.inputCostPer1M;
+  const outputCost = (usage.completion_tokens / 1_000_000) * modelConfig.pricing.outputCostPer1M;
+  
+  return inputCost + outputCost;
+}
+
+/**
+ * Legacy function - now defaults to cost-efficient model selection
+ */
+export async function callOpenRouterLegacy(
+  messages: OpenRouterRequest['messages'],
+  options: {
+    model?: string;
+    temperature?: number;
+    max_tokens?: number;
+  } = {}
+): Promise<string> {
+  return callOpenRouter(messages, {
+    ...options,
+    // Default to GPT-OSS-120B - cost-efficient and high-performance
+    model: options.model || 'gpt-oss-120b',
+    enableFallback: true,
+    preferredModels: ['gpt-oss-120b', 'qwen3-235b', 'gemini-2.0-flash-exp']
+  });
+}
+
+export function createTDEEPrompt(userData: any, tdeeResult: any): string {
+  return `You are a certified personal trainer and nutrition expert. Analyze this person's TDEE data and provide personalized coaching insights.
+
+USER PROFILE:
+- Age: ${userData.age}, Gender: ${userData.gender}
+- Weight: ${userData.weight}${userData.units === 'metric' ? 'kg' : 'lbs'}
+- Height: ${userData.units === 'metric' ? userData.height + 'cm' : userData.heightFeet + "'" + userData.heightInches + '"'}
+- Job: ${userData.jobActivity} (${userData.steps} daily steps)
+- Body Fat: ${userData.bodyFat || 'Unknown'}%
+- Exercise: ${userData.exercises?.map((ex: any) => `${ex.type} ${ex.intensity} ${ex.minutes}min ${ex.frequency}x/week`).join(', ') || userData.simpleExerciseLevel || 'None specified'}
+
+CALCULATED RESULTS:
+- TDEE: ${tdeeResult.tdee} calories
+- BMR: ${tdeeResult.bmr} calories  
+- Components: BMR(${tdeeResult.components.bmr}) + Job(${tdeeResult.components.jobActivity}) + Steps(${tdeeResult.components.neat}) + Exercise(${tdeeResult.components.exercise}) + Recovery(${tdeeResult.components.muscleRecovery})
+
+TASK: Provide 3-4 actionable, personalized coaching tips in a motivational tone. Focus on:
+1. Protein intake recommendations (0.75g/lb optimal, 1g/lb for weight loss satiety)
+2. Lifestyle optimization for their specific job/activity level  
+3. Exercise recommendations that complement their current routine
+4. One motivational insight about their progress potential
+
+PROTEIN CONTEXT: Recent research shows 0.75g per lb bodyweight is optimal for muscle protein synthesis for most people. Traditional 1g/lb recommendations provide extra satiety benefits, especially useful for weight loss. For weight gain, lower protein prevents excessive fullness.
+
+Keep each tip to 1-2 sentences. Be specific and actionable, not generic.`;
+}
+
+export function createMealAdaptationPrompt(
+  targetCalories: number, 
+  targetMacros: { protein: number; carbs: number; fats: number },
+  baseRecipe: any,
+  userData: any
+): string {
+  return `You are a nutrition expert. Adapt this recipe to meet specific macro targets while keeping it delicious.
+
+TARGET: ${targetCalories} calories, ${targetMacros.protein}g protein, ${targetMacros.carbs}g carbs, ${targetMacros.fats}g fats
+
+BASE RECIPE:
+${baseRecipe.name} (${baseRecipe.calories} cal, ${baseRecipe.protein}g P, ${baseRecipe.carbs}g C, ${baseRecipe.fats}g F)
+Ingredients: ${baseRecipe.ingredients.join(', ')}
+Instructions: ${baseRecipe.instructions.join('. ')}
+
+USER CONTEXT:
+- Goal: ${userData.goal || 'maintenance'}
+- Activity: ${userData.exercises?.length > 0 ? 'Active' : 'Moderate'}
+- Preferences: ${userData.dietaryPreferences?.join(', ') || 'None specified'}
+
+TASK: Modify the recipe by adjusting portions or substituting ingredients to hit the macro targets. Provide:
+1. Updated ingredient list with quantities
+2. New macro breakdown
+3. Any cooking adjustments needed
+4. One tip for meal timing based on their activity level
+
+Keep the recipe practical and tasty.`;
+}

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateMacros } from '@/lib/calculator';
 import { MacroSplit } from '@/types/calculator';
+import { getMacroAnalysis } from '@/lib/aiService';
+import { selectOptimalModel } from '@/lib/modelSelector';
+import { DEFAULT_USER_PREFERENCES, AIModelId, UserAIPreferences } from '@/types/ai';
 
 export async function POST(request: NextRequest) {
   try {
-    const { calories, goal, userData } = await request.json();
+    const { calories, goal, userData, userPreferences } = await request.json();
 
     if (!calories || calories < 800 || calories > 5000) {
       return NextResponse.json(
@@ -20,11 +23,69 @@ export async function POST(request: NextRequest) {
     const recommendedIndex = getPersonalizedRecommendation(goal, userData);
     const personalizedMessage = getPersonalizedMessage(goal, results[recommendedIndex], userData);
 
+    // Enhanced AI-powered macro analysis with smart model selection
+    let aiInsights = null;
+    let aiAnalysisMeta = null;
+    let optimizationData = null;
+
+    if (process.env.OPENROUTER_API_KEY) {
+      try {
+        const aiPreferences: UserAIPreferences = {
+          ...DEFAULT_USER_PREFERENCES,
+          ...userPreferences,
+          preferFreeModels: true,
+          maxCostPerRequest: 0.002, // 0.2 cents max for macro analysis (aggressive optimization)
+          qualityPreference: 'balanced' as const,
+          allowExperimental: true // Allow experimental models for macro analysis
+        };
+
+        // Smart model selection for macro analysis
+        const modelDecision = selectOptimalModel({
+          taskType: 'macro-analysis',
+          userPreferences: aiPreferences,
+          complexity: 0.5, // Lower complexity for macro analysis
+          context: {
+            urgency: 'low', // Macro analysis is not urgent
+            userType: 'returning'
+          }
+        });
+
+        optimizationData = {
+          selectedModel: modelDecision.selectedModel,
+          reason: modelDecision.reason,
+          estimatedCost: modelDecision.estimatedCost,
+          costSavings: modelDecision.costSavings,
+          optimizationScore: modelDecision.optimizationScore
+        };
+
+        console.log(`[Macros API] Selected model: ${modelDecision.selectedModel} for macro analysis`);
+
+        const aiResponse = await getMacroAnalysis(calories, goal, userData, aiPreferences);
+        aiInsights = parseAIInsights(aiResponse.content);
+        aiAnalysisMeta = {
+          model: aiResponse.modelUsed,
+          responseTime: aiResponse.responseTime,
+          cost: aiResponse.estimatedCost,
+          usedFallback: aiResponse.usedFallback,
+          optimization: optimizationData
+        };
+      } catch (aiError) {
+        console.error('AI macro analysis error:', aiError);
+        // Continue with rule-based insights only
+        aiAnalysisMeta = {
+          error: 'AI analysis temporarily unavailable',
+          optimization: optimizationData
+        };
+      }
+    }
+
     return NextResponse.json({
       macros: results,
       recommended: recommendedIndex,
       message: personalizedMessage,
-      insights: getPersonalizedInsights(userData, goal)
+      insights: getPersonalizedInsights(userData, goal),
+      aiInsights,
+      aiAnalysisMeta
     });
 
   } catch (error) {
@@ -133,6 +194,36 @@ function getPersonalizedInsights(userData: any, goal: string): string[] {
   }
 
   return insights;
+}
+
+function parseAIInsights(aiResponse: string): string[] {
+  // Extract insights from AI response
+  const lines = aiResponse.split('\n').filter(line => line.trim());
+  const insights: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Match numbered lists, bullet points, or clear recommendations
+    if (/^(\d+\.|[-*•]|Protein:|Carbs:|Fats:)/i.test(trimmed)) {
+      const cleanInsight = trimmed
+        .replace(/^\d+\.\s*/, '') // Remove numbers
+        .replace(/^[-*•]\s*/, '') // Remove bullets
+        .replace(/^(Protein|Carbs|Fats):\s*/i, '') // Clean macro labels
+        .trim();
+      
+      if (cleanInsight.length > 20) { // Only substantial insights
+        insights.push(cleanInsight);
+      }
+    }
+  }
+
+  // If parsing fails, extract meaningful sentences
+  if (insights.length === 0) {
+    const sentences = aiResponse.split(/[.!?]/).filter(s => s.trim().length > 30);
+    return sentences.slice(0, 3).map(s => s.trim() + '.');
+  }
+
+  return insights.slice(0, 4); // Limit to 4 insights
 }
 
 function calculateWeeklyHours(exercises: any[]): number {

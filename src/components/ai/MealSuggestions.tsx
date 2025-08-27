@@ -4,7 +4,21 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { MealSuggestion } from '@/types/calculator';
-import { ChefHat, Clock, Star, Loader2 } from 'lucide-react';
+import { 
+  ChefHat, 
+  Clock, 
+  Star, 
+  Loader2,
+  DollarSign,
+  Zap,
+  Brain,
+  Sparkles,
+  AlertCircle,
+  TrendingUp,
+  Shield
+} from 'lucide-react';
+import { AI_MODELS, AIModelId } from '@/types/ai';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
 
 interface MealSuggestionsProps {
   defaultCalories: number;
@@ -22,6 +36,17 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
   const [message, setMessage] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [manualCalories, setManualCalories] = useState(Math.round(defaultCalories / 4));
+  
+  // AI Performance & Cost Tracking
+  const [aiMetrics, setAiMetrics] = useState<{
+    modelUsed?: AIModelId;
+    responseTime?: number;
+    estimatedCost?: number;
+    usedFallback?: boolean;
+    totalSavings?: number;
+  }>({});
+  
+  const { preferences, trackModelUsage } = useUserPreferences();
 
   // Calculate target calories based on meal type and portion size
   const getTargetCalories = () => {
@@ -39,6 +64,8 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
 
   const handleGetSuggestions = async () => {
     setLoading(true);
+    const startTime = Date.now();
+    
     try {
       const targetCalories = getTargetCalories();
       const response = await fetch('/api/ai/meals', {
@@ -48,7 +75,8 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
           targetCalories, 
           goal,
           mealType,
-          dietaryPreferences: [] 
+          dietaryPreferences: [],
+          userPreferences: preferences
         })
       });
 
@@ -56,9 +84,33 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
         const data = await response.json();
         setSuggestions(data.suggestions);
         setMessage(data.message);
+        
+        // Track AI performance and cost metrics
+        const responseTime = Date.now() - startTime;
+        const metrics = {
+          modelUsed: data.modelUsed,
+          responseTime,
+          estimatedCost: data.estimatedCost || 0,
+          usedFallback: data.usedFallback || false,
+          totalSavings: data.totalSavings || 0
+        };
+        setAiMetrics(metrics);
+        
+        // Track usage for cost analytics
+        if (data.modelUsed) {
+          trackModelUsage(data.modelUsed, responseTime, data.estimatedCost || 0, true);
+        }
       }
     } catch (error) {
       console.error('Failed to get meal suggestions:', error);
+      
+      // Track failed attempt
+      const responseTime = Date.now() - startTime;
+      setAiMetrics({
+        responseTime,
+        usedFallback: true,
+        estimatedCost: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -76,13 +128,74 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
-          <ChefHat className="w-5 h-5" />
-          Meal Suggestions
-        </h3>
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <ChefHat className="w-5 h-5" />
+            AI Meal Planner
+          </h3>
+          
+          {/* Cost Transparency & Performance Indicators */}
+          {aiMetrics.modelUsed && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                aiMetrics.usedFallback 
+                  ? 'bg-orange-100 text-orange-700'
+                  : AI_MODELS[aiMetrics.modelUsed]?.pricing.isFree
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-purple-100 text-purple-700'
+              }`}>
+                {aiMetrics.usedFallback ? (
+                  <AlertCircle className="w-3 h-3" />
+                ) : AI_MODELS[aiMetrics.modelUsed]?.pricing.isFree ? (
+                  <Sparkles className="w-3 h-3" />
+                ) : (
+                  <Zap className="w-3 h-3" />
+                )}
+                {aiMetrics.usedFallback 
+                  ? 'Smart Fallback'
+                  : AI_MODELS[aiMetrics.modelUsed]?.name
+                }
+              </div>
+              
+              {/* Cost Transparency */}
+              {preferences.showCostEstimates && (
+                <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                  <DollarSign className="w-3 h-3" />
+                  {(aiMetrics.estimatedCost || 0) === 0 ? 'Free' : `$${(aiMetrics.estimatedCost || 0).toFixed(4)}`}
+                  {aiMetrics.totalSavings && aiMetrics.totalSavings > 0 && (
+                    <span className="ml-1 font-medium">
+                      (Saved ${aiMetrics.totalSavings.toFixed(4)})
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {aiMetrics.responseTime && (
+                <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                  <Clock className="w-3 h-3" />
+                  {(aiMetrics.responseTime / 1000).toFixed(1)}s
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        
         <p className="text-sm text-gray-600">
-          Get personalized meal ideas that match your hunger and goals
+          AI-powered meal planning with cost-optimized recommendations
         </p>
+        
+        {/* Cost Savings Banner */}
+        {preferences.showCostEstimates && aiMetrics.totalSavings && aiMetrics.totalSavings > 0 && (
+          <div className="mt-3 p-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+            <div className="flex items-center justify-center gap-2 text-sm text-green-800">
+              <TrendingUp className="w-4 h-4" />
+              <span className="font-medium">
+                Smart routing saved you ${aiMetrics.totalSavings.toFixed(4)} this request
+              </span>
+              <Shield className="w-4 h-4" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input Section */}
@@ -241,7 +354,36 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
         >
           {message && (
             <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <p className="text-sm text-orange-800">{message}</p>
+              <div className="flex items-start gap-2">
+                <Brain className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-orange-800">{message}</p>
+                  
+                  {/* AI Attribution */}
+                  {aiMetrics.modelUsed && !aiMetrics.usedFallback && (
+                    <div className="flex items-center gap-3 mt-2 text-xs text-orange-700">
+                      <span className="flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        Generated by {AI_MODELS[aiMetrics.modelUsed]?.name}
+                      </span>
+                      
+                      {aiMetrics.responseTime && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {(aiMetrics.responseTime / 1000).toFixed(1)}s response
+                        </span>
+                      )}
+                      
+                      {preferences.showCostEstimates && (
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="w-3 h-3" />
+                          {(aiMetrics.estimatedCost || 0) === 0 ? 'Free tier' : `$${(aiMetrics.estimatedCost || 0).toFixed(4)} cost`}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -252,8 +394,21 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative"
               >
+                {/* AI Quality Indicator */}
+                {!aiMetrics.usedFallback && aiMetrics.modelUsed && (
+                  <div className="absolute top-3 right-3 z-10">
+                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                      AI_MODELS[aiMetrics.modelUsed]?.pricing.isFree
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-purple-100 text-purple-700'
+                    }`}>
+                      <Brain className="w-3 h-3" />
+                      AI
+                    </div>
+                  </div>
+                )}
                 <div className="p-5">
                   {/* Header with Image and Title */}
                   <div className="flex gap-4 mb-4">
@@ -337,6 +492,39 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
                     </ol>
                   </div>
                 </div>
+                
+                {/* Performance Footer for First Meal */}
+                {index === 0 && aiMetrics.modelUsed && (
+                  <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-xs text-gray-600">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          {aiMetrics.usedFallback ? 'Smart Analysis' : `Powered by ${AI_MODELS[aiMetrics.modelUsed]?.name}`}
+                        </span>
+                        
+                        {aiMetrics.responseTime && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {(aiMetrics.responseTime / 1000).toFixed(1)}s
+                          </span>
+                        )}
+                      </div>
+                      
+                      {preferences.showCostEstimates && (
+                        <div className="flex items-center gap-1 text-green-600">
+                          <DollarSign className="w-3 h-3" />
+                          {(aiMetrics.estimatedCost || 0) === 0 ? 'Free' : `$${(aiMetrics.estimatedCost || 0).toFixed(4)}`}
+                          {aiMetrics.totalSavings && aiMetrics.totalSavings > 0 && (
+                            <span className="text-green-700 font-medium ml-1">
+                              (Saved ${aiMetrics.totalSavings.toFixed(4)})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>

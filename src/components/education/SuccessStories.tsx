@@ -35,10 +35,11 @@ const stories: Story[] = [
       "Walked 8,000 steps daily",
       "Focused on protein at every meal"
     ],
-    similar: (userData) => 
+    similar: (userData) => !!(
       userData.gender === 'female' && 
       userData.age >= 25 && userData.age <= 35 &&
       userData.jobActivity === 'desk'
+    )
   },
   {
     profile: "Mike, 35, Construction Worker",
@@ -55,9 +56,10 @@ const stories: Story[] = [
       "Tracked protein religiously (1g/lb)",
       "Prioritized sleep (8+ hours)"
     ],
-    similar: (userData) => 
+    similar: (userData) => !!(
       userData.gender === 'male' && 
       (userData.jobActivity === 'physical' || userData.jobActivity === 'heavy_physical')
+    )
   },
   {
     profile: "Jennifer, 42, Teacher",
@@ -74,10 +76,11 @@ const stories: Story[] = [
       "Healthy snacks between classes",
       "Hydrated constantly (3L water/day)"
     ],
-    similar: (userData) => 
+    similar: (userData) => !!(
       userData.gender === 'female' && 
       userData.age >= 38 && userData.age <= 48 &&
       (userData.jobActivity === 'standing' || userData.jobActivity === 'walking')
+    )
   },
   {
     profile: "David, 50, Remote Developer",
@@ -94,11 +97,12 @@ const stories: Story[] = [
       "10-minute walks every 2 hours",
       "Cut liquid calories completely"
     ],
-    similar: (userData) => 
+    similar: (userData) => !!(
       userData.gender === 'male' && 
       userData.age >= 45 &&
       userData.jobActivity === 'desk' &&
       userData.steps < 7000
+    )
   },
   {
     profile: "Amy, 23, College Student",
@@ -115,9 +119,10 @@ const stories: Story[] = [
       "Progressive overload every session",
       "Tracked measurements, not just weight"
     ],
-    similar: (userData) => 
+    similar: (userData) => !!(
       userData.age >= 18 && userData.age <= 25 &&
       userData.exercises && userData.exercises.length >= 4
+    )
   }
 ];
 

@@ -82,10 +82,10 @@ export default function MythBusters() {
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-      <div className="flex items-center gap-2 mb-6">
-        <AlertTriangle className="w-5 h-5 text-amber-600" />
-        <h3 className="text-xl font-bold text-gray-900">Common Fitness Myths Debunked</h3>
+    <div className="bg-white rounded-xl p-3 sm:p-6 shadow-lg border border-gray-200">
+      <div className="flex items-center gap-2 mb-4 sm:mb-6">
+        <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+        <h3 className="text-base sm:text-xl font-bold text-gray-900">Common Fitness Myths Debunked</h3>
       </div>
 
       <div className="space-y-4">
@@ -103,27 +103,36 @@ export default function MythBusters() {
             >
               <button
                 onClick={() => setExpandedIndex(isExpanded ? null : actualIndex)}
-                className="w-full p-4 text-left hover:bg-gray-50 transition-colors"
+                className="w-full p-3 sm:p-4 text-left hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                   <div className="flex-1">
-                    <div className="flex items-start gap-3">
-                      <X className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 mb-2">
-                          Myth: "{myth.myth}"
-                        </p>
-                        <div className="flex items-start gap-3">
-                          <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-green-700">
-                            Truth: {myth.truth}
+                    <div className="space-y-3">
+                      {/* Myth */}
+                      <div className="flex items-start gap-2">
+                        <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-xs text-red-600 font-medium uppercase tracking-wide mb-1">Myth</p>
+                          <p className="text-sm sm:text-base text-gray-900 leading-relaxed">
+                            {myth.myth}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Truth */}
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 font-medium uppercase tracking-wide mb-1">Truth</p>
+                          <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                            {myth.truth}
                           </p>
                         </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 mt-2 sm:mt-0">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getImpactColor(myth.impact)}`}>
                       {myth.impact} impact
                     </span>
@@ -131,7 +140,7 @@ export default function MythBusters() {
                       animate={{ rotate: isExpanded ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Info className="w-5 h-5 text-gray-400" />
+                      <Info className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                     </motion.div>
                   </div>
                 </div>
@@ -146,8 +155,8 @@ export default function MythBusters() {
                     transition={{ duration: 0.3 }}
                     className="border-t border-gray-200"
                   >
-                    <div className="p-4 bg-gray-50">
-                      <p className="text-sm text-gray-700 leading-relaxed">
+                    <div className="p-3 sm:p-4 bg-gray-50">
+                      <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
                         {myth.explanation}
                       </p>
                     </div>
