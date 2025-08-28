@@ -1,4 +1,4 @@
-// Push Notification System for CalorieScope
+// Push Notification System for My Calorie Needs
 // Personalized, relevant notifications based on user data
 
 export interface NotificationSchedule {

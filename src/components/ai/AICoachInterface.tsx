@@ -5,9 +5,10 @@ import {
   Send, Zap, Target, Brain, Dumbbell, Apple, Book, Heart, 
   AlertTriangle, BookOpen, BarChart3, Settings, MessageSquare,
   Sparkles, TrendingUp, Clock, Activity, CheckCircle, AlertCircle,
-  ArrowRight, Lightbulb, List, ChevronRight, User
+  ArrowRight, Lightbulb, List, ChevronRight, User, HelpCircle
 } from 'lucide-react';
 import type { UserData, TDEEResult } from '@/types/calculator';
+import type { AIModelId } from '@/types/ai';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { ConversationMemory } from '@/lib/conversationMemory';
 import { AIModelRouter } from '@/lib/aiModelRouter';
@@ -51,10 +52,30 @@ const MODEL_DISPLAY_NAMES: Record<AIMode, string> = {
 };
 
 const COACHING_MODES = {
-  supportive: { icon: Heart, label: 'Supportive', color: 'text-green-600' },
-  'reality-check': { icon: AlertTriangle, label: 'No BS', color: 'text-orange-600' },
-  educational: { icon: BookOpen, label: 'Educational', color: 'text-blue-600' },
-  analytical: { icon: BarChart3, label: 'Analytical', color: 'text-purple-600' }
+  supportive: { 
+    icon: Heart, 
+    label: 'Supportive', 
+    color: 'text-green-600',
+    desc: 'Encouraging'
+  },
+  'reality-check': { 
+    icon: AlertTriangle, 
+    label: 'No BS', 
+    color: 'text-orange-600',
+    desc: 'Direct truth'
+  },
+  socratic: { 
+    icon: HelpCircle, 
+    label: 'Socratic', 
+    color: 'text-blue-600',
+    desc: 'Questions'
+  },
+  analytical: { 
+    icon: BarChart3, 
+    label: 'Analytical', 
+    color: 'text-purple-600',
+    desc: 'Data-driven'
+  }
 };
 
 const AI_MODES = {
@@ -72,6 +93,7 @@ export default function AICoachInterface({ userData, tdeeResult }: AICoachInterf
   const [isLoading, setIsLoading] = useState(false);
   const [coachingMode, setCoachingMode] = useState<CoachingPersonality>('supportive');
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<AIModelId>('gemini-2.0-flash-exp');
   const [manualModelOverride, setManualModelOverride] = useState<AIMode | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [isFirstTime, setIsFirstTime] = useState(true);
@@ -110,12 +132,12 @@ export default function AICoachInterface({ userData, tdeeResult }: AICoachInterf
       }
     }, [text, isActive]);
     
-    // Auto-scroll during typing
-    useEffect(() => {
-      if (isActive && messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, [displayedText, isActive]);
+    // Removed auto-scroll during typing - was annoying
+    // useEffect(() => {
+    //   if (isActive && messagesEndRef.current) {
+    //     messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    //   }
+    // }, [displayedText, isActive]);
     
     return (
       <div className="text-sm whitespace-pre-wrap">
@@ -143,20 +165,32 @@ export default function AICoachInterface({ userData, tdeeResult }: AICoachInterf
       generateInitialAnalysis();
     }
   }, []);
+  
+  // Regenerate analysis when coaching mode changes (but only after initial load)
+  useEffect(() => {
+    if (!isFirstTime && tdeeResult && !isLoading) {
+      // Clear existing messages when mode changes
+      setCardMessages([]);
+      setChatMessages([]);
+      // Generate new analysis with the new mode
+      generateInitialAnalysis();
+    }
+  }, [coachingMode]);
 
   // Helper to get current messages based on view mode
   const messages = viewMode === 'cards' ? cardMessages : chatMessages;
   const setMessages = viewMode === 'cards' ? setCardMessages : setChatMessages;
 
-  useEffect(() => {
-    if (viewMode === 'chat') {
-      scrollToBottom();
-    }
-  }, [chatMessages, viewMode]);
+  // Removed auto-scroll in chat mode - was annoying
+  // useEffect(() => {
+  //   if (viewMode === 'chat') {
+  //     scrollToBottom();
+  //   }
+  // }, [chatMessages, viewMode]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // const scrollToBottom = () => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // };
 
   // Smart model selection with fallback
   const getModelWithFallback = (mode: AIMode, isRetry: boolean = false): string => {
@@ -1048,7 +1082,8 @@ User question: ${message}`;
           </div>
         </div>
       ))}
-      <div ref={messagesEndRef} />
+      {/* Removed auto-scroll anchor */}
+      {/* <div ref={messagesEndRef} /> */}
     </div>
   );
 
@@ -1150,8 +1185,8 @@ User question: ${message}`;
           <div className="mb-2 p-2 bg-blue-50 rounded-md border border-blue-100">
             <p className="text-xs text-blue-700">
               <span className="font-semibold">💡 Tip:</span> 
-              <span className="font-medium"> Personality</span> changes HOW I talk to you •
-              <span className="font-medium"> Model</span> changes WHAT I'm best at
+              <span className="font-medium"> Personality</span> = HOW I coach (supportive vs direct) •
+              <span className="font-medium"> Model</span> = My communication style (lists vs stories)
             </p>
           </div>
           
@@ -1177,6 +1212,12 @@ User question: ${message}`;
                   );
                 })}
               </div>
+              <p className="text-[10px] text-gray-500 mt-1">
+                {coachingMode === 'supportive' && 'Encouraging motivation for beginners'}
+                {coachingMode === 'reality-check' && 'Direct truth to cut through myths'}
+                {coachingMode === 'socratic' && 'Questions that make you think & learn'}
+                {coachingMode === 'analytical' && 'Numbers & data-driven optimization'}
+              </p>
             </div>
             
             <div className="flex-1">
@@ -1187,19 +1228,25 @@ User question: ${message}`;
                 className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-md bg-white"
                 title="Choose an AI model based on your needs"
               >
-                <option value="gemini-2.0-flash-exp" title="Best for quick responses and data analysis">
-                  📊 Numbers Expert (Free)
+                <option value="gemini-2.0-flash-exp" title="Best for quick responses and structured output">
+                  📊 Organized & Fast • Gemini 2.0
                 </option>
-                <option value="gpt-oss-120b" title="Comprehensive knowledge and explanations">
-                  📚 Comprehensive (Free)
+                <option value="gpt-oss-120b" title="Conversational and friendly explanations">
+                  💬 Gym Buddy • GPT-OSS 120B
                 </option>
-                <option value="qwen3-235b" title="Complex problem-solving and advanced strategies">
-                  🧠 Deep Thinker (Premium)
+                <option value="qwen3-235b" title="Shows reasoning process step-by-step">
+                  🔬 Method-Based • Qwen3 235B
                 </option>
-                <option value="gpt-4o-mini" title="Well-rounded and reliable for all purposes">
-                  🎯 Balanced (Premium)
+                <option value="gpt-4o-mini" title="Adapts to your communication style">
+                  🎯 Adaptive Pro • GPT-4o Mini
                 </option>
               </select>
+              <p className="text-[10px] text-gray-500 mt-1">
+                {selectedModel === 'gemini-2.0-flash-exp' && 'Lists & bullet points • 2-3 sec response'}
+                {selectedModel === 'gpt-oss-120b' && 'Friendly conversation • 4-5 sec response'}
+                {selectedModel === 'qwen3-235b' && 'Shows thinking process • 5-6 sec response'}
+                {selectedModel === 'gpt-4o-mini' && 'Matches your style • 3-4 sec response'}
+              </p>
             </div>
           </div>
         </div>

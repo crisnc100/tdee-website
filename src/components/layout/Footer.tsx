@@ -16,11 +16,11 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-bold mb-4 flex items-center">
               <Heart className="w-5 h-5 mr-2 text-red-500" />
-              7-Component Formula
+              No BS Approach
             </h3>
             <p className="text-gray-300 leading-relaxed">
-              Our proprietary formula accounts for muscle mass, NEAT, recovery,
-              and factors other calculators miss for maximum accuracy.
+              Straightforward calorie calculations without inflated claims. 
+              Get your daily needs calculated honestly and accurately.
             </p>
           </div>
 
@@ -49,10 +49,19 @@ export default function Footer() {
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
           <p className="text-gray-400">
-            © 2024 CalorieScope. Built with precision, powered by science.
+            Built by Cristian Ortega, CPT | Available for 1-on-1 coaching
           </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Questions or feedback? <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Let us know</span>
+          <p className="text-sm text-gray-500 mt-1">
+            Part of OrtegaFit | Engineering Fitness Solutions
+          </p>
+          <p className="text-xs text-gray-600 mt-2">
+            © 2024 My Calorie Needs. Questions or coaching inquiries? 
+            <a 
+              href="mailto:cristian@ortegafit.com?subject=Inquiry from My Calorie Needs" 
+              className="text-primary-400 hover:text-primary-300 ml-1"
+            >
+              Get in touch
+            </a>
           </p>
         </div>
       </div>

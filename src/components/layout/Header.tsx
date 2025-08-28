@@ -47,10 +47,10 @@ export default function Header({ onSettingsClick }: HeaderProps) {
             </div>
             <div>
               <h1 className="text-lg md:text-2xl font-bold text-gray-900">
-                CalorieScope
+                My Calorie Needs
               </h1>
               <p className="text-xs md:text-sm text-gray-600 hidden sm:block">
-                By Cristian Ortega, CPT
+                by OrtegaFit
               </p>
             </div>
           </motion.div>
@@ -71,11 +71,11 @@ export default function Header({ onSettingsClick }: HeaderProps) {
           <div className="hidden md:flex items-center space-x-6">
             <div className="flex items-center space-x-2 text-gray-600">
               <Target className="w-4 h-4" />
-              <span className="text-sm">Advanced Formula</span>
+              <span className="text-sm">The Better No BS</span>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <TrendingUp className="w-4 h-4" />
-              <span className="text-sm">7-Component Analysis</span>
+              <span className="text-sm">Calorie Calculator</span>
             </div>
             
             {/* Settings Dropdown */}
@@ -167,12 +167,12 @@ export default function Header({ onSettingsClick }: HeaderProps) {
         <div className="md:hidden flex items-center justify-center gap-4 mt-2 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-1 text-gray-600">
             <Target className="w-3 h-3" />
-            <span className="text-xs">Advanced Formula</span>
+            <span className="text-xs">The Better No BS</span>
           </div>
           <div className="w-px h-3 bg-gray-300"></div>
           <div className="flex items-center gap-1 text-gray-600">
             <TrendingUp className="w-3 h-3" />
-            <span className="text-xs">7-Component Analysis</span>
+            <span className="text-xs">Calorie Calculator</span>
           </div>
         </div>
       </div>

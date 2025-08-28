@@ -13,7 +13,7 @@ export default function NotificationTester() {
       icon: <Bell className="w-4 h-4" />,
       title: 'Welcome Test',
       notification: {
-        title: '👋 Welcome to CalorieScope!',
+        title: '👋 Welcome to My Calorie Needs!',
         body: 'Notifications are working! You\'ll receive personalized tips.',
         tag: 'test-welcome'
       }

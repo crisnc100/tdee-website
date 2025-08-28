@@ -84,7 +84,7 @@ export default function SettingsPage({ onBack, initialTab = 'ai' }: SettingsPage
                   <Settings className="w-6 h-6 text-purple-600" />
                   Settings
                 </h1>
-                <p className="text-gray-600">Customize your CalorieScope experience</p>
+                <p className="text-gray-600">Customize your My Calorie Needs experience</p>
               </div>
             </div>
 

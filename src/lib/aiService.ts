@@ -93,14 +93,16 @@ export class AIService {
         response = await this.makeModelRequest(request, routing.selectedModel, startTime);
         this.updateModelHealth(routing.selectedModel, true, Date.now() - startTime);
       } catch (error) {
-        console.error(`[AI Service] Primary model ${routing.selectedModel} failed:`, error);
+        console.log(`[AI Service] Primary model ${routing.selectedModel} unavailable, attempting fallback...`);
         this.updateModelHealth(routing.selectedModel, false);
 
         // Step 4: Fallback if enabled and available
         if (request.enableFallback !== false) {
           const fallbackModels = request.fallbackModels || this.getDefaultFallbackModels(routing.selectedModel);
           response = await this.attemptFallbacks(request, fallbackModels, startTime);
+          console.log(`[AI Service] Successfully used fallback model: ${response.modelUsed}`);
         } else {
+          console.error(`[AI Service] Primary model failed and fallback disabled:`, error);
           throw error;
         }
       }
@@ -411,7 +413,10 @@ export class AIService {
     const allModels = Object.keys(AI_MODELS) as AIModelId[];
     
     return allModels
-      .filter(id => id !== primaryModel)
+      .filter(id => {
+        // Exclude primary model and unavailable models
+        return id !== primaryModel && AI_MODELS[id].isAvailable;
+      })
       .sort((a, b) => AI_MODELS[a].fallbackPriority - AI_MODELS[b].fallbackPriority);
   }
 
@@ -613,7 +618,21 @@ export class AIService {
     code: AIServiceError['code'], 
     modelId?: AIModelId
   ): AIServiceError {
-    const error = new Error(originalError.message || 'AI Service error') as AIServiceError;
+    // Handle different error formats safely
+    let message = 'AI Service error';
+    if (originalError) {
+      if (typeof originalError === 'string') {
+        message = originalError;
+      } else if (originalError.message) {
+        message = originalError.message;
+      } else if (originalError.error) {
+        message = originalError.error;
+      } else if (originalError.toString) {
+        message = originalError.toString();
+      }
+    }
+    
+    const error = new Error(message) as AIServiceError;
     error.code = code;
     error.modelId = modelId;
     error.retryable = ['NETWORK_ERROR', 'MODEL_UNAVAILABLE'].includes(code);

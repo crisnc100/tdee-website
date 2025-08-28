@@ -1,7 +1,7 @@
 {
-  "name": "CalorieScope - Advanced TDEE Calculator",
-  "short_name": "CalorieScope",
-  "description": "Calculate your Total Daily Energy Expenditure with our advanced 7-component formula. Track progress, get meal plans, and AI coaching - all free and private.",
+  "name": "My Calorie Needs - The Better No BS Calorie Calculator",
+  "short_name": "My Calorie Needs",
+  "description": "Calculate your daily calorie needs with our straightforward, no-nonsense approach. Track progress, get meal plans, and AI coaching - all free and private.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFF7ED",
@@ -64,7 +64,7 @@
       "src": "/screenshots/home.png",
       "type": "image/png",
       "sizes": "1080x1920",
-      "label": "CalorieScope Home Screen"
+      "label": "My Calorie Needs Home Screen"
     },
     {
       "src": "/screenshots/calculator.png",

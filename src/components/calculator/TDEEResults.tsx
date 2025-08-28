@@ -168,6 +168,24 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
           can be 300-500 calories more accurate than generic formulas.
         </p>
       </motion.div>
+
+      {/* Subtle Coaching Note */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7 }}
+        className="text-center"
+      >
+        <p className="text-xs text-gray-500">
+          Questions about implementing these numbers? 
+          <a 
+            href="mailto:cristian@ortegafit.com?subject=Coaching Inquiry - My Calorie Needs Results" 
+            className="text-primary-600 hover:text-primary-700 ml-1 font-medium"
+          >
+            I offer personalized guidance
+          </a>
+        </p>
+      </motion.div>
     </div>
   );
 }

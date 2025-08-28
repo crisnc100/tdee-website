@@ -22,7 +22,7 @@ import { aiService } from '@/lib/aiService';
 export type CoachingMode = 
   | 'supportive'      // Encouraging, motivational approach
   | 'reality-check'   // Direct, honest, myth-busting approach  
-  | 'educational'     // Detailed explanations with scientific backing
+  | 'socratic'        // Questions-based learning, makes users think
   | 'analytical';     // Data-driven, structured analysis
 
 /**
@@ -86,14 +86,14 @@ COACHING STYLE:
 - Focus on what actually works, not what sounds good
 - Emphasize consistency over perfection`,
 
-  educational: `You are a science-based fitness educator who excels at explaining complex concepts clearly. Your approach combines academic rigor with practical application.
+  socratic: `You are a Socratic fitness coach who guides users to insights through thoughtful questions. You help them discover answers themselves while providing objective truth.
 
 COACHING STYLE:
-- Explain the 'why' behind every recommendation
-- Use analogies to make concepts accessible
-- Reference relevant studies when appropriate
-- Build understanding progressively
-- Connect theory to practical implementation`,
+- Start with thought-provoking questions about their habits/beliefs
+- Let them reflect and respond (or say "I don't know")
+- Then provide the objective, evidence-based answer
+- Ask follow-up questions to deepen understanding
+- Example: "What do you think happens when you skip protein after workouts? [Wait for response] Here's what actually happens..."`,
 
   analytical: `You are a data-driven fitness expert who excels at analyzing numbers and providing quantified insights.
 
@@ -111,78 +111,82 @@ COACHING STYLE:
  */
 const MODEL_STRENGTHS = {
   'gpt-4o-mini': {
-    name: 'Balanced Assistant',
-    userFriendlyName: '🎯 Balanced & Reliable',
-    description: 'Well-rounded AI that excels at clear communication and practical advice',
+    name: 'Professional Coach',
+    userFriendlyName: '🎯 Adaptive Professional',
+    description: 'Most human-like coach that adapts to your communication style',
+    articulation: 'Balanced and natural - matches your energy and tone',
     strengths: [
-      'Clear, structured responses',
-      'Great at motivation and encouragement',
-      'Reliable for general fitness guidance',
-      'Good balance of detail and simplicity'
+      'Best at understanding context and nuance',
+      'Adapts communication to match you',
+      'Professional yet personable',
+      'Excellent for sensitive topics'
     ],
-    bestFor: ['beginners', 'general-guidance', 'motivation'],
+    bestFor: ['personalized-coaching', 'long-term-planning', 'complex-situations'],
     personalityBoost: {
-      supportive: 'Adds extra warmth and encouragement to responses',
-      'reality-check': 'Maintains directness while being constructive',
-      educational: 'Explains concepts in very accessible ways',
-      analytical: 'Provides clear, organized data analysis'
+      supportive: 'Exceptionally empathetic and encouraging',
+      'reality-check': 'Direct but never harsh, always constructive',
+      socratic: 'Asks deeply insightful questions that really make you think',
+      analytical: 'Provides comprehensive analysis with clear insights'
     }
   },
 
   'gpt-oss-120b': {
-    name: 'Open Knowledge Base',
-    userFriendlyName: '📚 Comprehensive & Free',
-    description: 'Large open-source model with extensive fitness knowledge',
+    name: 'Friendly Expert',
+    userFriendlyName: '💬 Gym Buddy (Free)',
+    description: 'Explains things like a knowledgeable friend at the gym',
+    articulation: 'Conversational and flowing - like talking to an experienced workout partner',
     strengths: [
-      'Broad knowledge base',
-      'Good at comprehensive explanations',
-      'Free to use with no limits',
-      'Consistent and reliable'
+      'Most relatable and friendly tone',
+      'Great at explaining through stories/examples',
+      'Free with consistent quality',
+      'Feels like actual conversation'
     ],
-    bestFor: ['detailed-explanations', 'cost-conscious-users', 'comprehensive-advice'],
+    bestFor: ['beginners', 'general-questions', 'friendly-advice'],
     personalityBoost: {
-      supportive: 'Provides thorough encouragement with context',
-      'reality-check': 'Delivers comprehensive reality assessments',
-      educational: 'Offers detailed educational content',
-      analytical: 'Gives thorough data breakdowns'
+      supportive: 'Like a supportive gym buddy cheering you on',
+      'reality-check': 'Straight talk from someone who cares',
+      socratic: 'Asks questions like a curious friend helping you figure things out',
+      analytical: 'Breaks down numbers in relatable terms'
     }
   },
 
   'qwen3-235b': {
-    name: 'Advanced Reasoning',
-    userFriendlyName: '🧠 Deep Thinker',
-    description: 'Powerful model that excels at complex reasoning and problem-solving',
+    name: 'Sports Scientist',
+    userFriendlyName: '🔬 Method-Based (Premium)',
+    description: 'Shows its thinking process step-by-step like a sports scientist',
+    articulation: 'Methodical reasoning - "First, let\'s consider... Then we can see..."',
     strengths: [
-      'Exceptional at complex problem analysis',
-      'Great for troubleshooting plateaus',
-      'Considers multiple factors simultaneously',
-      'Excellent logical reasoning'
+      'Shows you HOW it reaches conclusions',
+      'Best for troubleshooting plateaus',
+      'Excellent at "why isn\'t this working?" questions',
+      'Breaks down complex problems systematically'
     ],
-    bestFor: ['complex-problems', 'plateau-breaking', 'advanced-users'],
+    bestFor: ['problem-solving', 'plateau-breaking', 'understanding-why'],
     personalityBoost: {
-      supportive: 'Uses reasoning to validate and encourage progress',
-      'reality-check': 'Provides logical, evidence-based reality checks',
-      educational: 'Excels at teaching through logical progression',
-      analytical: 'Performs sophisticated multi-factor analysis'
+      supportive: 'Validates your efforts through logical analysis',
+      'reality-check': 'Uses step-by-step logic to debunk myths',
+      socratic: 'Guides you through reasoning chains with questions',
+      analytical: 'Shows complete analytical thought process'
     }
   },
 
   'gemini-2.0-flash-exp': {
-    name: 'Data Specialist',
-    userFriendlyName: '📊 Numbers Expert',
-    description: 'Google\'s model optimized for data analysis and quantitative insights',
+    name: 'Structured Trainer',
+    userFriendlyName: '📋 Organized & Fast (Free)',
+    description: 'Like a trainer with a clipboard - organized, structured, quick',
+    articulation: 'Bullet points and lists - "Here are 3 key points..."',
     strengths: [
-      'Exceptional with numbers and calculations',
-      'Great at progress tracking analysis',
-      'Excellent data visualization descriptions',
-      'Strong predictive modeling'
+      'Fastest responses (2-3 seconds)',
+      'Very organized and easy to scan',
+      'Great for quick questions',
+      'Excellent at creating structured plans'
     ],
-    bestFor: ['data-driven-users', 'progress-tracking', 'optimization'],
+    bestFor: ['quick-answers', 'meal-plans', 'structured-guidance'],
     personalityBoost: {
-      supportive: 'Uses data to show encouraging progress trends',
-      'reality-check': 'Lets numbers reveal the truth objectively',
-      educational: 'Teaches through data examples and patterns',
-      analytical: 'Provides advanced statistical analysis and projections'
+      supportive: 'Organized encouragement with clear action items',
+      'reality-check': 'Bullet-pointed reality in digestible chunks',
+      socratic: 'Asks structured questions in logical sequence',
+      analytical: 'Presents data in clean, organized formats'
     }
   }
 } as const;
@@ -205,12 +209,12 @@ export const PERSONALITY_INFO = {
     tone: 'Straightforward, factual, myth-busting',
     bestFor: 'Experienced users who want the truth'
   },
-  educational: {
-    name: '🎓 Educational Expert',
-    shortName: 'Teacher',
-    description: 'Explains the science behind recommendations',
-    tone: 'Informative, thorough, teaching-focused',
-    bestFor: 'Those who want to understand the "why"'
+  socratic: {
+    name: '🤔 Socratic Coach',
+    shortName: 'Thinker',
+    description: 'Guides you to answers through thoughtful questions',
+    tone: 'Curious, thought-provoking, discovery-focused',
+    bestFor: 'Those who learn best by thinking it through'
   },
   analytical: {
     name: '📊 Data Analyst',
@@ -298,6 +302,11 @@ export class AdvancedAICoachingService {
     try {
       const response = await aiService.request(aiRequest);
       
+      // Log if fallback was used
+      if (response.usedFallback) {
+        console.log(`[AdvancedAICoaching] Used fallback model: ${response.modelUsed}`);
+      }
+      
       // Process response and add coaching-specific metadata
       return this.enhanceCoachingResponse(response, request);
     } catch (error) {
@@ -319,18 +328,18 @@ export class AdvancedAICoachingService {
   private selectOptimalModelForMode(mode: CoachingMode): AIModelId {
     switch (mode) {
       case 'reality-check':
-        // GPT-4o-mini excels at balanced directness
+        // GPT-OSS for friendly but direct truth
+        return 'gpt-oss-120b';
+      case 'socratic':
+        // GPT-4o-mini best at nuanced questioning
         return 'gpt-4o-mini';
-      case 'educational':
-        // Qwen2.5 is great for structured explanations
-        return 'qwen3-235b';
       case 'analytical':
-        // Gemini 2.0 Flash excels at data analysis
+        // Gemini for fast, structured data
         return 'gemini-2.0-flash-exp';
       case 'supportive':
       default:
-        // GPT-4o-mini for balanced supportive coaching
-        return 'gpt-4o-mini';
+        // GPT-OSS for friendly encouragement
+        return 'gpt-oss-120b';
     }
   }
 
@@ -459,12 +468,18 @@ CALCULATED RESULTS:
 4. Give them realistic timelines for their goals
 5. End with tough-love motivation about what actually works`,
 
-      educational: `TASK: Provide 3-4 educational insights that:
-1. Explain the science behind their TDEE calculation
-2. Teach them about optimal protein needs (0.75g/lb for muscle synthesis)
-3. Explain how their activity level affects their metabolism
-4. Provide actionable knowledge they can apply immediately
-5. Include one advanced tip for optimization`,
+      socratic: `TASK: Guide the user to insights through 2-3 thoughtful question-answer sequences:
+1. Ask a thought-provoking question about their habits or beliefs
+2. Give them space to think (say "Take a moment to consider...")
+3. Then provide the evidence-based answer with explanation
+4. Ask a follow-up question that builds on the insight
+5. End by connecting their specific data to the lessons learned
+
+Example format:
+"What do you think happens to your metabolism when you skip meals? 
+[Take a moment to consider...]
+Here's what actually happens: [evidence-based explanation]
+Now, looking at your TDEE of X calories, how might this affect your goals?"`,
 
       analytical: `TASK: Provide 3-4 data-driven analyses that:
 1. Break down their calorie allocation by component
@@ -483,7 +498,7 @@ CALCULATED RESULTS:
       const modeContext = {
         supportive: 'Provide a helpful, encouraging response',
         'reality-check': 'Give an honest, evidence-based response', 
-        educational: 'Provide an educational, detailed response',
+        socratic: 'Ask thoughtful questions, then provide evidence-based answers',
         analytical: 'Give a data-driven, analytical response'
       };
       
@@ -636,6 +651,12 @@ Provide a helpful, specific response to this question based on their TDEE data a
         'Understand macro timing and its effects',
         'Explore advanced nutrition strategies',
         'Get detailed exercise physiology explanations'
+      ],
+      socratic: [
+        'What do you think is your biggest challenge?',
+        'How do your habits align with your goals?',
+        'What would success look like to you?',
+        'Why do you think your current approach isn\'t working?'
       ],
       analytical: [
         'Analyze different macro split scenarios',

@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate coaching mode
-    const validModes: CoachingMode[] = ['supportive', 'reality-check', 'educational', 'analytical'];
+    const validModes: CoachingMode[] = ['supportive', 'reality-check', 'socratic', 'analytical'];
     if (!validModes.includes(selectedMode)) {
       return NextResponse.json(
-        { error: 'Invalid coaching mode. Must be one of: supportive, reality-check, educational, analytical' },
+        { error: 'Invalid coaching mode. Must be one of: supportive, reality-check, socratic, analytical' },
         { status: 400 }
       );
     }
@@ -58,7 +58,8 @@ export async function POST(request: NextRequest) {
         userGoals: userData?.goals ? [userData.goals] : ['Fitness improvement'],
         successRate: 0.8, // Default success rate
         preferredTone: selectedMode === 'reality-check' ? 'direct' : 
-                      selectedMode === 'educational' ? 'scientific' : 'gentle',
+                      selectedMode === 'socratic' ? 'questioning' : 
+                      selectedMode === 'analytical' ? 'scientific' : 'gentle',
         strugglingAreas: [],
         ...context // Allow override if provided
       };
@@ -178,11 +179,12 @@ export async function GET() {
           warning: 'Provides direct, potentially challenging feedback'
         },
         {
-          id: 'educational',
-          name: 'Educational Expert', 
-          description: 'Detailed explanations with scientific backing',
-          recommendedFor: ['science-interested', 'learning-focused', 'detail-oriented'],
-          recommendedModel: 'gpt-4o-mini'
+          id: 'socratic',
+          name: 'Socratic Coach', 
+          description: 'Guides you to insights through thoughtful questions',
+          recommendedFor: ['self-discovery', 'deep-learning', 'critical-thinking'],
+          recommendedModel: 'gpt-4o-mini',
+          note: 'Asks questions to help you think, then provides evidence-based answers'
         },
         {
           id: 'analytical',
@@ -194,16 +196,20 @@ export async function GET() {
       ],
       modelOptimizations: {
         'gpt-4o-mini': {
-          strengths: ['balanced responses', 'instruction following', 'motivational tone'],
+          strengths: ['adaptive communication', 'nuanced questioning', 'professional tone'],
+          optimalFor: ['socratic', 'supportive']
+        },
+        'gpt-oss-120b': {
+          strengths: ['friendly conversation', 'relatable explanations', 'consistent quality'],
           optimalFor: ['supportive', 'reality-check']
         },
-        'qwen2.5-7b-instruct': {
-          strengths: ['structured explanations', 'systematic approach', 'educational content'],
-          optimalFor: ['educational']
+        'qwen3-235b': {
+          strengths: ['step-by-step reasoning', 'problem-solving', 'detailed analysis'],
+          optimalFor: ['analytical', 'socratic']
         },
         'gemini-2.0-flash-exp': {
-          strengths: ['analytical insights', 'data integration', 'contextual reasoning'],
-          optimalFor: ['analytical']
+          strengths: ['structured output', 'fast responses', 'organized data'],
+          optimalFor: ['analytical', 'reality-check']
         }
       },
       version: '3.0',

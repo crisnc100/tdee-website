@@ -32,14 +32,18 @@ export default function InfoSidebar() {
       >
         <div className="flex items-center gap-3 mb-4">
           <Target className="w-5 h-5 text-primary-600" />
-          <h3 className="font-semibold text-gray-900">About CalorieScope</h3>
+          <h3 className="font-semibold text-gray-900">About My Calorie Needs</h3>
         </div>
         <p className="text-sm text-gray-600 mb-3">
-          Created by Cristian Ortega, a Certified Personal Trainer with expertise in 
-          metabolic calculations and body composition analysis.
+          I created this calculator because understanding your calorie needs is fundamental to achieving any fitness goal. 
+          Most online calculators are inaccurate, with studies showing error margins of 20-40%. These false numbers can derail your progress.
+        </p>
+        <p className="text-sm text-gray-600 mb-3">
+          While no calculator is perfect, I've minimized the error margin by accounting for factors others ignore. 
+          This helps anyone, anywhere get a more accurate foundation for their fitness journey.
         </p>
         <div className="text-xs bg-primary-50 text-primary-800 px-3 py-2 rounded-lg">
-          <strong>Credentials:</strong> NASM-CPT, Precision Nutrition Level 1
+          <strong>Created by:</strong> Cristian Ortega, CPT (NASM-CPT, Precision Nutrition Level 1)
         </div>
       </motion.div>
 
