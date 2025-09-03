@@ -278,16 +278,57 @@ export class AIService {
 
     console.log(`[AI Service] Making request to ${modelId} via OpenRouter`);
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://tdee-calculator.com',
-        'X-Title': process.env.OPENROUTER_APP_NAME || 'Multi-AI TDEE Calculator',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    let response;
+    try {
+      // Use native fetch with proper timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      console.log(`[AI Service] Request body:`, JSON.stringify(requestBody, null, 2));
+      console.log(`[AI Service] Using API key: ${apiKey ? 'Present' : 'Missing'}`);
+      
+      response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://tdee-calculator.com',
+          'X-Title': process.env.OPENROUTER_APP_NAME || 'Multi-AI TDEE Calculator',
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+    } catch (fetchError: any) {
+      console.error(`[AI Service] Network error for ${modelId}:`, fetchError);
+      
+      // Check if it's a DNS resolution issue
+      if (fetchError.cause?.code === 'ENOTFOUND' || fetchError.code === 'ENOTFOUND') {
+        console.error('[AI Service] DNS resolution failed for openrouter.ai');
+        // Try with explicit DNS resolution or IP address as fallback
+        throw this.createAIServiceError(
+          new Error(`Network error: Unable to resolve OpenRouter API. ${fetchError.message}`),
+          'NETWORK_ERROR',
+          modelId
+        );
+      }
+      
+      // Check if it's a timeout
+      if (fetchError.name === 'AbortError') {
+        throw this.createAIServiceError(
+          new Error(`Request timeout after 30 seconds`),
+          'NETWORK_ERROR',
+          modelId
+        );
+      }
+      
+      throw this.createAIServiceError(
+        fetchError,
+        'NETWORK_ERROR',
+        modelId
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

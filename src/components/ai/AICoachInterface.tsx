@@ -5,7 +5,8 @@ import {
   Send, Zap, Target, Brain, Dumbbell, Apple, Book, Heart, 
   AlertTriangle, BookOpen, BarChart3, Settings, MessageSquare,
   Sparkles, TrendingUp, Clock, Activity, CheckCircle, AlertCircle,
-  ArrowRight, Lightbulb, List, ChevronRight, User, HelpCircle
+  ArrowRight, Lightbulb, List, ChevronRight, User, HelpCircle,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import type { UserData, TDEEResult } from '@/types/calculator';
 import type { AIModelId } from '@/types/ai';
@@ -28,7 +29,7 @@ interface AICoachInterfaceProps {
 }
 
 type AIMode = 'fast' | 'precise' | 'research';
-type CoachingPersonality = 'supportive' | 'reality-check' | 'educational' | 'analytical';
+type CoachingPersonality = 'supportive' | 'reality-check' | 'socratic' | 'analytical';
 type ViewMode = 'cards' | 'chat';
 
 // Tiered model selection: GPT-OSS and free models first
@@ -85,9 +86,11 @@ const AI_MODES = {
 };
 
 export default function AICoachInterface({ userData, tdeeResult }: AICoachInterfaceProps) {
-  // Separate message arrays for card and chat modes
-  const [cardMessages, setCardMessages] = useState<Message[]>([]);
-  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  // Single message array with mode tracking to prevent duplication
+  const [messages, setMessages] = useState<{ cards: Message[], chat: Message[] }>({
+    cards: [],
+    chat: []
+  });
   const [input, setInput] = useState('');
   const [currentMode, setCurrentMode] = useState<AIMode>('fast');
   const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +101,7 @@ export default function AICoachInterface({ userData, tdeeResult }: AICoachInterf
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [isFirstTime, setIsFirstTime] = useState(true);
   const [loadingSuggestion, setLoadingSuggestion] = useState<string | null>(null);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { preferences } = useUserPreferences();
@@ -170,16 +174,24 @@ export default function AICoachInterface({ userData, tdeeResult }: AICoachInterf
   useEffect(() => {
     if (!isFirstTime && tdeeResult && !isLoading) {
       // Clear existing messages when mode changes
-      setCardMessages([]);
-      setChatMessages([]);
+      setMessages(prev => ({
+        ...prev,
+        cards: [],
+        chat: prev.chat // Keep chat history when switching modes
+      }));
       // Generate new analysis with the new mode
       generateInitialAnalysis();
     }
   }, [coachingMode]);
 
-  // Helper to get current messages based on view mode
-  const messages = viewMode === 'cards' ? cardMessages : chatMessages;
-  const setMessages = viewMode === 'cards' ? setCardMessages : setChatMessages;
+  // Helper to get/set current messages based on view mode
+  const currentMessages = viewMode === 'cards' ? messages.cards : messages.chat;
+  const updateMessages = (updater: (prev: Message[]) => Message[]) => {
+    setMessages(prev => ({
+      ...prev,
+      [viewMode]: typeof updater === 'function' ? updater(prev[viewMode]) : updater
+    }));
+  };
 
   // Removed auto-scroll in chat mode - was annoying
   // useEffect(() => {
@@ -271,7 +283,10 @@ export default function AICoachInterface({ userData, tdeeResult }: AICoachInterf
           mode: 'precise'
         };
         
-        setCardMessages([newMessage]);
+        setMessages(prev => ({
+          ...prev,
+          cards: [newMessage]
+        }));
         
         conversationMemory.current.addTurn({
           role: 'assistant',
@@ -296,13 +311,16 @@ export default function AICoachInterface({ userData, tdeeResult }: AICoachInterf
       }
       
       // Show fallback message only if all attempts fail
-      setCardMessages([{
+      setMessages(prev => ({
+        ...prev,
+        cards: [{
         id: Date.now().toString(),
         content: 'Welcome! I\'m ready to help you with personalized coaching based on your TDEE results. Ask me anything about nutrition, training, or reaching your fitness goals!',
         role: 'assistant',
         timestamp: new Date(),
         mode: 'precise'
-      }]);
+      }]
+      }));
     } finally {
       setIsLoading(false);
     }
@@ -321,7 +339,10 @@ export default function AICoachInterface({ userData, tdeeResult }: AICoachInterf
       timestamp: new Date()
     };
     
-    setCardMessages(prev => [...prev, userMessage]);
+    setMessages(prev => ({
+      ...prev,
+      cards: [...prev.cards, userMessage]
+    }));
     
     // Format the suggestion for card-friendly response with unique identifier
     const uniqueTimestamp = `${Date.now()}-${Math.random()}`;
@@ -368,7 +389,10 @@ Keep each point concise (1-2 sentences max). Use specific numbers and data when 
       processing: true
     };
     
-    setCardMessages(prev => [...prev, assistantMessage]);
+    setMessages(prev => ({
+      ...prev,
+      cards: [...prev.cards, assistantMessage]
+    }));
     
     try {
       const selectedModel = getModelWithFallback('precise', false);
@@ -412,50 +436,57 @@ Keep each point concise (1-2 sentences max). Use specific numbers and data when 
         });
         const fallbackData = await fallbackResponse.json();
         
-        setCardMessages(prev =>
-          prev.map(msg =>
+        setMessages(prev => ({
+          ...prev,
+          cards: prev.cards.map(msg =>
             msg.id === messageId
               ? { ...msg, content: fallbackData.content || 'I can help with that. Let me provide you with evidence-based guidance.', processing: false }
               : msg
           )
-        );
+        }));
       } else if (response.ok && data.content) {
         // Update the specific message by ID
-        setCardMessages(prev => 
-          prev.map(msg =>
+        setMessages(prev => ({
+          ...prev,
+          cards: prev.cards.map(msg =>
             msg.id === messageId
               ? { ...msg, content: data.content, processing: false }
               : msg
           )
-        );
+        }));
       } else {
         console.error('No content in response or response not ok:', response.status, data);
         // Check if it's an error response
         if (data.error) {
           console.error('API error:', data.error, data.details);
           // Remove the processing message and show error
-          setCardMessages(prev => prev.filter(msg => msg.id !== messageId));
+          setMessages(prev => ({
+            ...prev,
+            cards: prev.cards.filter(msg => msg.id !== messageId)
+          }));
           // Optionally show an error toast/notification
           alert(`Error: ${data.error}. Please try again.`);
         } else {
-          setCardMessages(prev =>
-            prev.map(msg =>
+          setMessages(prev => ({
+            ...prev,
+            cards: prev.cards.map(msg =>
               msg.id === messageId
                 ? { ...msg, content: 'Let me help you with that question...', processing: false }
                 : msg
             )
-          );
+          }));
         }
       }
     } catch (error) {
       console.error('Card message error:', error);
-      setCardMessages(prev =>
-        prev.map(msg =>
+      setMessages(prev => ({
+        ...prev,
+        cards: prev.cards.map(msg =>
           msg.id === messageId
             ? { ...msg, content: 'I can help with that. Let me provide you with evidence-based guidance.', processing: false }
             : msg
         )
-      );
+      }));
     } finally {
       setIsLoading(false);
       setLoadingSuggestion(null); // Clear loading suggestion state
@@ -473,7 +504,7 @@ Keep each point concise (1-2 sentences max). Use specific numbers and data when 
         role: 'user',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, userMessage]);
+      updateMessages(prev => [...prev, userMessage]);
       setInput('');
     }
 
@@ -495,12 +526,12 @@ Keep each point concise (1-2 sentences max). Use specific numbers and data when 
 
     // Only add assistant message on first attempt
     if (!retryWithFallback) {
-      setMessages(prev => [...prev, assistantMessage]);
+      updateMessages(prev => [...prev, assistantMessage]);
     }
 
     try {
       // Prepare conversation history for context
-      const formattedHistory = messages.slice(-5).map(msg => ({
+      const formattedHistory = currentMessages.slice(-5).map(msg => ({
         role: msg.role,
         content: msg.content // Don't truncate messages
       }));
@@ -564,7 +595,7 @@ User question: ${message}`;
         throw new Error('No content received from API');
       }
       
-      setMessages(prev => 
+      updateMessages(prev => 
         prev.map(msg => 
           msg.id === assistantMessage.id 
             ? { ...msg, content: data.content, processing: false }
@@ -586,7 +617,7 @@ User question: ${message}`;
         return handleSendMessage(message, true, isCardMode);
       }
       
-      setMessages(prev => 
+      updateMessages(prev => 
         prev.map(msg => 
           msg.id === assistantMessage.id 
             ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', processing: false }
@@ -860,11 +891,11 @@ User question: ${message}`;
 
   const CardView = () => {
     // Get all assistant messages for display
-    const assistantMessages = cardMessages.filter(msg => msg.role === 'assistant');
+    const assistantMessages = messages.cards.filter(msg => msg.role === 'assistant');
     const latestMessage = assistantMessages[assistantMessages.length - 1];
     
     // Check if any message is processing (loading state)
-    const isProcessing = cardMessages.some(msg => msg.processing);
+    const isProcessing = messages.cards.some(msg => msg.processing);
     
     // Show loading state for processing messages
     if (isProcessing) {
@@ -912,8 +943,8 @@ User question: ${message}`;
     const cards = parseContentToCards(latestMessage.content);
     
     return (
-      <div className="space-y-6 p-6 max-w-5xl mx-auto">
-        <div className="grid gap-5">
+      <div className="space-y-6 p-4 sm:p-6 max-w-6xl mx-auto">
+        <div className="grid gap-4 sm:gap-5 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {cards.map((card, index) => {
             const Icon = card.icon;
             
@@ -972,7 +1003,7 @@ User question: ${message}`;
                 } else if (/^\d+\./.test(line.trim())) {
                   return (
                     <li key={idx} className="flex items-start gap-2 mb-2">
-                      <span className="font-medium text-gray-500 min-w-[20px]">{line.match(/^\d+/)[0]}.</span>
+                      <span className="font-medium text-gray-500 min-w-[20px]">{line.match(/^\d+/)?.[0] || '1'}.</span>
                       <span className="flex-1 text-gray-700">{line.replace(/^\d+\.\s*/, '')}</span>
                     </li>
                   );
@@ -980,7 +1011,7 @@ User question: ${message}`;
                   // Handle bold labels with colons
                   const parts = line.split(':');
                   const label = parts[0].replace(/\*\*/g, '');
-                  const value = parts.slice(1).join(':');
+                  const value = parts.slice(1).join(':') || '';
                   return (
                     <div key={idx} className="mb-3">
                       <span className="font-semibold text-gray-800">{label}:</span>
@@ -997,7 +1028,9 @@ User question: ${message}`;
             return (
               <div
                 key={index}
-                className={`relative overflow-hidden rounded-xl border-2 ${colorMap[card.type as keyof typeof colorMap]} transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5`}
+                className={`relative rounded-xl border-2 ${colorMap[card.type as keyof typeof colorMap]} transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 ${
+                  expandedCards.has(index.toString()) ? 'overflow-visible' : 'overflow-hidden'
+                }`}
               >
                 {/* Card Header */}
                 <div className="flex items-center gap-3 p-5 pb-0">
@@ -1007,16 +1040,20 @@ User question: ${message}`;
                   <h3 className="font-bold text-lg text-gray-900 flex-1">{card.title}</h3>
                 </div>
                 
-                {/* Card Content */}
-                <div className="px-5 py-4">
+                {/* Card Content - Fixed overflow with expand/collapse */}
+                <div className={`px-5 py-4 transition-all duration-300 overflow-hidden ${
+                  expandedCards.has(index.toString()) 
+                    ? 'max-h-none' 
+                    : 'max-h-32'
+                }`}>
                   {card.isPlan ? (
                     <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-gray-200/50">
-                      <pre className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                      <pre className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap font-sans break-words">
                         {formatContent(card.content)}
                       </pre>
                     </div>
                   ) : (
-                    <div className="text-base leading-relaxed">
+                    <div className="text-base leading-relaxed break-words">
                       {typeof formatContent(card.content) === 'object' ? (
                         <ul className="space-y-1 list-none">
                           {formatContent(card.content)}
@@ -1024,6 +1061,37 @@ User question: ${message}`;
                       ) : (
                         formatContent(card.content)
                       )}
+                    </div>
+                  )}
+                  
+                  {/* Show More/Less button for long content */}
+                  {(card.content.length > 300 || card.content.split('\n').length > 4) && (
+                    <div className="mt-3 pt-2 border-t border-gray-100/50">
+                      <button
+                        onClick={() => {
+                          const newExpanded = new Set(expandedCards);
+                          const indexStr = index.toString();
+                          if (expandedCards.has(indexStr)) {
+                            newExpanded.delete(indexStr);
+                          } else {
+                            newExpanded.add(indexStr);
+                          }
+                          setExpandedCards(newExpanded);
+                        }}
+                        className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-800 transition-colors"
+                      >
+                        {expandedCards.has(index.toString()) ? (
+                          <>
+                            <span>Show less</span>
+                            <ChevronUp className="w-3 h-3" />
+                          </>
+                        ) : (
+                          <>
+                            <span>Show more</span>
+                            <ChevronDown className="w-3 h-3" />
+                          </>
+                        )}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1048,7 +1116,7 @@ User question: ${message}`;
 
   const ChatView = () => (
     <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-      {chatMessages.map((message) => (
+      {messages.chat.map((message) => (
         <div
           key={message.id}
           className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -1075,7 +1143,7 @@ User question: ${message}`;
               ) : (
                 <TypingAnimation 
                   text={message.content} 
-                  isActive={message.role === 'assistant' && message.id === chatMessages[chatMessages.length - 1]?.id}
+                  isActive={message.role === 'assistant' && message.id === messages.chat[messages.chat.length - 1]?.id}
                 />
               )}
             </div>
@@ -1105,11 +1173,11 @@ User question: ${message}`;
   };
 
   return (
-    <div className="flex flex-col h-[650px] bg-white rounded-lg shadow-sm border border-gray-100">
+    <div className="flex flex-col h-[650px] sm:h-[700px] bg-white rounded-lg shadow-sm border border-gray-100">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <div className="text-sm font-medium text-gray-700">
               📊 TDEE: {tdeeResult.tdee} cal
             </div>
@@ -1254,7 +1322,7 @@ User question: ${message}`;
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden flex flex-col">
-        {isLoading && cardMessages.length === 0 && chatMessages.length === 0 ? (
+        {isLoading && messages.cards.length === 0 && messages.chat.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-4">
               <div className="relative mx-auto w-20 h-20">
@@ -1273,7 +1341,7 @@ User question: ${message}`;
               </div>
             </div>
           </div>
-        ) : (viewMode === 'cards' ? cardMessages.length === 0 : chatMessages.length === 0) ? (
+        ) : (messages.cards.length === 0 && messages.chat.length === 0) ? (
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center space-y-4">
               <Brain className="w-16 h-16 text-gray-300 mx-auto" />
@@ -1290,8 +1358,8 @@ User question: ${message}`;
       </div>
 
       {/* Input Area - Always at bottom */}
-      <div className="border-t border-gray-100 p-4 bg-gray-50">
-        <div className="flex gap-2">
+      <div className="border-t border-gray-100 p-3 sm:p-4 bg-gray-50">
+        <div className="flex gap-2 flex-col sm:flex-row">
           <input
             type="text"
             value={input}
@@ -1304,7 +1372,7 @@ User question: ${message}`;
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 sm:w-auto w-full"
           >
             <Send className="w-4 h-4" />
             <span className="text-sm font-medium">Send</span>

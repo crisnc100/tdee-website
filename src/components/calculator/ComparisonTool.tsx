@@ -15,7 +15,7 @@ export default function ComparisonTool({ userData, ourResult }: ComparisonToolPr
 
   const calculators = [
     {
-      name: 'My Calorie Needs',
+      name: 'MyCalorieLog',
       subtitle: '(7-Component Formula)',
       value: comparison.ourCalculator,
       difference: 0,

@@ -118,7 +118,7 @@ export default function SimplePWA() {
             >
               <div className="max-w-6xl mx-auto flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="font-semibold">📲 Install My Calorie Needs</p>
+                  <p className="font-semibold">📲 Install MyCalorieLog</p>
                   <p className="text-sm opacity-90">
                     Tap the share button below ↓ then "Add to Home Screen"
                   </p>
@@ -163,17 +163,17 @@ export default function SimplePWA() {
             <motion.div
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              className="bg-white rounded-2xl p-6 max-w-md w-full"
+              className="card rounded-2xl p-6 max-w-md w-full"
             >
               <div className="text-center">
                 <Smartphone className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold mb-2">Install My Calorie Needs</h3>
+                <h3 className="text-2xl font-bold mb-2">Install MyCalorieLog</h3>
                 <p className="text-gray-600 mb-6">
                   Add to your home screen for quick access and offline use!
                 </p>
                 <button
                   onClick={handleInstall}
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-semibold mb-3"
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-semibold mb-3 cursor-pointer"
                 >
                   Install Now
                 </button>

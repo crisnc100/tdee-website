@@ -58,6 +58,7 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API requests - always fetch from network
   if (event.request.url.includes('/api/')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
@@ -84,16 +85,28 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
+            })
+            .catch(() => {
+              // Ignore cache errors
             });
 
           return response;
+        })
+        .catch(() => {
+          // Network error - try to serve from cache or offline page
+          return caches.match(event.request)
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              // If it's a navigation request and no cache, show offline page
+              if (event.request.destination === 'document') {
+                return caches.match('/offline.html');
+              }
+              // For other requests, just fail
+              return new Response('Network error', { status: 503 });
+            });
         });
-      })
-      .catch(() => {
-        // Offline fallback
-        if (event.request.destination === 'document') {
-          return caches.match('/offline.html');
-        }
       })
   );
 });

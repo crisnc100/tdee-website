@@ -131,7 +131,7 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
         <div className="flex items-center justify-center gap-3 mb-4">
           <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <ChefHat className="w-5 h-5" />
-            AI Meal Planner
+            Meal Planner
           </h3>
           
           {/* Cost Transparency & Performance Indicators */}
@@ -181,7 +181,7 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
         </div>
         
         <p className="text-sm text-gray-600">
-          AI-powered meal planning with cost-optimized recommendations
+          Meal planning with custom recipes and recommendations!
         </p>
         
         {/* Cost Savings Banner */}

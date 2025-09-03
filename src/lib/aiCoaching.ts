@@ -13,8 +13,9 @@
  * - Safety guardrails for health advice
  */
 
-import { AIModelId, AIRequest, AIResponse, UserAIPreferences } from '@/types/ai';
+import { AIModelId, AIRequest, AIResponse, UserAIPreferences, QueryAnalysis } from '@/types/ai';
 import { aiService } from '@/lib/aiService';
+import { contextAnalyzer } from '@/lib/contextAnalyzer';
 
 /**
  * Coaching modes with distinct approaches
@@ -264,24 +265,32 @@ export class AdvancedAICoachingService {
   async getCoaching(request: CoachingRequest): Promise<CoachingResponse> {
     const { mode, userData, tdeeResult, context, preferredModel, userPreferences } = request;
 
+    // Analyze the query to determine context relevance with proper null handling
+    const queryAnalysis = request.specificQuestion 
+      ? contextAnalyzer.analyzeQuery(request.specificQuestion)
+      : undefined;
+
     console.log('[AICoaching] Starting coaching request:', {
       mode,
       hasSpecificQuestion: !!request.specificQuestion,
       specificQuestion: request.specificQuestion?.substring(0, 100),
+      tdeeRelevance: queryAnalysis?.tdeeRelevanceScore,
+      category: queryAnalysis?.category,
       preferredModel
     });
 
     // Select optimal model for the coaching mode if none specified
     const selectedModel = preferredModel || this.selectOptimalModelForMode(mode);
 
-    // Build model-specific prompt
+    // Build model-specific prompt with context awareness
     const prompt = this.buildModelSpecificPrompt(
       selectedModel, 
       mode, 
       userData, 
       tdeeResult, 
       context,
-      request.specificQuestion
+      request.specificQuestion,
+      queryAnalysis
     );
 
     console.log('[AICoaching] Built prompt:', prompt.substring(0, 200));
@@ -296,7 +305,8 @@ export class AdvancedAICoachingService {
       preferredModel: selectedModel,
       userPreferences,
       enableFallback: true,
-      disableCache: true // Always disable cache for coaching to ensure fresh responses
+      disableCache: true, // Always disable cache for coaching to ensure fresh responses
+      queryAnalysis: queryAnalysis
     };
 
     try {
@@ -352,7 +362,8 @@ export class AdvancedAICoachingService {
     userData: any,
     tdeeResult: any,
     context?: CoachingContext,
-    specificQuestion?: string
+    specificQuestion?: string,
+    queryAnalysis?: QueryAnalysis
   ): string {
     // Get personality-based coaching style
     const personalityPrompt = COACHING_PERSONALITIES[mode];
@@ -361,8 +372,9 @@ export class AdvancedAICoachingService {
     const modelStrength = MODEL_STRENGTHS[modelId];
     const strengthBoost = modelStrength?.personalityBoost?.[mode] || '';
 
-    // Build user profile section
-    const userProfile = this.buildUserProfile(userData, tdeeResult);
+    // Build user profile section - include TDEE only if relevant with proper null checking
+    const includeTDEE = queryAnalysis?.requiresTDEE ?? true; // Default to true if no analysis
+    const userProfile = this.buildUserProfile(userData, tdeeResult, includeTDEE);
     
     // Build context section if available
     const contextSection = context ? this.buildContextSection(context) : '';
@@ -371,8 +383,8 @@ export class AdvancedAICoachingService {
     const questionSection = specificQuestion ? 
       `\n\nSPECIFIC QUESTION: ${specificQuestion}\n[Request Time: ${new Date().toISOString()}]` : '';
 
-    // Build mode-specific task instructions (consider specific question)
-    const taskInstructions = this.buildTaskInstructionsWithQuestion(mode, modelId, specificQuestion);
+    // Build mode-specific task instructions (consider specific question and context)
+    const taskInstructions = this.buildTaskInstructionsWithQuestion(mode, modelId, specificQuestion, queryAnalysis);
 
     // Build safety guidelines
     const safetyGuidelines = this.buildSafetyGuidelines();
@@ -395,8 +407,9 @@ Provide your response in the coaching style specified above.`;
 
   /**
    * Build comprehensive user profile for AI context
+   * Now includes TDEE data only when relevant to the query
    */
-  private buildUserProfile(userData: any, tdeeResult: any): string {
+  private buildUserProfile(userData: any, tdeeResult: any, includeTDEE: boolean = true): string {
     const exercises = userData.exercises?.map((ex: any) => 
       `${ex.type} ${ex.intensity} ${ex.minutes}min ${ex.frequency}x/week`
     ).join(', ') || userData.simpleExerciseLevel || 'None specified';
@@ -406,12 +419,16 @@ Provide your response in the coaching style specified above.`;
       ? `${userData.height}cm`
       : `${userData.heightFeet}'${userData.heightInches}"`;
 
-    return `USER PROFILE:
+    let profile = `USER PROFILE:
 - Age: ${userData.age}, Gender: ${userData.gender}
 - Weight: ${userData.weight}${weightUnit}, Height: ${heightDisplay}
 - Job Activity: ${userData.jobActivity} (${userData.steps} daily steps)
 - Body Fat: ${userData.bodyFat || 'Unknown'}%
-- Exercise: ${exercises}
+- Exercise: ${exercises}`;
+
+    // Only include TDEE data if relevant to the query
+    if (includeTDEE && tdeeResult) {
+      profile += `
 
 CALCULATED RESULTS:
 - TDEE: ${tdeeResult.tdee} calories/day
@@ -422,6 +439,9 @@ CALCULATED RESULTS:
   * Daily Steps: ${tdeeResult.components?.neat || 'N/A'} cal
   * Exercise: ${tdeeResult.components?.exercise || 'N/A'} cal
   * Recovery: ${tdeeResult.components?.muscleRecovery || 0} cal`;
+    }
+
+    return profile;
   }
 
   /**
@@ -492,7 +512,7 @@ Now, looking at your TDEE of X calories, how might this affect your goals?"`,
     return baseInstructions[mode];
   }
   
-  private buildTaskInstructionsWithQuestion(mode: CoachingMode, modelId: AIModelId, specificQuestion?: string): string {
+  private buildTaskInstructionsWithQuestion(mode: CoachingMode, modelId: AIModelId, specificQuestion?: string, queryAnalysis?: QueryAnalysis): string {
     // If there's a specific question, prioritize answering it directly
     if (specificQuestion && specificQuestion.toLowerCase().includes('user question:')) {
       const modeContext = {
@@ -502,8 +522,13 @@ Now, looking at your TDEE of X calories, how might this affect your goals?"`,
         analytical: 'Give a data-driven, analytical response'
       };
       
+      // Only mention TDEE if it's relevant to the query with safe access
+      const tdeeContext = (queryAnalysis?.requiresTDEE ?? false)
+        ? 'based on their TDEE data and fitness goals'
+        : 'based on their fitness profile and goals';
+      
       return `
-Provide a helpful, specific response to this question based on their TDEE data and fitness goals.`;
+Provide a helpful, specific response to this question ${tdeeContext}.`;
     }
     
     // Otherwise use the default task instructions
@@ -530,7 +555,7 @@ Provide a helpful, specific response to this question based on their TDEE data a
     const basePrompts = {
       supportive: 'You are an expert fitness coach providing encouraging, evidence-based advice.',
       'reality-check': 'You are a direct fitness expert who provides honest, myth-busting reality checks.',
-      educational: 'You are a fitness educator who explains concepts with scientific backing.',
+      socratic: 'You are a Socratic fitness coach who guides users to insights through thoughtful questions.',
       analytical: 'You are a data-driven fitness analyst who uses numbers to provide insights.'
     };
 
@@ -546,7 +571,7 @@ Provide a helpful, specific response to this question based on their TDEE data a
     const modeTemperatures = {
       'reality-check': 0.6,
       analytical: 0.5,
-      educational: 0.7,
+      socratic: 0.7,
       supportive: 0.8
     };
 
@@ -560,7 +585,7 @@ Provide a helpful, specific response to this question based on their TDEE data a
     // Increased token limits to prevent cut-off responses
     // All modes need sufficient tokens for complete answers
     const modeTokens = {
-      educational: 1500,  // Detailed explanations
+      socratic: 1500,  // Detailed questions and explanations
       analytical: 1400,   // Data analysis and calculations
       supportive: 1200,   // Encouraging comprehensive advice
       'reality-check': 1200  // Thorough reality checks with alternatives
@@ -666,7 +691,7 @@ Provide a helpful, specific response to this question based on their TDEE data a
       ]
     };
 
-    return suggestions[mode].slice(0, 3); // Return top 3 suggestions
+    return (suggestions[mode] || suggestions['supportive']).slice(0, 3); // Return top 3 suggestions
   }
 
   /**
@@ -739,8 +764,8 @@ Provide a helpful, specific response to this question based on their TDEE data a
         fallbackContent = this.getFallbackRealityCheck(userData, tdeeResult);
         coachingType = 'reality-check';
         break;
-      case 'educational':
-        fallbackContent = this.getFallbackEducational(userData, tdeeResult);
+      case 'socratic':
+        fallbackContent = this.getFallbackSocratic(userData, tdeeResult);
         coachingType = 'analysis';
         break;
       case 'analytical':
@@ -790,20 +815,28 @@ Remember: There are no shortcuts, supplements don't replace fundamentals, and co
   /**
    * Fallback educational coaching
    */
-  private getFallbackEducational(userData: any, tdeeResult: any): string {
-    return `📚 **UNDERSTANDING YOUR METABOLISM** 📚
+  private getFallbackSocratic(userData: any, tdeeResult: any): string {
+    const proteinTarget = Math.round(userData.weight * (userData.units === 'metric' ? 1.65 : 0.75));
+    
+    return `🤔 **LET'S THINK THROUGH YOUR APPROACH** 🤔
 
-1. **Your TDEE Breakdown:**
-   - BMR (${tdeeResult.components?.bmr || tdeeResult.bmr} cal): Energy to keep you alive at rest
-   - NEAT (${(tdeeResult.components?.neat || 0) + (tdeeResult.components?.jobActivity || 0)} cal): Daily activities and fidgeting
-   - Exercise (${tdeeResult.components?.exercise || 0} cal): Planned physical activity
-   - TEF (~200 cal): Energy to digest food (10% of intake)
+**Question 1:** What do you think happens when you eat less than your TDEE of ${tdeeResult.tdee} calories?
 
-2. **Protein Synthesis Science:** Your muscles need 0.75g protein per lb bodyweight for optimal muscle protein synthesis - that's about ${Math.round(userData.weight * (userData.units === 'metric' ? 1.65 : 0.75))}g for you.
+*Take a moment to consider...*
 
-3. **Activity Level Impact:** Your ${userData.steps} daily steps contribute significantly to your NEAT. Research shows 8,000+ steps daily correlates with better metabolic health.
+**Answer:** Your body enters a deficit and starts using stored energy (fat and some muscle). The key is finding a sustainable deficit that preserves muscle.
 
-4. **Progressive Adaptation:** Your body adapts to changes in ~2-4 weeks. Expect metabolic adjustments and plan accordingly rather than panic when progress slows.`;
+**Question 2:** Why do you think you need ${proteinTarget}g of protein daily?
+
+*Think about muscle protein synthesis...*
+
+**Answer:** Your muscles constantly break down and rebuild. Without adequate protein (0.75g/lb), you lose muscle mass even if you're losing weight.
+
+**Question 3:** How do you think your ${userData.steps} daily steps compare to dedicated exercise for fat loss?
+
+**Answer:** NEAT (daily activities) often burns more calories than formal exercise! Your steps contribute significantly to your total daily burn.
+
+**Your Turn:** What's one habit you think might be holding you back from your goals?`;
   }
 
   /**

@@ -1,6 +1,6 @@
 {
-  "name": "My Calorie Needs - The Better No BS Calorie Calculator",
-  "short_name": "My Calorie Needs",
+  "name": "MyCalorieLog - The Better No BS Calorie Calculator",
+  "short_name": "MyCalorieLog",
   "description": "Calculate your daily calorie needs with our straightforward, no-nonsense approach. Track progress, get meal plans, and AI coaching - all free and private.",
   "start_url": "/",
   "display": "standalone",
@@ -64,7 +64,7 @@
       "src": "/screenshots/home.png",
       "type": "image/png",
       "sizes": "1080x1920",
-      "label": "My Calorie Needs Home Screen"
+      "label": "MyCalorieLog Home Screen"
     },
     {
       "src": "/screenshots/calculator.png",

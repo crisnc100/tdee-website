@@ -32,7 +32,7 @@ export default function FAQSection() {
 
   return (
     <div className="mt-16 pb-16">
-      <h2 className="text-2xl font-bold text-white mb-8 text-center">
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">
         Frequently Asked Questions
       </h2>
       
@@ -43,10 +43,10 @@ export default function FAQSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="bg-white/95 backdrop-blur-md rounded-lg shadow-xl p-6 border border-white/30"
+            className="card rounded-lg p-6"
           >
-            <h3 className="font-semibold mb-2 text-gray-900">{faq.question}</h3>
-            <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+            <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">{faq.question}</h3>
+            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{faq.answer}</p>
           </motion.div>
         ))}
       </div>

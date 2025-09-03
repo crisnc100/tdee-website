@@ -304,7 +304,7 @@ async function validateCoachingRequest(request: NextRequest, requestId: string):
 
   // Validate optional preferred model
   if (preferredModel) {
-    const validModels: AIModelId[] = ['gpt-4o-mini', 'qwen2.5-7b-instruct', 'gemini-2.0-flash-exp', 'claude-3.5-sonnet'];
+    const validModels: AIModelId[] = ['gpt-4o-mini', 'qwen3-235b', 'gemini-2.0-flash-exp', 'gpt-oss-120b'];
     if (!validModels.includes(preferredModel)) {
       throw new Error(`Invalid preferredModel: ${preferredModel}`);
     }

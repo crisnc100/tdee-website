@@ -32,7 +32,7 @@ export default function InfoSidebar() {
       >
         <div className="flex items-center gap-3 mb-4">
           <Target className="w-5 h-5 text-primary-600" />
-          <h3 className="font-semibold text-gray-900">About My Calorie Needs</h3>
+          <h3 className="font-semibold text-gray-900">About MyCalorieLog</h3>
         </div>
         <p className="text-sm text-gray-600 mb-3">
           I created this calculator because understanding your calorie needs is fundamental to achieving any fitness goal. 

@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ai-coach-enhancement-directive>
+  <metadata>
+    <project>AI Fitness Coach Multi-Agent Enhancement</project>
+    <priority>CRITICAL</priority>
+    <execution-mode>PARALLEL</execution-mode>
+    <date-created>2025-09-03</date-created>
+  </metadata>
+
+  <global-instructions>
+    <instruction priority="MANDATORY">ALL AGENTS MUST READ CONTEXT FILES THOROUGHLY - NO SHORTCUTS OR LAZINESS</instruction>
+    <instruction priority="MANDATORY">WORK IN PARALLEL - DO NOT WAIT FOR OTHER AGENTS</instruction>
+    <instruction priority="MANDATORY">STAY WITHIN YOUR DESIGNATED SCOPE - DO NOT OVERLAP</instruction>
+    <instruction priority="MANDATORY">REPORT PROGRESS EVERY 10 MINUTES OR AFTER MAJOR MILESTONES</instruction>
+    <instruction priority="CRITICAL">TEST ALL CHANGES BEFORE REPORTING COMPLETION</instruction>
+  </global-instructions>
+
+  <context-files>
+    <required-reading>
+      <file>/mnt/c/Users/crisn/GitHub/tdee-website/AI_COACH_IMPLEMENTATION.md</file>
+      <file>/mnt/c/Users/crisn/GitHub/tdee-website/src/components/ai/AICoachInterface.tsx</file>
+      <file>/mnt/c/Users/crisn/GitHub/tdee-website/src/lib/aiCoaching.ts</file>
+      <file>/mnt/c/Users/crisn/GitHub/tdee-website/src/lib/aiService.ts</file>
+      <file>/mnt/c/Users/crisn/GitHub/tdee-website/src/types/ai.ts</file>
+      <file>/mnt/c/Users/crisn/GitHub/tdee-website/src/app/api/ai/advanced-coaching/route.ts</file>
+    </required-reading>
+  </context-files>
+
+  <parallel-agent-assignments>
+    
+    <!-- AGENT 1: CORE AI ARCHITECTURE -->
+    <agent id="ai-fitness-architect" phase="1" status="ACTIVE">
+      <scope>
+        <title>Core AI Service Architecture & Context Recognition</title>
+        <description>Fix TDEE over-emphasis and implement smart context analysis</description>
+      </scope>
+      
+      <critical-issues>
+        <issue priority="1">TDEE data forced in buildUserProfile() at lines 399-425 in aiCoaching.ts</issue>
+        <issue priority="2">Line 506 forces "based on their TDEE data" for all responses</issue>
+        <issue priority="3">No context recognition to determine query relevance</issue>
+      </critical-issues>
+      
+      <tasks>
+        <task id="1.1" priority="URGENT">
+          <action>CREATE src/lib/contextAnalyzer.ts</action>
+          <details>
+            - Implement QueryAnalysis interface
+            - Build relevance scoring (0-100%)
+            - Categorize queries: 'tdee-relevant' | 'general-fitness' | 'mixed'
+            - Topic detection patterns
+            - Response depth analysis
+          </details>
+        </task>
+        
+        <task id="1.2" priority="URGENT">
+          <action>MODIFY src/lib/aiCoaching.ts</action>
+          <details>
+            - Fix buildUserProfile() to conditionally include TDEE
+            - Update buildTaskInstructionsWithQuestion() to remove forced TDEE
+            - Add context-aware prompt building
+            - Implement smart context injection based on relevance score
+          </details>
+        </task>
+        
+        <task id="1.3" priority="HIGH">
+          <action>ENHANCE src/lib/aiService.ts</action>
+          <details>
+            - Integrate contextAnalyzer into model selection
+            - Optimize prompts based on query type
+            - Add query-specific model routing
+          </details>
+        </task>
+        
+        <task id="1.4" priority="HIGH">
+          <action>UPDATE src/types/ai.ts</action>
+          <details>
+            - Add QueryAnalysis type
+            - Add ContextRelevance enum
+            - Extend AIRequest with context analysis
+          </details>
+        </task>
+      </tasks>
+      
+      <deliverables>
+        <deliverable>Context analyzer with 95%+ accuracy</deliverable>
+        <deliverable>TDEE only included when relevance > 70%</deliverable>
+        <deliverable>Smart prompt templates per query category</deliverable>
+        <deliverable>Test suite with 20+ query examples</deliverable>
+      </deliverables>
+    </agent>
+
+    <!-- AGENT 2: UI/UX SPECIALIST -->
+    <agent id="fitness-ui-specialist" phase="2" status="ACTIVE">
+      <scope>
+        <title>UI/UX Enhancements & Bug Fixes</title>
+        <description>Fix overflow, duplication, and enhance card system</description>
+      </scope>
+      
+      <critical-issues>
+        <issue priority="1">Card text overflow - no CSS constraints</issue>
+        <issue priority="2">Message duplication between chat/card views (line 89-92)</issue>
+        <issue priority="3">Empty responses on model switching</issue>
+      </critical-issues>
+      
+      <tasks>
+        <task id="2.1" priority="URGENT">
+          <action>FIX src/components/ai/AICoachInterface.tsx</action>
+          <details>
+            - Fix message state management (single source of truth)
+            - Implement proper message deduplication logic
+            - Add unique IDs to prevent duplicates
+            - Fix viewMode switching without data loss
+          </details>
+        </task>
+        
+        <task id="2.2" priority="URGENT">
+          <action>ADD CSS constraints for cards</action>
+          <details>
+            - Add max-height with overflow-y-auto to cards
+            - Implement text truncation with "Show more"
+            - Add responsive breakpoints
+            - Ensure mobile compatibility
+          </details>
+        </task>
+        
+        <task id="2.3" priority="HIGH">
+          <action>CREATE card expansion system</action>
+          <details>
+            - Add expand/collapse functionality
+            - Smooth animations with Tailwind
+            - Preserve scroll position
+            - Add visual indicators
+          </details>
+        </task>
+        
+        <task id="2.4" priority="MEDIUM">
+          <action>ENHANCE src/components/ai/AIResponseFormatter.tsx</action>
+          <details>
+            - Smart truncation algorithm
+            - Priority-based card ordering
+            - Visual hierarchy improvements
+            - Loading states per card
+          </details>
+        </task>
+      </tasks>
+      
+      <deliverables>
+        <deliverable>Zero message duplication</deliverable>
+        <deliverable>Cards properly constrained with scrollable content</deliverable>
+        <deliverable>Smooth expand/collapse animations</deliverable>
+        <deliverable>Mobile-responsive card layout</deliverable>
+      </deliverables>
+    </agent>
+
+    <!-- AGENT 3: COACHING ENHANCEMENT -->
+    <agent id="fitness-coaching-architect" phase="3" status="ACTIVE">
+      <scope>
+        <title>Enhanced Coaching System & Knowledge Domains</title>
+        <description>Expand card types, create knowledge domains, personality engine</description>
+      </scope>
+      
+      <tasks>
+        <task id="3.1" priority="HIGH">
+          <action>CREATE src/lib/knowledgeDomains.ts</action>
+          <details>
+            - Define 6 domains: training, nutrition, recovery, mindset, supplements, advanced
+            - Create prompt templates per domain
+            - Build topic recognition patterns
+            - Add cross-domain linking
+          </details>
+        </task>
+        
+        <task id="3.2" priority="HIGH">
+          <action>CREATE src/lib/personalityEngine.ts</action>
+          <details>
+            - Define personality profiles for each mode
+            - Create response modifiers
+            - Build consistency checker
+            - Add tone calibration
+          </details>
+        </task>
+        
+        <task id="3.3" priority="HIGH">
+          <action>EXPAND card types in src/types/ai.ts</action>
+          <details>
+            - Add 12 new card types (insight, action, education, etc.)
+            - Create card templates
+            - Define priority logic
+            - Add visual indicators per type
+          </details>
+        </task>
+        
+        <task id="3.4" priority="MEDIUM">
+          <action>CREATE src/lib/followUpEngine.ts</action>
+          <details>
+            - Analyze responses for follow-up opportunities
+            - Generate contextual suggestions
+            - Rank by relevance
+            - Personalize based on history
+          </details>
+        </task>
+      </tasks>
+      
+      <deliverables>
+        <deliverable>6 fully defined knowledge domains</deliverable>
+        <deliverable>12 new interactive card types</deliverable>
+        <deliverable>Consistent personality across responses</deliverable>
+        <deliverable>Smart follow-up suggestions</deliverable>
+      </deliverables>
+    </agent>
+  </parallel-agent-assignments>
+
+  <coordination-protocol>
+    <communication>
+      <channel>Progress reports to main coordinator</channel>
+      <frequency>Every 10 minutes or major milestone</frequency>
+      <format>
+        - Agent ID
+        - Current task
+        - Progress percentage
+        - Blockers (if any)
+        - Next steps
+      </format>
+    </communication>
+    
+    <conflict-resolution>
+      <rule>If file conflict detected, agent with lower phase number has priority</rule>
+      <rule>Coordinate through main thread for shared files</rule>
+      <rule>Use git branches if needed: feature/phase-1, feature/phase-2, feature/phase-3</rule>
+    </conflict-resolution>
+  </coordination-protocol>
+
+  <success-metrics>
+    <metric id="1">TDEE mentioned only when query relevance > 70%</metric>
+    <metric id="2">Zero message duplication in chat/card views</metric>
+    <metric id="3">All cards properly constrained with no overflow</metric>
+    <metric id="4">Response time < 3 seconds</metric>
+    <metric id="5">12 new card types implemented and functional</metric>
+    <metric id="6">Personality consistency score > 90%</metric>
+    <metric id="7">Zero console errors or warnings</metric>
+    <metric id="8">All TypeScript types properly defined</metric>
+  </success-metrics>
+
+  <reporting-template>
+    <report>
+      <header>
+        ===== AGENT PROGRESS REPORT =====
+        Agent: [AGENT_ID]
+        Phase: [PHASE_NUMBER]
+        Time: [TIMESTAMP]
+      </header>
+      
+      <body>
+        COMPLETED:
+        - [List completed tasks with file paths]
+        
+        IN PROGRESS:
+        - [Current task with % complete]
+        
+        BLOCKERS:
+        - [Any issues preventing progress]
+        
+        FILES MODIFIED:
+        - [List all files changed with line numbers]
+        
+        TESTS RUN:
+        - [Test results and validation]
+        
+        NEXT STEPS:
+        - [Immediate next actions]
+      </body>
+      
+      <footer>
+        Estimated completion: [TIME]
+        Confidence level: [HIGH/MEDIUM/LOW]
+      </footer>
+    </report>
+  </reporting-template>
+
+  <final-instructions>
+    <instruction>DO NOT SKIP READING THE IMPLEMENTATION PLAN</instruction>
+    <instruction>DO NOT MAKE ASSUMPTIONS - READ THE ACTUAL CODE</instruction>
+    <instruction>DO NOT WORK ON OTHER AGENTS' TASKS</instruction>
+    <instruction>DO TEST EVERYTHING BEFORE MARKING COMPLETE</instruction>
+    <instruction>DO REPORT IMMEDIATELY IF BLOCKED</instruction>
+    <instruction>DO MAINTAIN BACKWARDS COMPATIBILITY</instruction>
+  </final-instructions>
+</ai-coach-enhancement-directive>

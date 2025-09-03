@@ -10,7 +10,9 @@ import {
   Brain,
   ArrowLeft,
   Save,
-  Check
+  Check,
+  Moon,
+  Sun
 } from 'lucide-react';
 import AIModelSettings from './AIModelSettings';
 
@@ -28,6 +30,12 @@ interface SettingsPageProps {
 export default function SettingsPage({ onBack, initialTab = 'ai' }: SettingsPageProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('darkMode') === 'true' || false;
+    }
+    return false;
+  });
 
   const tabs = [
     {
@@ -64,6 +72,19 @@ export default function SettingsPage({ onBack, initialTab = 'ai' }: SettingsPage
     setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', String(newDarkMode));
+    
+    // Apply dark mode class to document
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -84,7 +105,7 @@ export default function SettingsPage({ onBack, initialTab = 'ai' }: SettingsPage
                   <Settings className="w-6 h-6 text-purple-600" />
                   Settings
                 </h1>
-                <p className="text-gray-600">Customize your My Calorie Needs experience</p>
+                <p className="text-gray-600">Customize your MyCalorieLog experience</p>
               </div>
             </div>
 
@@ -220,6 +241,39 @@ export default function SettingsPage({ onBack, initialTab = 'ai' }: SettingsPage
                           <option value="metric">Metric (kg, cm)</option>
                           <option value="imperial">Imperial (lbs, ft/in)</option>
                         </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Appearance
+                        </label>
+                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {darkMode ? (
+                              <Moon className="w-5 h-5 text-gray-700" />
+                            ) : (
+                              <Sun className="w-5 h-5 text-yellow-500" />
+                            )}
+                            <span className="text-gray-700 font-medium">
+                              {darkMode ? 'Dark Mode' : 'Light Mode'}
+                            </span>
+                          </div>
+                          <button
+                            onClick={toggleDarkMode}
+                            className={`
+                              relative inline-flex h-7 w-12 items-center rounded-full
+                              transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                              ${darkMode ? 'bg-purple-600' : 'bg-gray-300'}
+                            `}
+                          >
+                            <span
+                              className={`
+                                inline-block h-5 w-5 transform rounded-full bg-white transition-transform
+                                ${darkMode ? 'translate-x-6' : 'translate-x-1'}
+                              `}
+                            />
+                          </button>
+                        </div>
                       </div>
 
                       <div>

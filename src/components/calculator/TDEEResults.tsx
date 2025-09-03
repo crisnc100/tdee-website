@@ -4,12 +4,16 @@ import { motion } from 'framer-motion';
 import { TDEEResult } from '@/types/calculator';
 import { Target, TrendingUp, TrendingDown, Minus, Activity, Zap } from 'lucide-react';
 import ComponentExplainer from '../education/ComponentExplainer';
+import { useCoachingModal } from '@/hooks/useCoachingModal';
+import CoachingModal from '@/components/coaching/CoachingModal';
 
 interface TDEEResultsProps {
   result: TDEEResult;
 }
 
 export default function TDEEResults({ result }: TDEEResultsProps) {
+  const { isOpen, source, openModal, closeModal } = useCoachingModal();
+  
   const recommendations = [
     {
       label: 'Extreme Weight Loss',
@@ -84,7 +88,7 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
         </div>
         <p className="text-lg text-gray-600">calories per day</p>
         
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <p className="text-sm text-gray-700">
             <span className="font-semibold">Confidence Range:</span> {result.errorMargin.lower.toLocaleString()} - {result.errorMargin.upper.toLocaleString()} calories
           </p>
@@ -101,7 +105,7 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
             >
               <div className="flex items-center gap-3">
                 <component.icon className="w-4 h-4 text-primary-600" />
@@ -131,7 +135,7 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
               className={`flex items-center justify-between p-4 rounded-lg border-2 ${
                 rec.label === 'Maintain Weight' 
                   ? 'border-green-200 bg-green-50' 
-                  : 'border-gray-100 bg-gray-50'
+                  : 'border-gray-100 bg-gray-50 dark:bg-gray-800 dark:border-gray-700'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -178,14 +182,20 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
       >
         <p className="text-xs text-gray-500">
           Questions about implementing these numbers? 
-          <a 
-            href="mailto:cristian@ortegafit.com?subject=Coaching Inquiry - My Calorie Needs Results" 
-            className="text-primary-600 hover:text-primary-700 ml-1 font-medium"
+          <button
+            onClick={() => openModal('results')}
+            className="text-primary-600 hover:text-primary-700 ml-1 font-medium underline"
           >
             I offer personalized guidance
-          </a>
+          </button>
         </p>
       </motion.div>
+      
+      <CoachingModal 
+        isOpen={isOpen}
+        onClose={closeModal}
+        source={source}
+      />
     </div>
   );
 }

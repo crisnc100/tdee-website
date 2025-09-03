@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, Target, TrendingUp, Settings, Brain, User, Menu, X } from 'lucide-react';
+import { Calculator, Target, TrendingUp, Settings, Brain, User, Menu, X, Moon, Sun } from 'lucide-react';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface HeaderProps {
   onSettingsClick?: () => void;
@@ -11,6 +12,7 @@ interface HeaderProps {
 export default function Header({ onSettingsClick }: HeaderProps) {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const settingsMenuRef = useRef<HTMLDivElement>(null);
+  const { darkMode, toggleDarkMode } = useDarkMode();
 
   // Close settings menu when clicking outside
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function Header({ onSettingsClick }: HeaderProps) {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50"
+      className="w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50"
     >
       <div className="max-w-6xl mx-auto px-4 py-3 md:py-4">
         <div className="flex items-center justify-between">
@@ -47,7 +49,7 @@ export default function Header({ onSettingsClick }: HeaderProps) {
             </div>
             <div>
               <h1 className="text-lg md:text-2xl font-bold text-gray-900">
-                My Calorie Needs
+                MyCalorieLog
               </h1>
               <p className="text-xs md:text-sm text-gray-600 hidden sm:block">
                 by OrtegaFit
@@ -77,6 +79,19 @@ export default function Header({ onSettingsClick }: HeaderProps) {
               <TrendingUp className="w-4 h-4" />
               <span className="text-sm">Calorie Calculator</span>
             </div>
+            
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {darkMode ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
             
             {/* Settings Dropdown */}
             <div className="relative" ref={settingsMenuRef}>

@@ -98,6 +98,9 @@ export default function TDEECalculator() {
     localStorage.setItem('tdee-last-result', JSON.stringify(calculatedResult));
     localStorage.setItem('tdee-last-user-data', JSON.stringify(userData));
     
+    // Track TDEE calculation for coaching prompt
+    localStorage.setItem('lastTDEECalculation', new Date().toISOString());
+    
     // Track first calculation date for check-ins
     if (!localStorage.getItem('tdee-first-calculation-date')) {
       localStorage.setItem('tdee-first-calculation-date', new Date().toISOString());

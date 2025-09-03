@@ -146,7 +146,7 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
         <div className="flex items-center justify-center gap-3 mb-4">
           <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <Calculator className="w-5 h-5" />
-            AI Macro Calculator
+            Macro Calculator
           </h3>
           
           {/* AI Performance Indicators */}
@@ -197,7 +197,7 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
         </div>
         
         <p className="text-sm text-gray-600">
-          Get personalized macro splits powered by AI analysis
+          Get personalized macro splits!
         </p>
       </div>
 

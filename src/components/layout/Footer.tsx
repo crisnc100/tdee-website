@@ -2,9 +2,14 @@
 
 import { motion } from 'framer-motion';
 import { Heart, Shield, Star } from 'lucide-react';
+import { useCoachingModal } from '@/hooks/useCoachingModal';
+import CoachingModal from '@/components/coaching/CoachingModal';
 
 export default function Footer() {
+  const { isOpen, source, openModal, closeModal } = useCoachingModal();
+
   return (
+    <>
     <motion.footer 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -49,22 +54,35 @@ export default function Footer() {
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
           <p className="text-gray-400">
-            Built by Cristian Ortega, CPT | Available for 1-on-1 coaching
+            Built by Cristian Ortega, CPT | 
+            <button
+              onClick={() => openModal('footer')}
+              className="text-primary-400 hover:text-primary-300 ml-1 cursor-pointer"
+            >
+              Available for 1-on-1 coaching
+            </button>
           </p>
           <p className="text-sm text-gray-500 mt-1">
             Part of OrtegaFit | Engineering Fitness Solutions
           </p>
           <p className="text-xs text-gray-600 mt-2">
-            © 2024 My Calorie Needs. Questions or coaching inquiries? 
-            <a 
-              href="mailto:cristian@ortegafit.com?subject=Inquiry from My Calorie Needs" 
-              className="text-primary-400 hover:text-primary-300 ml-1"
+            © 2024 MyCalorieLog. Questions or coaching inquiries? 
+            <button
+              onClick={() => openModal('footer')}
+              className="text-primary-400 hover:text-primary-300 ml-1 cursor-pointer"
             >
               Get in touch
-            </a>
+            </button>
           </p>
         </div>
       </div>
     </motion.footer>
+    
+    <CoachingModal 
+      isOpen={isOpen}
+      onClose={closeModal}
+      source={source}
+    />
+    </>
   );
 }

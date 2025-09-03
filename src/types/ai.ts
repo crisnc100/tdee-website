@@ -6,6 +6,61 @@
  */
 
 /**
+ * Enhanced card types for structured coaching responses
+ */
+export type EnhancedCardType = 
+  | 'insight'        // 📊 Key findings and observations
+  | 'action'         // 🎯 Immediate actionable steps
+  | 'education'      // 📚 Educational content and explanations
+  | 'plan'           // 📝 Structured programs and routines
+  | 'quick-tip'      // ⚡ Bite-sized advice
+  | 'research'       // 🔍 Scientific backing and studies
+  | 'mindset'        // 💡 Mental coaching and motivation
+  | 'form-check'     // 🏋️ Technique and form guidance
+  | 'nutrition'      // 🥗 Food and diet specific advice
+  | 'recovery'       // 😴 Rest and recovery recommendations
+  | 'myth-buster'    // 🚫 Debunking common misconceptions
+  | 'progress'       // 📈 Progress tracking and evaluation
+  | 'calculation'    // 🔢 Numbers and calculations
+  | 'encouragement'; // 💪 Motivational support
+
+/**
+ * Context relevance levels for TDEE data inclusion
+ */
+export enum ContextRelevance {
+  HIGH = 'high',       // >70% relevance - TDEE essential
+  MEDIUM = 'medium',   // 30-70% relevance - TDEE helpful
+  LOW = 'low',         // <30% relevance - TDEE not needed
+  NONE = 'none'        // 0% relevance - Pure fitness question
+}
+
+/**
+ * Query analysis result for context-aware responses
+ */
+export interface QueryAnalysis {
+  category: 'tdee-relevant' | 'general-fitness' | 'mixed';
+  topics: string[];
+  tdeeRelevanceScore: number;
+  suggestedCardTypes: EnhancedCardType[];
+  responseDepth: 'quick' | 'standard' | 'comprehensive';
+  requiresTDEE: boolean;
+  intent: QueryIntent;
+}
+
+/**
+ * User query intent classification
+ */
+export type QueryIntent = 
+  | 'question'
+  | 'advice-seeking'
+  | 'troubleshooting'
+  | 'plan-request'
+  | 'validation'
+  | 'education'
+  | 'calculation'
+  | 'progress-check';
+
+/**
  * Supported AI model identifiers
  */
 export type AIModelId = 
@@ -122,6 +177,8 @@ export interface AIRequest {
   userPreferences?: UserAIPreferences;
   /** Disable caching for this request */
   disableCache?: boolean;
+  /** Query analysis for context-aware responses */
+  queryAnalysis?: QueryAnalysis;
 }
 
 /**
