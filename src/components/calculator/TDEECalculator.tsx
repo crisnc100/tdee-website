@@ -13,7 +13,7 @@ import ComparisonTool from './ComparisonTool';
 import SocialShare from './SocialShare';
 import MacroCalculator from '../ai/MacroCalculator';
 import MealSuggestions from '../ai/MealSuggestions';
-import AICoaching from '../ai/AICoaching';
+import AICoachComingSoon from '../ai/AICoachComingSoon';
 import ProgressTracker from '../tracking/ProgressTracker';
 import WeeklyCheckIn from '../progress/WeeklyCheckIn';
 import SuccessStories from '../education/SuccessStories';
@@ -364,7 +364,7 @@ export default function TDEECalculator() {
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.4 }}
                     >
-                      <AICoaching userData={userData} tdeeResult={result} />
+                      <AICoachComingSoon />
                     </motion.div>
                   )}
                   

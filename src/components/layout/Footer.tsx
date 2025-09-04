@@ -81,7 +81,7 @@ export default function Footer() {
     <CoachingModal 
       isOpen={isOpen}
       onClose={closeModal}
-      source={source}
+      source={source as "footer" | "results" | "other"}
     />
     </>
   );

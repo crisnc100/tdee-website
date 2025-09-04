@@ -15,49 +15,73 @@ const myths: Myth[] = [
   {
     myth: "1200 calories is the magic number for weight loss",
     truth: "Most adults need significantly more than 1200 calories",
-    explanation: "1200 calories is below the BMR for most adults. Eating this little can slow metabolism, cause muscle loss, and lead to nutrient deficiencies. Your actual needs depend on age, size, and activity level.",
+    explanation: "1200 calories is below the BMR for 95% of adults. Studies show eating below BMR for extended periods reduces metabolic rate by 20-30%, causes significant muscle loss (up to 25% of weight lost), and creates hormonal imbalances affecting thyroid, cortisol, and reproductive hormones. Use our calculator to find YOUR actual needs.",
     impact: "high"
   },
   {
     myth: "Starvation mode will stop weight loss completely",
     truth: "Metabolic adaptation is real but doesn't stop weight loss",
-    explanation: "While your metabolism does slow with extreme calorie restriction (by 10-15%), it doesn't stop. The real issue is that extreme restriction is unsustainable and often leads to binge eating.",
+    explanation: "The Minnesota Starvation Experiment showed metabolism slows by 15-20% during extreme restriction, but weight loss continues. The real danger: 83% of extreme dieters regain MORE weight within 2 years due to increased hunger hormones (ghrelin up 24%) and decreased satiety hormones (leptin down 35%).",
+    impact: "high"
+  },
+  {
+    myth: "You need to eat clean 100% of the time",
+    truth: "The 80/20 rule is more sustainable and equally effective",
+    explanation: "Research shows flexible dieting (IIFYM) produces identical fat loss to 'clean eating' when calories and protein are matched. People following flexible approaches have 78% better adherence rates and 50% less binge eating. Psychological restriction often triggers overconsumption - allow yourself planned indulgences.",
     impact: "high"
   },
   {
     myth: "Eating after 8 PM causes weight gain",
     truth: "Total daily calories matter, not meal timing",
-    explanation: "Your body doesn't have a clock that makes calories count more at night. Weight gain happens from consistently eating more calories than you burn, regardless of when you eat them.",
+    explanation: "Multiple studies comparing early vs late eating with equal calories show NO difference in fat loss. Your metabolism runs 24/7 - it doesn't slow at night. Late-night weight gain happens because people eat EXTRA calories (average 400-600) when snacking at night, not because of timing.",
     impact: "medium"
   },
   {
     myth: "You must eat 6 small meals to boost metabolism",
-    truth: "Meal frequency doesn't significantly affect metabolism",
-    explanation: "TEF (Thermic Effect of Food) is based on total food intake, not frequency. Whether you eat 3 meals or 6, if calories are equal, the metabolic effect is the same.",
+    truth: "Meal frequency doesn't affect total daily metabolism",
+    explanation: "TEF (Thermic Effect of Food) is ~10% of total calories consumed, regardless of frequency. Studies comparing 3 vs 6 meals show identical metabolic rates when calories are equal. In fact, intermittent fasting (fewer meals) can increase growth hormone by 500% and improve insulin sensitivity by 20-30%.",
     impact: "medium"
   },
   {
-    myth: "Muscle weighs more than fat",
-    truth: "Muscle is denser than fat, not heavier",
-    explanation: "A pound is a pound. But muscle takes up about 20% less space than fat, which is why you can look leaner at the same weight with more muscle mass.",
-    impact: "low"
+    myth: "Spot reduction (losing fat from specific areas) works",
+    truth: "Fat loss happens systemically based on genetics",
+    explanation: "A study of tennis players showed no difference in arm fat despite one arm being significantly more muscular. Fat cells release energy based on hormones circulating throughout your entire body. You'll lose fat in reverse order of how you gained it - first on, last off. Keep going!",
+    impact: "high"
   },
   {
     myth: "Cardio is the best way to lose weight",
-    truth: "Diet controls weight loss; exercise improves body composition",
-    explanation: "You can't outrun a bad diet. A 30-minute run burns ~300 calories - easily undone by one pastry. Weight training preserves muscle during weight loss, leading to better results.",
+    truth: "Resistance training is superior for body composition",
+    explanation: "Cardio alone causes 25-30% of weight lost to be muscle. Weight training preserves 96% of muscle mass during fat loss. Each pound of muscle burns 6-10 calories daily at rest. A 12-week study showed weight training created 40% more fat loss than cardio alone when diet was controlled.",
     impact: "high"
   },
   {
     myth: "Women will get bulky from lifting weights",
-    truth: "Women lack the testosterone to build large muscles easily",
-    explanation: "Women have 15-20x less testosterone than men. Building significant muscle requires years of training and often intentional bulking. Weight training creates a 'toned' look most women want.",
+    truth: "Women lack the hormones to build large muscles easily",
+    explanation: "Women have 15-20x less testosterone and 60% less muscle-building capacity than men. Female bodybuilders train 15-20 hours weekly for YEARS and often use enhancement. Regular weight training (3-4x/week) increases women's metabolism by 7%, reduces body fat by 3-4%, and creates the 'toned' athletic look.",
     impact: "high"
   },
   {
+    myth: "You need expensive supplements to see results",
+    truth: "Only 3 supplements have strong scientific evidence",
+    explanation: "99% of supplements lack evidence. Only creatine (5g/day increases strength 5-15%), caffeine (3-6mg/kg improves performance 3-7%), and protein powder (if diet lacks protein) consistently work. The supplement industry makes $35 billion yearly selling hope. Save your money - focus on food, training, and sleep.",
+    impact: "high"
+  },
+  {
+    myth: "Detox teas and juice cleanses remove toxins",
+    truth: "Your liver and kidneys detox 24/7 for free",
+    explanation: "No study has ever identified which 'toxins' these products remove. Your liver processes 1.5L of blood per minute, filtering everything. Detox products are just expensive laxatives and diuretics causing temporary water loss (2-5 lbs) that returns within 48 hours. Total scam.",
+    impact: "high"
+  },
+  {
+    myth: "Muscle turns into fat when you stop exercising",
+    truth: "Muscle and fat are completely different tissues",
+    explanation: "Muscle cells and fat cells are as different as bone and skin - one cannot become the other. When you stop training, muscles atrophy (shrink) by 20-30% in 2-3 months. People gain fat because they maintain high calories while burning 300-500 fewer daily from lost muscle and reduced activity.",
+    impact: "medium"
+  },
+  {
     myth: "You need to cut carbs to lose fat",
-    truth: "Calorie deficit matters, not eliminating food groups",
-    explanation: "Low-carb can work, but it's the calorie reduction that causes weight loss, not carb elimination. Many successful athletes eat 300+ grams of carbs daily while staying lean.",
+    truth: "All macronutrient ratios work if calories/protein are controlled",
+    explanation: "Meta-analysis of 32 studies shows no difference in fat loss between low-carb and low-fat when calories and protein (0.7-1g/lb) are matched. Carbs fuel performance - elite athletes eat 300-600g daily. Choose the approach you can sustain. Adherence beats optimization every time.",
     impact: "medium"
   }
 ];
@@ -201,10 +225,11 @@ export default function MythBusters() {
         </div>
       )}
 
-      <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+      <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
         <p className="text-sm text-amber-800">
-          <span className="font-semibold">Remember:</span> Sustainable fitness is about science, not trends. 
-          Focus on consistent calorie balance, adequate protein, and regular activity for lasting results.
+          <span className="font-semibold">💡 The Truth:</span> 90% of fitness advice is marketing BS. The science is simple: 
+          maintain a moderate calorie deficit (15-25%), eat 0.7-1g protein per pound, lift weights 3-4x weekly, 
+          sleep 7-9 hours, and be patient. That's literally it. Everything else is noise designed to sell you something.
         </p>
       </div>
     </div>

@@ -800,7 +800,7 @@ Keep each tip to 1-2 sentences. Be specific and actionable, not generic.`;
     systemPrompt: 'You are an expert personal trainer and nutritionist providing personalized coaching advice.',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.8,
-    maxTokens: 600,
+    maxTokens: 2000,  // Increased from 600 for complete responses
     enableFallback: true,
     userPreferences,
     preferredModel

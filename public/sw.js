@@ -1,4 +1,4 @@
-const CACHE_NAME = 'caloriescope-v1';
+const CACHE_NAME = 'mycalorielog-v1';
 const urlsToCache = [
   '/',
   '/offline.html',

@@ -4,8 +4,8 @@
   "description": "Calculate your daily calorie needs with our straightforward, no-nonsense approach. Track progress, get meal plans, and AI coaching - all free and private.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFF7ED",
-  "theme_color": "#EA580C",
+  "background_color": "#111827",
+  "theme_color": "#7c3aed",
   "orientation": "portrait",
   "scope": "/",
   "categories": ["health", "fitness", "lifestyle"],
@@ -57,26 +57,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home.png",
-      "type": "image/png",
-      "sizes": "1080x1920",
-      "label": "MyCalorieLog Home Screen"
-    },
-    {
-      "src": "/screenshots/calculator.png",
-      "type": "image/png",
-      "sizes": "1080x1920",
-      "label": "TDEE Calculator"
-    },
-    {
-      "src": "/screenshots/results.png",
-      "type": "image/png",
-      "sizes": "1080x1920",
-      "label": "Your Results"
     }
   ],
   "shortcuts": [

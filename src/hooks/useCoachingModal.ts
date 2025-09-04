@@ -1,32 +1,17 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { create } from 'zustand';
 
-export function useCoachingModal() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [source, setSource] = useState<'footer' | 'results' | 'other'>('other');
-
-  const openModal = useCallback((modalSource: 'footer' | 'results' | 'other' = 'other') => {
-    setSource(modalSource);
-    setIsOpen(true);
-    
-    // Track event in localStorage for analytics
-    const events = JSON.parse(localStorage.getItem('coachingEvents') || '[]');
-    events.push({
-      source: modalSource,
-      timestamp: new Date().toISOString()
-    });
-    localStorage.setItem('coachingEvents', JSON.stringify(events));
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
-  return {
-    isOpen,
-    source,
-    openModal,
-    closeModal
-  };
+interface CoachingModalState {
+  isOpen: boolean;
+  source: string;
+  openModal: (source: string) => void;
+  closeModal: () => void;
 }
+
+export const useCoachingModal = create<CoachingModalState>((set) => ({
+  isOpen: false,
+  source: '',
+  openModal: (source: string) => set({ isOpen: true, source }),
+  closeModal: () => set({ isOpen: false, source: '' }),
+}));

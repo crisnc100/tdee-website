@@ -2,7 +2,7 @@ import TDEECalculator from '@/components/calculator/TDEECalculator';
 import InfoSidebar from '@/components/layout/InfoSidebar';
 import FAQSection from '@/components/layout/FAQSection';
 import UserCounter from '@/components/UserCounter';
-import NotificationManager from '@/components/NotificationManager';
+// import NotificationManager from '@/components/NotificationManager'; // Disabled for MVP
 
 export default function Home() {
   return (
@@ -16,8 +16,8 @@ export default function Home() {
         {/* User Counter Section */}
         <UserCounter />
         
-        {/* Notification Manager */}
-        <NotificationManager />
+        {/* Notification Manager - Disabled for MVP */}
+        {/* <NotificationManager /> */}
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8 items-start">

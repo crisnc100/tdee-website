@@ -4,7 +4,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SimplePWA from "@/components/SimplePWA";
-import NotificationSchedulerProvider from "@/components/NotificationSchedulerProvider";
+// import NotificationSchedulerProvider from "@/components/NotificationSchedulerProvider"; // Disabled for MVP
 import CoachingPrompt from "@/components/coaching/CoachingPrompt";
 import VisitTracker from "@/components/VisitTracker";
 import DarkModeProvider from "@/components/DarkModeProvider";
@@ -57,7 +57,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased bg-pattern`}>
         <DarkModeProvider />
         <SimplePWA />
-        <NotificationSchedulerProvider />
+        {/* <NotificationSchedulerProvider /> */} {/* Disabled for MVP */}
         <VisitTracker />
         <CoachingPrompt />
         <div className="min-h-screen flex flex-col">
