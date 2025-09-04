@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('PWA analytics error:', error);
+    // console.error('PWA analytics error:', error);
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }
@@ -96,7 +96,7 @@ export async function GET() {
       recent: recentInstalls?.map(item => JSON.parse(item as string)) || []
     });
   } catch (error) {
-    console.error('Error fetching PWA analytics:', error);
+    // console.error('Error fetching PWA analytics:', error);
     return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
   }
 }

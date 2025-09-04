@@ -141,7 +141,7 @@ export class UserPreferencesManager {
       // Validate and fix any invalid values
       return this.validatePreferences(merged);
     } catch (error) {
-      console.warn('[UserPreferences] Failed to load preferences, using defaults:', error);
+      // console.warn('[UserPreferences] Failed to load preferences, using defaults:', error);
       return { ...DEFAULT_EXTENDED_PREFERENCES };
     }
   }
@@ -165,7 +165,7 @@ export class UserPreferencesManager {
         });
       }
     } catch (error) {
-      console.warn('[UserPreferences] Failed to load model stats:', error);
+      // console.warn('[UserPreferences] Failed to load model stats:', error);
     }
 
     return stats;
@@ -196,7 +196,7 @@ export class UserPreferencesManager {
       const stored = localStorage.getItem(STORAGE_KEYS.COST_TRACKING);
       return stored ? { ...defaultTracking, ...JSON.parse(stored) } : defaultTracking;
     } catch (error) {
-      console.warn('[UserPreferences] Failed to load cost tracking:', error);
+      // console.warn('[UserPreferences] Failed to load cost tracking:', error);
       return defaultTracking;
     }
   }
@@ -445,7 +445,7 @@ export class UserPreferencesManager {
 
       return true;
     } catch (error) {
-      console.error('[UserPreferences] Failed to import preferences:', error);
+      // console.error('[UserPreferences] Failed to import preferences:', error);
       return false;
     }
   }
@@ -459,7 +459,7 @@ export class UserPreferencesManager {
     try {
       localStorage.setItem(STORAGE_KEYS.AI_PREFERENCES, JSON.stringify(this.preferences));
     } catch (error) {
-      console.error('[UserPreferences] Failed to save preferences:', error);
+      // console.error('[UserPreferences] Failed to save preferences:', error);
     }
   }
 
@@ -473,7 +473,7 @@ export class UserPreferencesManager {
       const data = Object.fromEntries(this.modelUsageStats);
       localStorage.setItem(STORAGE_KEYS.MODEL_USAGE, JSON.stringify(data));
     } catch (error) {
-      console.error('[UserPreferences] Failed to save model stats:', error);
+      // console.error('[UserPreferences] Failed to save model stats:', error);
     }
   }
 
@@ -486,7 +486,7 @@ export class UserPreferencesManager {
     try {
       localStorage.setItem(STORAGE_KEYS.COST_TRACKING, JSON.stringify(this.costTracking));
     } catch (error) {
-      console.error('[UserPreferences] Failed to save cost tracking:', error);
+      // console.error('[UserPreferences] Failed to save cost tracking:', error);
     }
   }
 }

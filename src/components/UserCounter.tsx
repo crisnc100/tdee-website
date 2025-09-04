@@ -30,7 +30,7 @@ export default function UserCounter() {
       setCounts(data);
       setIsLoading(false);
     } catch (error) {
-      console.error('Failed to fetch counts:', error);
+      // console.error('Failed to fetch counts:', error);
       setIsLoading(false);
     }
   };

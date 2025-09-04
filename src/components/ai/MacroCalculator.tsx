@@ -114,7 +114,7 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
         }
       }
     } catch (error) {
-      console.error('Failed to calculate macros:', error);
+      // console.error('Failed to calculate macros:', error);
       
       // Track failed attempt
       const responseTime = Date.now() - startTime;

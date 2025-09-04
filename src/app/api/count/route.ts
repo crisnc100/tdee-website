@@ -12,7 +12,7 @@ export async function GET() {
       today: todayCount
     });
   } catch (error) {
-    console.error('Failed to get calculation count:', error);
+    // console.error('Failed to get calculation count:', error);
     // Return mock data in development
     return NextResponse.json({ 
       total: 127543,
@@ -38,7 +38,7 @@ export async function POST() {
       today: todayCount
     });
   } catch (error) {
-    console.error('Failed to increment calculation count:', error);
+    // console.error('Failed to increment calculation count:', error);
     // Return mock data in development
     return NextResponse.json({ 
       total: 127544,

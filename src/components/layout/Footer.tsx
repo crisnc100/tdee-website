@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Heart, Shield, Star } from 'lucide-react';
 import { useCoachingModal } from '@/hooks/useCoachingModal';
 import CoachingModal from '@/components/coaching/CoachingModal';
+import Link from 'next/link';
 
 export default function Footer() {
   const { isOpen, source, openModal, closeModal } = useCoachingModal();
@@ -74,6 +75,15 @@ export default function Footer() {
               Get in touch
             </button>
           </p>
+          <div className="text-xs text-gray-600 mt-4 space-x-4">
+            <Link href="/privacy" className="hover:text-gray-400 transition-colors">
+              Privacy Policy
+            </Link>
+            <span>|</span>
+            <Link href="/terms" className="hover:text-gray-400 transition-colors">
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </div>
     </motion.footer>

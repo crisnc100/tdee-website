@@ -61,7 +61,7 @@ export default function Header({ onSettingsClick }: HeaderProps) {
 
             <button
               id="install-app-header-desktop"
-              className="px-4 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
               style={{ display: 'none' }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

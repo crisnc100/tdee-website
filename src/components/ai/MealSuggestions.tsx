@@ -102,7 +102,7 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
         }
       }
     } catch (error) {
-      console.error('Failed to get meal suggestions:', error);
+      // console.error('Failed to get meal suggestions:', error);
       
       // Track failed attempt
       const responseTime = Date.now() - startTime;

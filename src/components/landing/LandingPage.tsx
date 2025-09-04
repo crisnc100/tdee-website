@@ -17,7 +17,9 @@ export default function LandingPage() {
     fetch('/api/count')
       .then(res => res.json())
       .then(data => setCalculationCount(data.total))
-      .catch(console.error);
+      .catch(() => {
+        // Silently fail, use default count
+      });
   }, []);
 
   const features = [

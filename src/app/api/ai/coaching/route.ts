@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   try {
     // Generate request ID for tracking
     requestId = `coaching_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    console.log(`[Coaching API] ${requestId} - Request started`);
+    // console.log(`[Coaching API] ${requestId} - Request started`);
 
     // Rate limiting
     const clientIP = request.headers.get('x-forwarded-for') || 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
                     'unknown';
     
     if (!checkRateLimit(clientIP)) {
-      console.warn(`[Coaching API] ${requestId} - Rate limit exceeded for ${clientIP}`);
+      // console.warn(`[Coaching API] ${requestId} - Rate limit exceeded for ${clientIP`);
       return NextResponse.json(
         { 
           error: 'Rate limit exceeded. Please wait before making another request.',
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     const cachedResponse = getCachedResponse(cacheKey);
     
     if (cachedResponse) {
-      console.log(`[Coaching API] ${requestId} - Cache hit`);
+      // console.log(`[Coaching API] ${requestId} - Cache hit`);
       return NextResponse.json({
         ...cachedResponse,
         cached: true,
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback to rule-based coaching if OpenRouter is not configured
     if (!process.env.OPENROUTER_API_KEY) {
-      console.log(`[Coaching API] ${requestId} - Using rule-based fallback (no API key)`);
+      // console.log(`[Coaching API] ${requestId} - Using rule-based fallback (no API key`);
       const fallbackTips = generateFallbackCoaching(userData, tdeeResult);
       const response = {
         tips: fallbackTips,
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
           costOptimization
         };
 
-        console.log(`[Coaching API] ${requestId} - Selected model: ${selectedModel} (${modelDecision.reason})`);
+        // console.log(`[Coaching API] ${requestId} - Selected model: ${selectedModel} (${modelDecision.reason})`);
       }
 
       // Make AI request with retry logic
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          console.log(`[Coaching API] ${requestId} - Attempt ${attempt + 1}/${maxRetries + 1} with ${selectedModel}`);
+          // console.log(`[Coaching API] ${requestId} - Attempt ${attempt + 1}/${maxRetries + 1} with ${selectedModel}`);
           
           const aiResponse = await getNutritionCoaching(
             userData, 
@@ -193,19 +193,19 @@ export async function POST(request: NextRequest) {
           // Cache successful response
           setCachedResponse(cacheKey, response);
 
-          console.log(`[Coaching API] ${requestId} - Success on attempt ${attempt + 1}`);
+          // console.log(`[Coaching API] ${requestId} - Success on attempt ${attempt + 1}`);
           return NextResponse.json(response);
 
         } catch (aiError: any) {
           lastError = aiError;
-          console.error(`[Coaching API] ${requestId} - Attempt ${attempt + 1} failed:`, aiError.message);
+          // console.error(`[Coaching API] ${requestId} - Attempt ${attempt + 1} failed:`, aiError.message);
           
           // If not last attempt and fallback is enabled, try alternative model
           if (attempt < maxRetries && options?.enableFallback !== false && optimizationData?.alternatives?.length) {
             const nextModel = optimizationData.alternatives[attempt]?.modelId;
             if (nextModel) {
               selectedModel = nextModel;
-              console.log(`[Coaching API] ${requestId} - Switching to fallback model: ${selectedModel}`);
+              // console.log(`[Coaching API] ${requestId} - Switching to fallback model: ${selectedModel}`);
               continue;
             }
           }
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
       }
 
       // All AI attempts failed, use rule-based fallback
-      console.warn(`[Coaching API] ${requestId} - All AI attempts failed, using rule-based fallback`);
+      // console.warn(`[Coaching API] ${requestId} - All AI attempts failed, using rule-based fallback`);
       const fallbackTips = generateFallbackCoaching(userData, tdeeResult);
       const response = {
         tips: fallbackTips,
@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response);
 
     } catch (processingError) {
-      console.error(`[Coaching API] ${requestId} - Processing error:`, processingError);
+      // console.error(`[Coaching API] ${requestId} - Processing error:`, processingError);
       
       // Final fallback to rule-based
       const fallbackTips = generateFallbackCoaching(userData, tdeeResult);
@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error(`[Coaching API] ${requestId} - Request failed:`, error);
+    // console.error(`[Coaching API] ${requestId} - Request failed:`, error);
     return NextResponse.json(
       { 
         error: 'Failed to generate coaching advice',
@@ -325,7 +325,7 @@ async function validateCoachingRequest(request: NextRequest, requestId: string):
     }
   }
 
-  console.log(`[Coaching API] ${requestId} - Request validated successfully`);
+  // console.log(`[Coaching API] ${requestId} - Request validated successfully`);
 
   return {
     userData,

@@ -105,7 +105,7 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
           setIsVisible(true);
         }
       } catch (error) {
-        console.error('Error reading stored results:', error);
+        // console.error('Error reading stored results:', error);
       }
     };
 

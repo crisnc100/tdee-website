@@ -85,7 +85,7 @@ export default function TDEECalculator() {
     try {
       await fetch('/api/count', { method: 'POST' });
     } catch (error) {
-      console.error('Failed to increment count:', error);
+      // console.error('Failed to increment count:', error);
     }
     
     // Add a realistic delay for loading animation

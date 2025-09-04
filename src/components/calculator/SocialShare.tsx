@@ -42,7 +42,7 @@ This uses a 7-component formula that's way more precise than basic calculators. 
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      // console.error('Failed to copy: ', err);
     }
   };
 

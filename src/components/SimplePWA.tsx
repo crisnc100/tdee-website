@@ -27,14 +27,16 @@ export default function SimplePWA() {
         })
       });
     } catch (error) {
-      console.error('Failed to track analytics:', error);
+      // console.error('Failed to track analytics:', error);
     }
   };
 
   useEffect(() => {
     // Register service worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Service worker registration failed silently
+      });
     }
 
     // Check if iOS

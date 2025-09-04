@@ -356,7 +356,7 @@ function getEducationalTips(userData: any, goal: string): NotificationSchedule[]
 // Request notification permission
 export async function requestNotificationPermission(): Promise<boolean> {
   if (typeof window === 'undefined' || !('Notification' in window)) {
-    console.log('This browser does not support notifications');
+    // console.log('This browser does not support notifications');
     return false;
   }
   

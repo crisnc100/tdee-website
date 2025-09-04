@@ -70,7 +70,7 @@ export class AIService {
     try {
       // Step 1: Model Selection
       const routing = this.selectOptimalModel(request);
-      console.log(`[AI Service] Selected model: ${routing.selectedModel} (${routing.reason})`);
+      // console.log(`[AI Service] Selected model: ${routing.selectedModel} (${routing.reason})`);
 
       // Step 2: Check cache for identical requests (skip for coaching tasks)
       // Disable cache for nutrition-coaching to ensure fresh responses for follow-ups
@@ -80,11 +80,11 @@ export class AIService {
         const cacheKey = this.generateCacheKey(request, routing.selectedModel);
         const cached = this.getCachedResponse(cacheKey);
         if (cached) {
-          console.log(`[AI Service] Cache hit for ${routing.selectedModel}`);
+          // console.log(`[AI Service] Cache hit for ${routing.selectedModel}`);
           return cached;
         }
       } else {
-        console.log(`[AI Service] Cache disabled for ${request.taskType} request`);
+        // console.log(`[AI Service] Cache disabled for ${request.taskType} request`);
       }
 
       // Step 3: Attempt request with selected model
@@ -93,16 +93,16 @@ export class AIService {
         response = await this.makeModelRequest(request, routing.selectedModel, startTime);
         this.updateModelHealth(routing.selectedModel, true, Date.now() - startTime);
       } catch (error) {
-        console.log(`[AI Service] Primary model ${routing.selectedModel} unavailable, attempting fallback...`);
+        // console.log(`[AI Service] Primary model ${routing.selectedModel} unavailable, attempting fallback...`);
         this.updateModelHealth(routing.selectedModel, false);
 
         // Step 4: Fallback if enabled and available
         if (request.enableFallback !== false) {
           const fallbackModels = request.fallbackModels || this.getDefaultFallbackModels(routing.selectedModel);
           response = await this.attemptFallbacks(request, fallbackModels, startTime);
-          console.log(`[AI Service] Successfully used fallback model: ${response.modelUsed}`);
+          // console.log(`[AI Service] Successfully used fallback model: ${response.modelUsed}`);
         } else {
-          console.error(`[AI Service] Primary model failed and fallback disabled:`, error);
+          // console.error(`[AI Service] Primary model failed and fallback disabled:`, error);
           throw error;
         }
       }
@@ -120,7 +120,7 @@ export class AIService {
 
     } catch (error) {
       const aiError = this.createAIServiceError(error, 'NETWORK_ERROR');
-      console.error('[AI Service] Request failed completely:', aiError);
+      // console.error('[AI Service] Request failed completely:', aiError);
       throw aiError;
     }
   }
@@ -179,7 +179,7 @@ export class AIService {
       
       // Use the preferred model if it's available and healthy
       if (preferredModel?.isAvailable && (!health || health.isHealthy)) {
-        console.log(`[AI Service] Using user-selected model: ${request.preferredModel}`);
+        // console.log(`[AI Service] Using user-selected model: ${request.preferredModel}`);
         return {
           selectedModel: request.preferredModel,
           reason: 'User explicitly selected this model',
@@ -189,7 +189,7 @@ export class AIService {
         };
       }
       // If preferred model is unavailable, continue with fallback logic
-      console.log(`[AI Service] User-selected model ${request.preferredModel} unavailable, using fallback`);
+      // console.log(`[AI Service] User-selected model ${request.preferredModel} unavailable, using fallback`);
     }
     
     // Start with task-specific recommendations
@@ -276,7 +276,7 @@ export class AIService {
       stream: false
     };
 
-    console.log(`[AI Service] Making request to ${modelId} via OpenRouter`);
+    // console.log(`[AI Service] Making request to ${modelId} via OpenRouter`);
 
     let response;
     try {
@@ -284,8 +284,8 @@ export class AIService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
       
-      console.log(`[AI Service] Request body:`, JSON.stringify(requestBody, null, 2));
-      console.log(`[AI Service] Using API key: ${apiKey ? 'Present' : 'Missing'}`);
+      // console.log(`[AI Service] Request body:`, JSON.stringify(requestBody, null, 2));
+      // console.log(`[AI Service] Using API key: ${apiKey ? 'Present' : 'Missing'}`);
       
       response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -301,11 +301,11 @@ export class AIService {
       
       clearTimeout(timeoutId);
     } catch (fetchError: any) {
-      console.error(`[AI Service] Network error for ${modelId}:`, fetchError);
+      // console.error(`[AI Service] Network error for ${modelId}:`, fetchError);
       
       // Check if it's a DNS resolution issue
       if (fetchError.cause?.code === 'ENOTFOUND' || fetchError.code === 'ENOTFOUND') {
-        console.error('[AI Service] DNS resolution failed for openrouter.ai');
+        // console.error('[AI Service] DNS resolution failed for openrouter.ai');
         // Try with explicit DNS resolution or IP address as fallback
         throw this.createAIServiceError(
           new Error(`Network error: Unable to resolve OpenRouter API. ${fetchError.message}`),
@@ -332,7 +332,7 @@ export class AIService {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[AI Service] OpenRouter API error for ${modelId}:`, errorText);
+      // console.error(`[AI Service] OpenRouter API error for ${modelId}:`, errorText);
       throw this.createAIServiceError(
         new Error(`${response.status}: ${errorText}`),
         'MODEL_UNAVAILABLE',
@@ -405,7 +405,7 @@ export class AIService {
     
     // If the response is empty after cleaning, provide a fallback
     if (!cleaned || cleaned.length < 10) {
-      console.warn(`[AI Service] Response was empty after cleaning for ${modelId}`);
+      // console.warn(`[AI Service] Response was empty after cleaning for ${modelId}`);
       return 'I understand your question. Based on your TDEE data, I recommend focusing on maintaining consistent nutrition and activity levels. Please ask a specific question for more detailed advice.';
     }
     
@@ -424,18 +424,18 @@ export class AIService {
     for (const modelId of fallbackModels) {
       const health = this.modelHealth.get(modelId);
       if (health && !health.isHealthy) {
-        console.log(`[AI Service] Skipping unhealthy fallback model: ${modelId}`);
+        // console.log(`[AI Service] Skipping unhealthy fallback model: ${modelId}`);
         continue;
       }
 
       try {
-        console.log(`[AI Service] Attempting fallback to ${modelId}`);
+        // console.log(`[AI Service] Attempting fallback to ${modelId}`);
         const response = await this.makeModelRequest(request, modelId, Date.now());
         response.usedFallback = true;
         response.warnings = [`Used fallback model ${modelId} due to primary model failure`];
         return response;
       } catch (error) {
-        console.error(`[AI Service] Fallback model ${modelId} also failed:`, error);
+        // console.error(`[AI Service] Fallback model ${modelId} also failed:`, error);
         this.updateModelHealth(modelId, false);
         continue;
       }
@@ -595,7 +595,7 @@ export class AIService {
       // Mark as unhealthy after 3 consecutive failures
       if (health.consecutiveFailures >= 3) {
         health.isHealthy = false;
-        console.warn(`[AI Service] Model ${modelId} marked as unhealthy`);
+        // console.warn(`[AI Service] Model ${modelId} marked as unhealthy`);
       }
     }
 

@@ -96,7 +96,7 @@ export default function NotificationTester() {
       setTimeout(() => setTestStatus(''), 3000);
     } catch (error) {
       setTestStatus('❌ Failed to send notification');
-      console.error(error);
+      // console.error(error);
     }
   };
 

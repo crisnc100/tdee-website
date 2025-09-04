@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         );
     }
   } catch (error) {
-    console.error('Error in preferences API:', error);
+    // console.error('Error in preferences API:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         );
     }
   } catch (error) {
-    console.error('Error in preferences POST API:', error);
+    // console.error('Error in preferences POST API:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

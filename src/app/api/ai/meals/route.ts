@@ -860,7 +860,7 @@ export async function POST(request: NextRequest) {
           optimizationScore: modelDecision.optimizationScore
         };
 
-        console.log(`[Meals API] Selected model: ${modelDecision.selectedModel} for meal planning`);
+        // console.log(`[Meals API] Selected model: ${modelDecision.selectedModel} for meal planning`);
 
         const aiResponse = await getMealSuggestions(
           targetCalories,
@@ -878,7 +878,7 @@ export async function POST(request: NextRequest) {
           optimization: optimizationData
         };
       } catch (aiError) {
-        console.error('AI meal suggestions error:', aiError);
+        // console.error('AI meal suggestions error:', aiError);
         // Continue with database suggestions only
         aiMeta = {
           error: 'AI meal suggestions temporarily unavailable',
@@ -896,7 +896,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error getting meal suggestions:', error);
+    // console.error('Error getting meal suggestions:', error);
     return NextResponse.json(
       { error: 'Failed to get meal suggestions' },
       { status: 500 }

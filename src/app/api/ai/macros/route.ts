@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
           optimizationScore: modelDecision.optimizationScore
         };
 
-        console.log(`[Macros API] Selected model: ${modelDecision.selectedModel} for macro analysis`);
+        // console.log(`[Macros API] Selected model: ${modelDecision.selectedModel} for macro analysis`);
 
         const aiResponse = await getMacroAnalysis(calories, goal, userData, aiPreferences);
         aiInsights = parseAIInsights(aiResponse.content);
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
           optimization: optimizationData
         };
       } catch (aiError) {
-        console.error('AI macro analysis error:', aiError);
+        // console.error('AI macro analysis error:', aiError);
         // Continue with rule-based insights only
         aiAnalysisMeta = {
           error: 'AI analysis temporarily unavailable',
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error calculating macros:', error);
+    // console.error('Error calculating macros:', error);
     return NextResponse.json(
       { error: 'Failed to calculate macros' },
       { status: 500 }
