@@ -173,7 +173,7 @@ export default function SuccessStories({ userData }: { userData?: UserData }) {
       {userData && relevantStory !== currentStory && currentIndex === 0 && (
         <div className="mb-3 p-2 bg-amber-100 rounded-lg border border-amber-300">
           <p className="text-xs text-amber-800">
-            💡 We found a story similar to your profile! Check out {relevantStory.profile.split(',')[0]}'s journey.
+            💡 We found a story similar to your profile! Check out {relevantStory.profile.split(',')[0]}&apos;s journey.
           </p>
         </div>
       )}

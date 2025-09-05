@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
-  Calculator, TrendingUp, Brain, Target, ChefHat, Camera,
+  Calculator, TrendingUp, Brain, Target, ChefHat,
   CheckCircle, ArrowRight, Star, Users, Zap, Shield, 
-  BarChart3, Sparkles, Clock, Award
+  BarChart3, Sparkles, Clock
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -163,7 +163,7 @@ export default function LandingPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why We're Different
+              Why We&apos;re Different
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               See how our calculator compares to popular alternatives
@@ -350,7 +350,7 @@ export default function LandingPage() {
               Ready to Transform Your Fitness Journey?
             </h2>
             <p className="text-xl text-white/90 mb-8">
-              Join thousands who've discovered their true calorie needs
+              Join thousands who&apos;ve discovered their true calorie needs
             </p>
             <Link href="/calculator">
               <motion.button

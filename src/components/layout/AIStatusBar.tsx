@@ -6,7 +6,6 @@ import {
   Brain,
   Sparkles,
   TrendingUp,
-  Clock,
   DollarSign,
   Zap,
   ChevronDown,
@@ -16,7 +15,7 @@ import {
   CheckCircle,
   Wifi
 } from 'lucide-react';
-import { AI_MODELS, AIModelId } from '@/types/ai';
+import { AI_MODELS } from '@/types/ai';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 
 interface AIStatusBarProps {
@@ -33,7 +32,6 @@ interface AIStatusBarProps {
  */
 export default function AIStatusBar({ 
   className = '',
-  showDetails = false,
   onToggleDetails
 }: AIStatusBarProps) {
   const { preferences, getModelUsageStats, getCostTracking } = useUserPreferences();
