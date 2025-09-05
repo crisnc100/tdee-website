@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MacroSplit } from '@/types/calculator';
+import { calculateMacros } from '@/lib/calculator';
 import { 
   Calculator, 
   Loader2, 
@@ -74,58 +75,57 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
     setIsManualCalories(true); // Mark as manually set
   };
 
-  const handleCalculate = async () => {
+  const handleCalculate = () => {
     setLoading(true);
-    const startTime = Date.now();
     
-    try {
-      const response = await fetch('/api/ai/macros', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          calories: targetCalories, 
-          goal, 
-          userData,
-          userPreferences: preferences
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMacros(data.macros);
-        setRecommended(data.recommended);
-        setMessage(data.message);
-        setInsights(data.insights || []);
-        
-        // Track AI performance metrics
-        const responseTime = Date.now() - startTime;
-        const performance = {
-          modelUsed: data.modelUsed,
-          responseTime,
-          estimatedCost: data.estimatedCost || 0,
-          confidence: data.confidence || 0.8,
-          usedFallback: data.usedFallback || false
-        };
-        setAiPerformance(performance);
-        
-        // Track usage for analytics
-        if (data.modelUsed) {
-          trackModelUsage(data.modelUsed, responseTime, data.estimatedCost || 0, true);
-        }
-      }
-    } catch (error) {
-      // console.error('Failed to calculate macros:', error);
-      
-      // Track failed attempt
-      const responseTime = Date.now() - startTime;
-      setAiPerformance({
-        responseTime,
-        usedFallback: true,
-        confidence: 0.3
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Calculate macros locally - no API call needed!
+    const macroTypes: MacroSplit['type'][] = ['balanced', 'low_carb', 'high_carb', 'keto'];
+    const calculatedMacros = macroTypes.map(type => calculateMacros(targetCalories, type));
+    
+    // Smart recommendation - always balanced, protein is key!
+    let recommendedIndex = 0; // Always recommend balanced
+    
+    // Generate personalized message - concise
+    const messages = {
+      lose: `Balanced macros with ${calculatedMacros[0].protein.grams}g protein to preserve muscle while losing fat.`,
+      maintain: `Balanced approach with ${calculatedMacros[0].protein.grams}g protein for optimal body composition.`,
+      gain: `Balanced macros with ${calculatedMacros[0].protein.grams}g protein to support muscle growth.`
+    };
+    
+    // Generate insights based on goal - focus on protein
+    const insightsList = {
+      lose: [
+        'Aim for 0.8-1g protein per pound bodyweight',
+        'Keep carbs moderate for energy',
+        'Focus on whole foods for satiety'
+      ],
+      maintain: [
+        'Maintain 0.8g protein per pound minimum',
+        'Balance carbs and fats by preference',
+        'Stay consistent with tracking'
+      ],
+      gain: [
+        'Target 1g protein per pound bodyweight',
+        'Higher carbs fuel training',
+        'Don\'t drop fats below 20%'
+      ]
+    };
+    
+    setMacros(calculatedMacros);
+    setRecommended(recommendedIndex);
+    setMessage(messages[goal]);
+    setInsights(insightsList[goal]);
+    
+    // Set dummy AI performance for UI compatibility
+    setAiPerformance({
+      modelUsed: 'local' as AIModelId,
+      responseTime: 10,
+      estimatedCost: 0,
+      confidence: 1,
+      usedFallback: false
+    });
+    
+    setLoading(false);
   };
 
   const goalIcons = {
@@ -149,51 +149,7 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
             Macro Calculator
           </h3>
           
-          {/* AI Performance Indicators */}
-          {aiPerformance.modelUsed && (
-            <div className="flex items-center gap-2">
-              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                aiPerformance.usedFallback 
-                  ? 'bg-orange-100 text-orange-700'
-                  : AI_MODELS[aiPerformance.modelUsed]?.pricing.isFree
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-purple-100 text-purple-700'
-              }`}>
-                {aiPerformance.usedFallback ? (
-                  <AlertCircle className="w-3 h-3" />
-                ) : AI_MODELS[aiPerformance.modelUsed]?.pricing.isFree ? (
-                  <Sparkles className="w-3 h-3" />
-                ) : (
-                  <Zap className="w-3 h-3" />
-                )}
-                {aiPerformance.usedFallback 
-                  ? 'Fallback Mode'
-                  : AI_MODELS[aiPerformance.modelUsed]?.name
-                }
-              </div>
-              
-              {aiPerformance.responseTime && (
-                <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                  <Clock className="w-3 h-3" />
-                  {(aiPerformance.responseTime / 1000).toFixed(1)}s
-                </div>
-              )}
-              
-              {preferences.showCostEstimates && aiPerformance.estimatedCost !== undefined && (
-                <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                  <DollarSign className="w-3 h-3" />
-                  {aiPerformance.estimatedCost === 0 ? 'Free' : `$${aiPerformance.estimatedCost.toFixed(4)}`}
-                </div>
-              )}
-              
-              {aiPerformance.confidence && (
-                <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                  <Star className="w-3 h-3" />
-                  {Math.round(aiPerformance.confidence * 100)}%
-                </div>
-              )}
-            </div>
-          )}
+         
         </div>
         
         <p className="text-sm text-gray-600">
@@ -284,12 +240,7 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
                 <Brain className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-primary-800">{message}</p>
-                  {aiPerformance.modelUsed && !aiPerformance.usedFallback && (
-                    <p className="text-xs text-primary-600 mt-1">
-                      Generated by {AI_MODELS[aiPerformance.modelUsed]?.name} 
-                      {aiPerformance.responseTime && ` in ${(aiPerformance.responseTime / 1000).toFixed(1)}s`}
-                    </p>
-                  )}
+               
                 </div>
               </div>
             </div>
@@ -324,30 +275,31 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
                   <div className="relative">
                     <div className="flex items-center justify-center gap-1">
                       <p className="text-lg font-bold text-gray-900">{macro.protein.grams}g</p>
-                      <button
-                        onClick={() => setShowProteinInfo(!showProteinInfo)}
-                        className="text-gray-400 hover:text-orange-600 transition-colors"
-                      >
-                        <Info className="w-3 h-3" />
-                      </button>
+                      {index === 0 && (
+                        <button
+                          onClick={() => setShowProteinInfo(!showProteinInfo)}
+                          className="text-gray-400 hover:text-orange-600 transition-colors"
+                        >
+                          <Info className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                     <p className="text-xs text-gray-600">Protein ({macro.protein.percentage}%)</p>
                     
-                    {/* Protein Info Tooltip */}
-                    {showProteinInfo && (
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-72 p-4 bg-white rounded-lg shadow-xl border border-gray-200 z-10 text-left">
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-white"></div>
-                        <h5 className="font-semibold text-gray-900 mb-2">Optimal Protein Intake</h5>
-                        <div className="space-y-2 text-xs text-gray-700">
-                          <p><strong>Recent Research:</strong> 0.75g per lb bodyweight is optimal for muscle protein synthesis.</p>
-                          <p><strong>Traditional:</strong> 1g per lb provides extra satiety benefits.</p>
-                          <p><strong>For Weight Loss:</strong> Higher protein (1g/lb) helps preserve muscle and increases fullness.</p>
-                          <p><strong>For Weight Gain:</strong> Lower protein (0.75g/lb) prevents excessive fullness.</p>
-                          <div className="mt-2 pt-2 border-t border-gray-200">
-                            <p className="text-xs text-gray-500">
-                              <strong>Sources:</strong> Recent meta-analyses suggest 0.75g/lb is sufficient for 99% of people.
-                            </p>
-                          </div>
+                    {/* Protein Info Tooltip - Only for first macro */}
+                    {showProteinInfo && index === 0 && (
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-white rounded-lg shadow-xl border border-gray-200 z-10 text-left">
+                        <button 
+                          onClick={() => setShowProteinInfo(false)}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                        >
+                          ×
+                        </button>
+                        <h5 className="font-semibold text-gray-900 mb-2 text-sm">Protein Guidelines</h5>
+                        <div className="space-y-1 text-xs text-gray-700">
+                          <p>• <strong>Minimum:</strong> 0.8g per lb bodyweight</p>
+                          <p>• <strong>Optimal:</strong> 1g per lb for satiety</p>
+                          <p>• <strong>Weight Loss:</strong> Higher protein preserves muscle</p>
                         </div>
                       </div>
                     )}
@@ -365,51 +317,6 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
             ))}
           </div>
 
-          {/* AI Insights */}
-          {insights.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"
-            >
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Brain className="w-4 h-4 text-orange-600" />
-                AI-Powered Insights
-                {aiPerformance.confidence && (
-                  <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded-full">
-                    {Math.round(aiPerformance.confidence * 100)}% confidence
-                  </span>
-                )}
-              </h4>
-              <div className="space-y-2">
-                {insights.map((insight, index) => (
-                  <motion.p
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 * index }}
-                    className="text-sm text-gray-700 flex items-start gap-2"
-                  >
-                    <span className="text-orange-600 mt-0.5">•</span>
-                    <span>{insight}</span>
-                  </motion.p>
-                ))}
-              </div>
-              
-              {/* Performance Footer */}
-              {aiPerformance.modelUsed && (
-                <div className="mt-3 pt-3 border-t border-orange-200">
-                  <p className="text-xs text-orange-700 flex items-center gap-2">
-                    <Sparkles className="w-3 h-3" />
-                    Powered by {aiPerformance.usedFallback ? 'Smart Analysis' : AI_MODELS[aiPerformance.modelUsed]?.name}
-                    {!aiPerformance.usedFallback && aiPerformance.estimatedCost === 0 && ' (Free)'}
-                    {aiPerformance.responseTime && ` • Generated in ${(aiPerformance.responseTime / 1000).toFixed(1)}s`}
-                  </p>
-                </div>
-              )}
-            </motion.div>
-          )}
         </motion.div>
       )}
     </div>

@@ -350,7 +350,7 @@ export default function LandingPage() {
               Ready to Transform Your Fitness Journey?
             </h2>
             <p className="text-xl text-white/90 mb-8">
-              Join thousands who&apos;ve discovered their true calorie needs
+              Take control of your fitness with precise calorie calculations
             </p>
             <Link href="/calculator">
               <motion.button

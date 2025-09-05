@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { MealSuggestion } from '@/types/calculator';
+import { filterMeals } from '@/lib/mealDatabase';
 import { 
   ChefHat, 
   Clock, 
@@ -62,58 +63,26 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
     return mealCalorieMap[mealType][portionSize];
   };
 
-  const handleGetSuggestions = async () => {
+  const handleGetSuggestions = () => {
     setLoading(true);
-    const startTime = Date.now();
     
-    try {
-      const targetCalories = getTargetCalories();
-      const response = await fetch('/api/ai/meals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          targetCalories, 
-          goal,
-          mealType,
-          dietaryPreferences: [],
-          userPreferences: preferences
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data.suggestions);
-        setMessage(data.message);
-        
-        // Track AI performance and cost metrics
-        const responseTime = Date.now() - startTime;
-        const metrics = {
-          modelUsed: data.modelUsed,
-          responseTime,
-          estimatedCost: data.estimatedCost || 0,
-          usedFallback: data.usedFallback || false,
-          totalSavings: data.totalSavings || 0
-        };
-        setAiMetrics(metrics);
-        
-        // Track usage for cost analytics
-        if (data.modelUsed) {
-          trackModelUsage(data.modelUsed, responseTime, data.estimatedCost || 0, true);
-        }
-      }
-    } catch (error) {
-      // console.error('Failed to get meal suggestions:', error);
-      
-      // Track failed attempt
-      const responseTime = Date.now() - startTime;
-      setAiMetrics({
-        responseTime,
-        usedFallback: true,
-        estimatedCost: 0
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Get meals locally - no API call needed!
+    const targetCalories = getTargetCalories();
+    const filteredMeals = filterMeals(targetCalories, goal, mealType);
+    
+    setSuggestions(filteredMeals);
+    setMessage(`Found ${filteredMeals.length} meal suggestions for ${targetCalories} calories`);
+    
+    // Set dummy AI metrics for UI compatibility
+    setAiMetrics({
+      modelUsed: 'local' as any,
+      responseTime: 10,
+      estimatedCost: 0,
+      usedFallback: false,
+      totalSavings: 0
+    });
+    
+    setLoading(false);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -133,69 +102,11 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
             <ChefHat className="w-5 h-5" />
             Meal Planner
           </h3>
-          
-          {/* Cost Transparency & Performance Indicators */}
-          {aiMetrics.modelUsed && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                aiMetrics.usedFallback 
-                  ? 'bg-orange-100 text-orange-700'
-                  : AI_MODELS[aiMetrics.modelUsed]?.pricing.isFree
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-purple-100 text-purple-700'
-              }`}>
-                {aiMetrics.usedFallback ? (
-                  <AlertCircle className="w-3 h-3" />
-                ) : AI_MODELS[aiMetrics.modelUsed]?.pricing.isFree ? (
-                  <Sparkles className="w-3 h-3" />
-                ) : (
-                  <Zap className="w-3 h-3" />
-                )}
-                {aiMetrics.usedFallback 
-                  ? 'Smart Fallback'
-                  : AI_MODELS[aiMetrics.modelUsed]?.name
-                }
-              </div>
-              
-              {/* Cost Transparency */}
-              {preferences.showCostEstimates && (
-                <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                  <DollarSign className="w-3 h-3" />
-                  {(aiMetrics.estimatedCost || 0) === 0 ? 'Free' : `$${(aiMetrics.estimatedCost || 0).toFixed(4)}`}
-                  {aiMetrics.totalSavings && aiMetrics.totalSavings > 0 && (
-                    <span className="ml-1 font-medium">
-                      (Saved ${aiMetrics.totalSavings.toFixed(4)})
-                    </span>
-                  )}
-                </div>
-              )}
-              
-              {aiMetrics.responseTime && (
-                <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                  <Clock className="w-3 h-3" />
-                  {(aiMetrics.responseTime / 1000).toFixed(1)}s
-                </div>
-              )}
-            </div>
-          )}
         </div>
         
         <p className="text-sm text-gray-600">
           Meal planning with custom recipes and recommendations!
         </p>
-        
-        {/* Cost Savings Banner */}
-        {preferences.showCostEstimates && aiMetrics.totalSavings && aiMetrics.totalSavings > 0 && (
-          <div className="mt-3 p-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-            <div className="flex items-center justify-center gap-2 text-sm text-green-800">
-              <TrendingUp className="w-4 h-4" />
-              <span className="font-medium">
-                Smart routing saved you ${aiMetrics.totalSavings.toFixed(4)} this request
-              </span>
-              <Shield className="w-4 h-4" />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Input Section */}
@@ -359,29 +270,7 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
                 <div className="flex-1">
                   <p className="text-sm text-orange-800">{message}</p>
                   
-                  {/* AI Attribution */}
-                  {aiMetrics.modelUsed && !aiMetrics.usedFallback && (
-                    <div className="flex items-center gap-3 mt-2 text-xs text-orange-700">
-                      <span className="flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        Generated by {AI_MODELS[aiMetrics.modelUsed]?.name}
-                      </span>
-                      
-                      {aiMetrics.responseTime && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {(aiMetrics.responseTime / 1000).toFixed(1)}s response
-                        </span>
-                      )}
-                      
-                      {preferences.showCostEstimates && (
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-3 h-3" />
-                          {(aiMetrics.estimatedCost || 0) === 0 ? 'Free tier' : `$${(aiMetrics.estimatedCost || 0).toFixed(4)} cost`}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                 
                 </div>
               </div>
             </div>
@@ -396,19 +285,7 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
                 transition={{ delay: index * 0.1 }}
                 className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative"
               >
-                {/* AI Quality Indicator */}
-                {!aiMetrics.usedFallback && aiMetrics.modelUsed && (
-                  <div className="absolute top-3 right-3 z-10">
-                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                      AI_MODELS[aiMetrics.modelUsed]?.pricing.isFree
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-purple-100 text-purple-700'
-                    }`}>
-                      <Brain className="w-3 h-3" />
-                      AI
-                    </div>
-                  </div>
-                )}
+               
                 <div className="p-5">
                   {/* Header with Image and Title */}
                   <div className="flex gap-4 mb-4">
@@ -492,39 +369,6 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
                     </ol>
                   </div>
                 </div>
-                
-                {/* Performance Footer for First Meal */}
-                {index === 0 && aiMetrics.modelUsed && (
-                  <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-xs text-gray-600">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          {aiMetrics.usedFallback ? 'Smart Analysis' : `Powered by ${AI_MODELS[aiMetrics.modelUsed]?.name}`}
-                        </span>
-                        
-                        {aiMetrics.responseTime && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {(aiMetrics.responseTime / 1000).toFixed(1)}s
-                          </span>
-                        )}
-                      </div>
-                      
-                      {preferences.showCostEstimates && (
-                        <div className="flex items-center gap-1 text-green-600">
-                          <DollarSign className="w-3 h-3" />
-                          {(aiMetrics.estimatedCost || 0) === 0 ? 'Free' : `$${(aiMetrics.estimatedCost || 0).toFixed(4)}`}
-                          {aiMetrics.totalSavings && aiMetrics.totalSavings > 0 && (
-                            <span className="text-green-700 font-medium ml-1">
-                              (Saved ${aiMetrics.totalSavings.toFixed(4)})
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </motion.div>
             ))}
           </div>

@@ -194,7 +194,7 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
       <CoachingModal 
         isOpen={isOpen}
         onClose={closeModal}
-        source={source}
+        source={source as "footer" | "results" | "other"}
       />
     </div>
   );

@@ -158,7 +158,7 @@ This uses a 7-component formula that's way more precise than basic calculators. 
         className="p-4 bg-primary-50 rounded-lg border border-primary-200 text-center"
       >
         <p className="text-sm text-primary-800">
-          <span className="font-semibold">Join thousands</span> who've discovered more accurate TDEE calculations!
+          <span className="font-semibold">Help others discover</span> their perfect calorie intake for real results!
         </p>
         <p className="text-xs text-primary-600 mt-1">
           Your shared link expires in 30 days

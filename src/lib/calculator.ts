@@ -282,9 +282,9 @@ export function calculateMacros(calories: number, type: MacroSplit['type']): Mac
 
   switch (type) {
     case 'balanced':
-      proteinPercentage = 25;
-      carbsPercentage = 45;
-      fatsPercentage = 30;
+      proteinPercentage = 35;
+      carbsPercentage = 40;
+      fatsPercentage = 25;
       break;
     case 'low_carb':
       proteinPercentage = 30;

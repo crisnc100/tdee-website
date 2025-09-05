@@ -81,7 +81,7 @@ export default function UserCounter() {
         </div>
         
         <p className="mt-3 text-sm text-gray-700 font-medium">
-          Join thousands who trust our advanced formula for accurate TDEE calculations
+          Join the community and get accurate calorie calculations for real results!
         </p>
       </motion.div>
     </div>
