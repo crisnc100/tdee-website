@@ -208,7 +208,7 @@ export default function QuickTips({ userData }: { userData: UserData }) {
         
         <button
           onClick={rotateTip}
-          className="p-1.5 hover:bg-blue-100 rounded-lg transition-all group"
+          className="p-1.5 hover:bg-blue-100 rounded-lg transition-all group cursor-pointer"
           aria-label="Next tip"
         >
           <RefreshCw className={`w-4 h-4 text-blue-600 transition-transform ${

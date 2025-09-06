@@ -704,3 +704,79 @@ export function filterMeals(
     image: getMealImagePath(meal.name, goal || 'maintain')
   }));
 }
+
+// Simple calorie-first filtering with optional flags
+export function filterMealsByMax(options: {
+  maxCalories: number;
+  snacksOnly?: boolean;
+  quick?: boolean; // prepTime <= 15
+  easyOnly?: boolean; // difficulty === 'easy'
+  highProtein?: boolean; // protein density threshold
+  limit?: number;
+}): MealSuggestion[] {
+  const { maxCalories, snacksOnly, quick, easyOnly, highProtein, limit = 12 } = options;
+
+  let candidates = [...mealDatabase];
+
+  if (snacksOnly) {
+    const snackNames = new Set(mealCategories.snack);
+    candidates = candidates.filter((m) => snackNames.has(m.name));
+  }
+
+  // Base calorie cap
+  let filtered = candidates.filter((m) => m.calories <= maxCalories);
+
+  // If too few, relax cap slightly to keep variety
+  if (filtered.length < 8) {
+    filtered = candidates.filter((m) => m.calories <= maxCalories + 100);
+  }
+
+  // Optional filters
+  if (quick) filtered = filtered.filter((m) => m.prepTime <= 15);
+  if (easyOnly) filtered = filtered.filter((m) => m.difficulty === 'easy');
+  if (highProtein) filtered = filtered.filter((m) => (m.protein / Math.max(1, m.calories)) >= 0.08);
+
+  // Sort: closest to max (higher calories first within cap), then protein density, then quicker prep
+  filtered.sort((a, b) => {
+    const aGap = maxCalories - a.calories;
+    const bGap = maxCalories - b.calories;
+    if (aGap !== bGap) return aGap - bGap; // smaller gap first
+    const aPD = a.protein / Math.max(1, a.calories);
+    const bPD = b.protein / Math.max(1, b.calories);
+    if (bPD !== aPD) return bPD - aPD;
+    return a.prepTime - b.prepTime;
+  });
+
+  return filtered.slice(0, Math.min(limit, filtered.length)).map((meal) => ({
+    ...meal,
+    image: getMealImagePath(meal.name, 'maintain')
+  }));
+}
+
+// Calorie range filtering that can cover the whole DB when needed
+export function filterMealsByRange(options: {
+  minCalories: number;
+  maxCalories: number;
+  limit?: number; // optional; if omitted, return all in range
+}): MealSuggestion[] {
+  const { minCalories, maxCalories, limit } = options;
+
+  // Inclusive range
+  let filtered = mealDatabase.filter((m) => m.calories >= minCalories && m.calories <= maxCalories);
+
+  // Sort primarily by calories ascending, then by protein density, then quicker prep
+  filtered.sort((a, b) => {
+    if (a.calories !== b.calories) return a.calories - b.calories;
+    const aPD = a.protein / Math.max(1, a.calories);
+    const bPD = b.protein / Math.max(1, b.calories);
+    if (bPD !== aPD) return bPD - aPD;
+    return a.prepTime - b.prepTime;
+  });
+
+  const mapped = filtered.map((meal) => ({
+    ...meal,
+    image: getMealImagePath(meal.name, 'maintain')
+  }));
+
+  return typeof limit === 'number' ? mapped.slice(0, Math.min(limit, mapped.length)) : mapped;
+}

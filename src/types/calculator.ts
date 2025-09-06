@@ -79,7 +79,7 @@ export interface ComparisonData {
 }
 
 export interface MacroSplit {
-  type: 'balanced' | 'low_carb' | 'high_carb' | 'keto';
+  type: 'balanced' | 'low_carb' | 'high_carb' | 'keto' | 'custom';
   calories: number;
   protein: { grams: number; percentage: number };
   carbs: { grams: number; percentage: number };

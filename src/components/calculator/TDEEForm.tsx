@@ -63,6 +63,35 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
   const [showBodyFatGuide, setShowBodyFatGuide] = useState(false);
   const [selectedBodyFatImage, setSelectedBodyFatImage] = useState<{range: string, image: string, description: string} | null>(null);
 
+  // Track field interaction to avoid showing errors prematurely
+  const [touched, setTouched] = useState({
+    age: false,
+    heightCm: false,
+    heightFeet: false,
+    heightInches: false,
+    weight: false,
+    steps: false,
+    bodyFat: false,
+  });
+  const [submitted, setSubmitted] = useState(false);
+
+  // Inline validation helpers
+  const invalidAge = userData.age < 15 || userData.age > 80;
+  const invalidHeightMetric = userData.units === 'metric' && (userData.height < 120 || userData.height > 220);
+  const invalidHeightFeet = userData.units === 'imperial' && ((userData.heightFeet ?? 0) < 4 || (userData.heightFeet ?? 0) > 7);
+  const invalidHeightInches = userData.units === 'imperial' && ((userData.heightInches ?? 0) < 0 || (userData.heightInches ?? 0) > 11);
+  const invalidWeightMetric = userData.units === 'metric' && (userData.weight < 30 || userData.weight > 200);
+  const invalidWeightImperial = userData.units === 'imperial' && (userData.weight < 66 || userData.weight > 440);
+  const invalidSteps = userData.steps < 1000 || userData.steps > 30000;
+
+  // Show errors only if field was interacted with or after submit attempt
+  const showAgeError = (touched.age || submitted) && invalidAge;
+  const showHeightMetricError = (touched.heightCm || submitted) && invalidHeightMetric;
+  const showHeightFeetError = (touched.heightFeet || submitted) && invalidHeightFeet;
+  const showHeightInchesError = (touched.heightInches || submitted) && invalidHeightInches;
+  const showWeightError = (touched.weight || submitted) && ((userData.units === 'metric' ? invalidWeightMetric : invalidWeightImperial));
+  const showStepsError = (touched.steps || submitted) && invalidSteps;
+
   const handleInputChange = (field: keyof UserData, value: any) => {
     onChange({ ...userData, [field]: value });
   };
@@ -145,6 +174,14 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
+    const heightInvalid = userData.units === 'metric' ? invalidHeightMetric : (invalidHeightFeet || invalidHeightInches);
+    const weightInvalid = userData.units === 'metric' ? invalidWeightMetric : invalidWeightImperial;
+    const bodyFatInvalid = userData.bodyFat !== undefined && (userData.bodyFat < 5 || userData.bodyFat > 50);
+    const hasInvalid = invalidAge || heightInvalid || weightInvalid || invalidSteps || bodyFatInvalid;
+    if (hasInvalid) {
+      return; // Show errors; do not calculate
+    }
     onCalculate();
   };
 
@@ -193,28 +230,37 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
         {/* 2. Basic Demographics */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
               Age
             </label>
             <input
               type="number"
               value={userData.age || ''}
               onChange={(e) => handleInputChange('age', e.target.value ? parseInt(e.target.value) : 0)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              id="age"
+              inputMode="numeric"
+              onBlur={() => setTouched((t) => ({ ...t, age: true }))}
+              aria-invalid={showAgeError}
+              aria-describedby={showAgeError ? 'age-error' : undefined}
+              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showAgeError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
               min="15"
               max="80"
               placeholder="e.g., 30"
               required
             />
+            {showAgeError && (
+              <p id="age-error" className="mt-1 text-xs text-red-600">Age must be between 15–80.</p>
+            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
               Gender
             </label>
             <select
               value={userData.gender}
               onChange={(e) => handleInputChange('gender', e.target.value)}
+              id="gender"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
               <option value="male">Male</option>
@@ -225,7 +271,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={userData.units === 'metric' ? 'height-cm' : 'height-feet'}>
               Height {userData.units === 'metric' ? '(cm)' : '(feet & inches)'}
             </label>
             {userData.units === 'metric' ? (
@@ -233,7 +279,12 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                 type="number"
                 value={userData.height || ''}
                 onChange={(e) => handleInputChange('height', e.target.value ? parseInt(e.target.value) : 0)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                id="height-cm"
+                inputMode="numeric"
+                onBlur={() => setTouched((t) => ({ ...t, heightCm: true }))}
+                aria-invalid={showHeightMetricError}
+                aria-describedby={showHeightMetricError ? 'height-error' : undefined}
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightMetricError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
                 min="120"
                 max="220"
                 step="1"
@@ -250,13 +301,21 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                       const feet = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
                       handleHeightChange(feet, userData.heightInches || 0);
                     }}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                    id="height-feet"
+                    inputMode="numeric"
+                    onBlur={() => setTouched((t) => ({ ...t, heightFeet: true }))}
+                    aria-invalid={showHeightFeetError}
+                    aria-describedby={showHeightFeetError ? 'height-feet-error' : undefined}
+                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightFeetError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
                     min="4"
                     max="7"
                     placeholder="5"
                     required
                   />
                   <label className="block text-xs text-gray-500 mt-1 text-center">feet</label>
+                  {showHeightFeetError && (
+                    <p id="height-feet-error" className="mt-1 text-xs text-red-600 text-center">Feet must be between 4–7.</p>
+                  )}
                 </div>
                 <div className="flex-1">
                   <input
@@ -266,33 +325,54 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                       const inches = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
                       handleHeightChange(userData.heightFeet || 0, inches);
                     }}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                    id="height-inches"
+                    inputMode="numeric"
+                    onBlur={() => setTouched((t) => ({ ...t, heightInches: true }))}
+                    aria-invalid={showHeightInchesError}
+                    aria-describedby={showHeightInchesError ? 'height-inches-error' : undefined}
+                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightInchesError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
                     min="0"
                     max="11"
                     placeholder="9"
                     required
                   />
                   <label className="block text-xs text-gray-500 mt-1 text-center">inches</label>
+                  {showHeightInchesError && (
+                    <p id="height-inches-error" className="mt-1 text-xs text-red-600 text-center">Inches must be 0–11.</p>
+                  )}
                 </div>
               </div>
+            )}
+            {(showHeightMetricError) && (
+              <p id="height-error" className="mt-1 text-xs text-red-600">Height must be between 120–220 cm.</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-2">
               Weight ({userData.units === 'metric' ? 'kg' : 'lbs'})
             </label>
             <input
               type="number"
               value={userData.weight || ''}
               onChange={(e) => handleInputChange('weight', e.target.value ? parseFloat(e.target.value) : 0)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              id="weight"
+              inputMode="numeric"
+              onBlur={() => setTouched((t) => ({ ...t, weight: true }))}
+              aria-invalid={showWeightError}
+              aria-describedby={showWeightError ? 'weight-error' : undefined}
+              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showWeightError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
               min={userData.units === 'metric' ? "30" : "66"}
               max={userData.units === 'metric' ? "200" : "440"}
               step="0.1"
               placeholder={userData.units === 'metric' ? "e.g., 70" : "e.g., 154"}
               required
             />
+            {showWeightError && (
+              <p id="weight-error" className="mt-1 text-xs text-red-600">
+                {userData.units === 'metric' ? 'Weight must be between 30–200 kg.' : 'Weight must be between 66–440 lbs.'}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -306,12 +386,13 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="job-activity" className="block text-sm font-medium text-gray-700 mb-2">
               Job Activity Level
             </label>
             <select
               value={userData.jobActivity}
               onChange={(e) => handleInputChange('jobActivity', e.target.value)}
+              id="job-activity"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
               <option value="desk">Desk Job (mostly sitting)</option>
@@ -323,14 +404,19 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="steps" className="block text-sm font-medium text-gray-700 mb-2">
               Daily Steps
             </label>
             <input
               type="number"
               value={userData.steps}
               onChange={(e) => handleInputChange('steps', parseInt(e.target.value))}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              id="steps"
+              inputMode="numeric"
+              onBlur={() => setTouched((t) => ({ ...t, steps: true }))}
+              aria-invalid={showStepsError}
+              aria-describedby={showStepsError ? 'steps-error' : undefined}
+              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showStepsError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
               min="1000"
               max="30000"
               required
@@ -338,6 +424,9 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             <p className="text-xs text-gray-500 mt-1">
               Average daily steps from phone/watch
             </p>
+            {showStepsError && (
+              <p id="steps-error" className="mt-1 text-xs text-red-600">Steps must be between 1,000–30,000.</p>
+            )}
           </div>
         </div>
       </div>
@@ -385,12 +474,13 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
         {/* Simple Exercise Input */}
         {userData.calculatorMode === 'simple' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="simple-exercise-level" className="block text-sm font-medium text-gray-700 mb-2">
               Exercise Level
             </label>
             <select
               value={userData.simpleExerciseLevel || 'none'}
               onChange={(e) => handleInputChange('simpleExerciseLevel', e.target.value)}
+              id="simple-exercise-level"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
               <option value="none">No regular exercise</option>
@@ -421,6 +511,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                       type="button"
                       onClick={() => removeExercise(exercise.id)}
                       className="text-red-500 hover:text-red-700 p-1"
+                      aria-label={`Remove exercise ${index + 1}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -428,10 +519,11 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                   
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                      <label htmlFor={`ex-type-${exercise.id}`} className="block text-xs font-medium text-gray-700 mb-1">Type</label>
                       <select
                         value={exercise.type}
                         onChange={(e) => updateExercise(exercise.id, 'type', e.target.value)}
+                        id={`ex-type-${exercise.id}`}
                         className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
                         <option value="weight_lifting">Weight Lifting</option>
@@ -443,10 +535,11 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                     </div>
                     
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Intensity</label>
+                      <label htmlFor={`ex-intensity-${exercise.id}`} className="block text-xs font-medium text-gray-700 mb-1">Intensity</label>
                       <select
                         value={exercise.intensity}
                         onChange={(e) => updateExercise(exercise.id, 'intensity', e.target.value)}
+                        id={`ex-intensity-${exercise.id}`}
                         className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
                         {intensityDescriptions[exercise.type].map(option => (
@@ -461,27 +554,55 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                     </div>
                     
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Minutes/Session</label>
+                      <label htmlFor={`ex-min-${exercise.id}`} className="block text-xs font-medium text-gray-700 mb-1">Minutes/Session</label>
                       <input
                         type="number"
-                        value={exercise.minutes}
-                        onChange={(e) => updateExercise(exercise.id, 'minutes', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        value={exercise.minutes === 0 ? '' : exercise.minutes}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const numValue = value === '' ? 0 : parseInt(value);
+                          if (!isNaN(numValue) && numValue >= 0) {
+                            updateExercise(exercise.id, 'minutes', numValue);
+                          }
+                        }}
+                        id={`ex-min-${exercise.id}`}
+                        inputMode="numeric"
+                        aria-invalid={exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300)}
+                        aria-describedby={exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) ? `ex-min-err-${exercise.id}` : undefined}
+                        className={`w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:border-transparent ${exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
                         min="5"
                         max="300"
+                        placeholder="60"
                       />
+                      {exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) && (
+                        <p id={`ex-min-err-${exercise.id}`} className="mt-1 text-xs text-red-600">Minutes must be 5–300.</p>
+                      )}
                     </div>
                     
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Days/Week</label>
+                      <label htmlFor={`ex-freq-${exercise.id}`} className="block text-xs font-medium text-gray-700 mb-1">Days/Week</label>
                       <input
                         type="number"
-                        value={exercise.frequency}
-                        onChange={(e) => updateExercise(exercise.id, 'frequency', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        value={exercise.frequency === 0 ? '' : exercise.frequency}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const numValue = value === '' ? 0 : parseInt(value);
+                          if (!isNaN(numValue) && numValue >= 0) {
+                            updateExercise(exercise.id, 'frequency', numValue);
+                          }
+                        }}
+                        id={`ex-freq-${exercise.id}`}
+                        inputMode="numeric"
+                        aria-invalid={exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7)}
+                        aria-describedby={exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) ? `ex-freq-err-${exercise.id}` : undefined}
+                        className={`w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:border-transparent ${exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
                         min="1"
                         max="7"
+                        placeholder="3"
                       />
+                      {exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) && (
+                        <p id={`ex-freq-err-${exercise.id}`} className="mt-1 text-xs text-red-600">Days must be 1–7.</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -529,19 +650,26 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             type="number"
             value={userData.bodyFat || ''}
             onChange={(e) => handleInputChange('bodyFat', e.target.value ? parseFloat(e.target.value) : undefined)}
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+            id="body-fat"
+            inputMode="numeric"
+            aria-invalid={!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50)}
+            aria-describedby={!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) ? 'body-fat-error' : undefined}
+            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
             min="5"
             max="50"
             step="0.1"
             placeholder="e.g., 15"
           />
+          {!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) && (
+            <p id="body-fat-error" className="mt-1 text-xs text-red-600">Body fat must be 5–50% if provided.</p>
+          )}
           
           <div className="mt-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
             <p className="text-sm text-orange-800">
-              <strong>Accuracy boost:</strong> Adding body fat reduces error margin from ±15% to ±10% by enabling the Katch-McArdle formula.
+              <strong>Accuracy boost:</strong> Adding a body fat estimate enables the Katch–McArdle (lean mass) formula, which can improve precision for muscular or lean users.
             </p>
             <p className="text-xs text-orange-600 mt-1">
-              Only add if you have a close estimate from DEXA, BodPod, or calipers. Don't guess - leave empty if unsure.
+              Only add if you have a close estimate from DEXA, BodPod, or calipers. If unsure, leave blank.
             </p>
           </div>
 
@@ -632,6 +760,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                 step="1"
                 value={userData.errorMarginPreference || 7}
                 onChange={(e) => handleInputChange('errorMarginPreference', parseInt(e.target.value))}
+                id="error-margin"
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                 style={{
                   background: `linear-gradient(to right, #f97316 0%, #f97316 ${((userData.errorMarginPreference || 7) - 3) * 11.11}%, #e5e7eb ${((userData.errorMarginPreference || 7) - 3) * 11.11}%, #e5e7eb 100%)`

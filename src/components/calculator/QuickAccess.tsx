@@ -180,12 +180,12 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleViewResults}
-                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-3 rounded-lg font-medium hover:shadow-lg transition-all"
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-3 rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer"
                 >
                   <Calculator className="w-4 h-4" />
                   View Full Results
@@ -196,7 +196,7 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onRecalculate}
-                  className="flex items-center justify-center gap-2 bg-white border-2 border-orange-500 text-orange-600 px-4 py-3 rounded-lg font-medium hover:bg-orange-50 transition-all"
+                  className="flex items-center justify-center gap-2 bg-white border-2 border-orange-500 text-orange-600 px-4 py-3 rounded-lg font-medium hover:bg-orange-50 transition-all cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Recalculate

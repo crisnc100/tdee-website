@@ -37,6 +37,7 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
   const [insights, setInsights] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showProteinInfo, setShowProteinInfo] = useState(false);
+  const [selectedMacroInfo, setSelectedMacroInfo] = useState<string | null>(null);
   
   // AI Performance Indicators
   const [aiPerformance, setAiPerformance] = useState<{
@@ -48,6 +49,35 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
   }>({});
   
   const { preferences, trackModelUsage } = useUserPreferences();
+
+  // Macro type explanations
+  const macroExplanations = {
+    custom: {
+      title: "MyCalorieLog Recommended",
+      description: "Personalized based on your goals, body composition, and activity level",
+      reasoning: "Our smart algorithm considers your specific needs and optimizes protein, carbs, and fats for your individual situation."
+    },
+    balanced: {
+      title: "Balanced",
+      description: "Versatile approach that works for most goals and lifestyles",
+      reasoning: "You prefer a well-rounded diet with adequate protein, moderate carbs for energy, and healthy fats. Great for beginners or those who like variety in their meals."
+    },
+    low_carb: {
+      title: "Low Carb",
+      description: "Higher fats and protein, reduced carbohydrates",
+      reasoning: "You feel better with fewer carbs, prefer sustained energy from fats, and enjoy foods like meat, nuts, oils, and vegetables over grains and fruits."
+    },
+    high_carb: {
+      title: "High Carb", 
+      description: "Emphasizes carbohydrates for high energy demands",
+      reasoning: "You're highly active, love pasta, rice, and fruits, need quick energy for training, and perform well with higher carbohydrate intake."
+    },
+    keto: {
+      title: "Ketogenic",
+      description: "Very low carb, high fat approach for metabolic adaptation",
+      reasoning: "You want to use fats as primary fuel, dislike most carb sources, are willing to be strict with food choices, and prefer the appetite control that comes with ketosis."
+    }
+  };
 
   // Auto-adjust calories when goal changes (unless user manually overrode)
   const handleGoalChange = (newGoal: 'lose' | 'maintain' | 'gain') => {
@@ -78,43 +108,73 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
   const handleCalculate = () => {
     setLoading(true);
     
-    // Calculate macros locally - no API call needed!
-    const macroTypes: MacroSplit['type'][] = ['balanced', 'low_carb', 'high_carb', 'keto'];
-    const calculatedMacros = macroTypes.map(type => calculateMacros(targetCalories, type));
+    // Calculate macros - 4 standard types + 1 custom
+    const macroTypes: MacroSplit['type'][] = ['custom', 'balanced', 'low_carb', 'high_carb', 'keto'];
+    const userDataWithGoal = { ...userData, goal };
+    const calculatedMacros = macroTypes.map(type => calculateMacros(targetCalories, type, userDataWithGoal));
     
-    // Smart recommendation - always balanced, protein is key!
-    let recommendedIndex = 0; // Always recommend balanced
+    // Smart recommendation - recommend custom by default, or match if it's close to a standard
+    let recommendedIndex = 0; // Default to custom (MyCalorieLog recommended)
     
-    // Generate personalized message - concise
-    const messages = {
-      lose: `Balanced macros with ${calculatedMacros[0].protein.grams}g protein to preserve muscle while losing fat.`,
-      maintain: `Balanced approach with ${calculatedMacros[0].protein.grams}g protein for optimal body composition.`,
-      gain: `Balanced macros with ${calculatedMacros[0].protein.grams}g protein to support muscle growth.`
-    };
+    // Check if custom matches any standard type closely (within 3% for each macro)
+    const customMacro = calculatedMacros[0];
+    const standardTypes = calculatedMacros.slice(1);
     
-    // Generate insights based on goal - focus on protein
-    const insightsList = {
-      lose: [
-        'Aim for 0.8-1g protein per pound bodyweight',
-        'Keep carbs moderate for energy',
-        'Focus on whole foods for satiety'
-      ],
-      maintain: [
-        'Maintain 0.8g protein per pound minimum',
-        'Balance carbs and fats by preference',
-        'Stay consistent with tracking'
-      ],
-      gain: [
-        'Target 1g protein per pound bodyweight',
-        'Higher carbs fuel training',
-        'Don\'t drop fats below 20%'
-      ]
-    };
+    for (let i = 0; i < standardTypes.length; i++) {
+      const standard = standardTypes[i];
+      const proteinDiff = Math.abs(customMacro.protein.percentage - standard.protein.percentage);
+      const carbsDiff = Math.abs(customMacro.carbs.percentage - standard.carbs.percentage);
+      const fatsDiff = Math.abs(customMacro.fats.percentage - standard.fats.percentage);
+      
+      if (proteinDiff <= 3 && carbsDiff <= 3 && fatsDiff <= 3) {
+        recommendedIndex = i + 1; // Recommend the matching standard type
+        break;
+      }
+    }
+    
+    // Generate personalized message based on recommendation
+    const recommendedMacro = calculatedMacros[recommendedIndex];
+    let personalizedMessage = '';
+    
+    if (recommendedIndex === 0) {
+      // Custom recommendation
+      personalizedMessage = `Our personalized recommendation: ${recommendedMacro.protein.grams}g protein (${recommendedMacro.protein.percentage}%), ${recommendedMacro.carbs.grams}g carbs (${recommendedMacro.carbs.percentage}%), ${recommendedMacro.fats.grams}g fats (${recommendedMacro.fats.percentage}%).`;
+    } else {
+      // Standard type that matches custom recommendation
+      const standardType = macroExplanations[recommendedMacro.type].title;
+      personalizedMessage = `Based on your profile, ${standardType} macros work best: ${recommendedMacro.protein.grams}g protein to preserve muscle and optimize your results.`;
+    }
+    
+    // Generate insights based on goal and user factors
+    const insights: string[] = [];
+    
+    if (goal === 'lose') {
+      insights.push(`High protein (${recommendedMacro.protein.grams}g) preserves muscle during weight loss`);
+      if (targetCalories < 1500) {
+        insights.push('Low calories - focus on nutrient-dense foods');
+      }
+      insights.push('Moderate carbs maintain energy for workouts');
+    } else if (goal === 'gain') {
+      insights.push(`At least ${recommendedMacro.protein.grams}g protein supports muscle growth`);
+      if (targetCalories > 3000) {
+        insights.push('Higher carbs fuel intense training sessions');
+      } else {
+        insights.push('If struggling to gain, increase healthy fats');
+      }
+    } else {
+      // Maintain
+      if ((userData?.gender === 'male' && targetCalories < 2200) || 
+          (userData?.gender === 'female' && targetCalories < 1800)) {
+        insights.push('⚠️ Low maintenance calories - consider reverse dieting');
+      }
+      insights.push('Adjust carbs/fats based on how your body responds');
+      insights.push('Consistency with tracking is key for maintenance');
+    }
     
     setMacros(calculatedMacros);
     setRecommended(recommendedIndex);
-    setMessage(messages[goal]);
-    setInsights(insightsList[goal]);
+    setMessage(personalizedMessage);
+    setInsights(insights);
     
     // Set dummy AI performance for UI compatibility
     setAiPerformance({
@@ -152,9 +212,22 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
          
         </div>
         
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 mb-3">
           Get personalized macro splits!
         </p>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-blue-800 mb-1">Remember: Calories Drive Results</p>
+              <p className="text-xs text-blue-700">
+                Your calorie intake determines whether you lose, maintain, or gain weight. 
+                Macros are about how you feel and perform within those calories to reach your fitness goals optimally.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Input Section */}
@@ -183,7 +256,7 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Your Goal
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {(['lose', 'maintain', 'gain'] as const).map((option) => {
               const Icon = goalIcons[option];
               return (
@@ -260,16 +333,36 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900 capitalize flex items-center gap-2">
-                    {macro.type.replace('_', ' ')}
-                    {index === recommended && (
-                      <span className="text-xs bg-orange-600 text-white px-2 py-1 rounded-full font-medium shadow-sm">
-                        Recommended
-                      </span>
-                    )}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                      {macroExplanations[macro.type].title}
+                      {index === recommended && (
+                        <span className="text-xs bg-orange-600 text-white px-2 py-1 rounded-full font-medium shadow-sm">
+                          Recommended
+                        </span>
+                      )}
+                    </h4>
+                    <button
+                      onClick={() => setSelectedMacroInfo(selectedMacroInfo === macro.type ? null : macro.type)}
+                      className="text-gray-400 hover:text-orange-600 transition-colors"
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </div>
                   <span className="text-sm text-gray-600">{macro.calories} cal</span>
                 </div>
+
+                {/* Macro explanation */}
+                {selectedMacroInfo === macro.type && (
+                  <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <p className="text-sm text-orange-800 mb-2 font-medium">
+                      {macroExplanations[macro.type].description}
+                    </p>
+                    <p className="text-xs text-orange-700">
+                      {macroExplanations[macro.type].reasoning}
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div className="relative">

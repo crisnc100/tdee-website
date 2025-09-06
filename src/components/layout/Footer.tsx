@@ -67,7 +67,7 @@ export default function Footer() {
             Part of OrtegaFit | Engineering Fitness Solutions
           </p>
           <p className="text-xs text-gray-600 mt-2">
-            © 2024 MyCalorieLog. Questions or coaching inquiries? 
+            © 2025 MyCalorieLog. Questions or coaching inquiries? 
             <button
               onClick={() => openModal('footer')}
               className="text-primary-400 hover:text-primary-300 ml-1 cursor-pointer"

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { UserData } from '@/types/calculator';
 import { calculateComparison } from '@/lib/calculator';
@@ -11,7 +12,7 @@ interface ComparisonToolProps {
 }
 
 export default function ComparisonTool({ userData, ourResult }: ComparisonToolProps) {
-  const comparison = calculateComparison(userData);
+  const comparison = useMemo(() => calculateComparison(userData), [userData]);
 
   const calculators = [
     {

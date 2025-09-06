@@ -8,7 +8,7 @@ export async function GET() {
     const todayCount = await kv.get<number>(todayKey) || 0;
     
     return NextResponse.json({ 
-      total: count,
+      total: count + 150,
       today: todayCount
     });
   } catch (error) {
@@ -34,7 +34,7 @@ export async function POST() {
     await kv.expire(todayKey, 86400);
     
     return NextResponse.json({ 
-      total: newTotal,
+      total: newTotal + 150,
       today: todayCount
     });
   } catch (error) {

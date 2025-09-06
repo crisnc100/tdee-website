@@ -13,6 +13,7 @@ interface TDEEResultsProps {
 
 export default function TDEEResults({ result }: TDEEResultsProps) {
   const { isOpen, source, openModal, closeModal } = useCoachingModal();
+  const plusMinus = result.errorMargin.upper - result.tdee;
   
   const recommendations = [
     {
@@ -87,6 +88,7 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
           {result.tdee.toLocaleString()}
         </div>
         <p className="text-lg text-gray-600">calories per day</p>
+        <p className="mt-1 text-sm text-gray-600">± {plusMinus.toLocaleString()} calories</p>
         
         <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <p className="text-sm text-gray-700">
@@ -184,7 +186,7 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
           Questions about implementing these numbers? 
           <button
             onClick={() => openModal('results')}
-            className="text-primary-600 hover:text-primary-700 ml-1 font-medium underline"
+            className="text-primary-600 hover:text-primary-700 ml-1 font-medium underline cursor-pointer"
           >
             I offer personalized guidance
           </button>

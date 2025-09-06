@@ -216,6 +216,7 @@ export function calculateComparison(userData: UserData): ComparisonData {
   };
   
   // Determine activity level for comparison calculators
+  // Map our detailed system to their simple activity levels
   let activityLevel: keyof typeof activityMultipliers = 'moderately_active';
   
   if (userData.calculatorMode === 'simple') {
@@ -230,32 +231,53 @@ export function calculateComparison(userData: UserData): ComparisonData {
       default: activityLevel = 'moderately_active';
     }
   } else {
-    // For advanced mode, calculate based on exercise frequency
-    const exerciseCount = userData.exercises?.length || 0;
-    const totalSteps = userData.steps || 5000;
+    // For advanced mode, calculate total weekly exercise sessions
+    const weeklyExerciseSessions = userData.exercises?.reduce((total, ex) => total + ex.frequency, 0) || 0;
+    const jobIsActive = userData.jobActivity === 'physical' || userData.jobActivity === 'heavy_physical';
+    const highSteps = userData.steps >= 10000;
     
-    if (exerciseCount === 0 && totalSteps < 5000) {
+    if (weeklyExerciseSessions === 0 && !jobIsActive && userData.steps < 5000) {
       activityLevel = 'sedentary';
-    } else if (exerciseCount <= 2 || totalSteps < 7500) {
-      activityLevel = 'lightly_active';
-    } else if (exerciseCount <= 4 || totalSteps < 10000) {
+    } else if (weeklyExerciseSessions <= 3 && !jobIsActive) {
+      activityLevel = 'lightly_active'; 
+    } else if (weeklyExerciseSessions <= 5 || (weeklyExerciseSessions <= 3 && jobIsActive)) {
       activityLevel = 'moderately_active';
-    } else if (exerciseCount <= 6 || totalSteps < 12500) {
+    } else if (weeklyExerciseSessions <= 7 || (weeklyExerciseSessions <= 5 && jobIsActive)) {
       activityLevel = 'very_active';
     } else {
       activityLevel = 'extra_active';
     }
   }
   
+  // Calculate additional BMR formulas first
+  // Harris-Benedict Original BMR (older formula)
+  const harrisOriginalBMR = userData.gender === 'male'
+    ? 66.4730 + (13.7516 * weight) + (5.0033 * height) - (6.7550 * userData.age)
+    : 655.0955 + (9.5634 * weight) + (1.8496 * height) - (4.6756 * userData.age);
+  
+  // Katch-McArdle (if body fat available)
+  let katchBMR = mifflinBMR; // Fallback to Mifflin if no body fat
+  if (userData.bodyFat && userData.bodyFat > 0) {
+    const leanMass = weight * (1 - userData.bodyFat / 100);
+    katchBMR = 370 + (21.6 * leanMass);
+  }
+  
+  // Cunningham formula (athletic)
+  const cunninghamBMR = userData.bodyFat && userData.bodyFat > 0
+    ? 500 + (22 * (weight * (1 - userData.bodyFat / 100)))
+    : mifflinBMR; // Fallback if no body fat
+  
+  // Now calculate each calculator's TDEE
   // MyFitnessPal: Mifflin-St Jeor with standard multipliers
   const myFitnessPal = Math.round(mifflinBMR * activityMultipliers[activityLevel]);
   
-  // Calculator.net: Mifflin-St Jeor (default) with standard multipliers
-  const calculatorNet = Math.round(mifflinBMR * activityMultipliers[activityLevel]);
+  // Calculator.net: Mifflin-St Jeor (default) OR Katch-McArdle if body fat provided
+  const calculatorNetBMR = (userData.bodyFat && userData.bodyFat > 0) ? katchBMR : mifflinBMR;
+  const calculatorNet = Math.round(calculatorNetBMR * activityMultipliers[activityLevel]);
   
-  // Sailrabbit: Average of multiple formulas (Mifflin + Harris-Benedict)
-  // They average multiple formulas for more accuracy
-  const sailrabbitAvg = Math.round(((mifflinBMR + harrisBenedictBMR) / 2) * activityMultipliers[activityLevel]);
+  // Sailrabbit: Average of multiple BMR formulas (they use 5+ formulas)
+  const sailrabbitBMRs = [mifflinBMR, harrisBenedictBMR, harrisOriginalBMR, katchBMR, cunninghamBMR];
+  const sailrabbitAvg = Math.round((sailrabbitBMRs.reduce((a, b) => a + b) / sailrabbitBMRs.length) * activityMultipliers[activityLevel]);
   
   // TDEECalculator.net: Mifflin-St Jeor with standard multipliers
   const tdeeCalculatorNet = Math.round(mifflinBMR * activityMultipliers[activityLevel]);
@@ -275,7 +297,109 @@ export function calculateComparison(userData: UserData): ComparisonData {
   };
 }
 
-export function calculateMacros(calories: number, type: MacroSplit['type']): MacroSplit {
+function calculateSmartMacros(calories: number, userData?: UserData): { protein: number; carbs: number; fats: number } {
+  if (!userData) {
+    // Fallback to balanced if no user data
+    return { protein: 35, carbs: 40, fats: 25 };
+  }
+
+  // Convert weight to lbs if needed for protein calculation
+  let weightLbs = userData.weight;
+  if (userData.units === 'metric') {
+    weightLbs = userData.weight * 2.20462; // kg to lbs
+  }
+
+  // Determine if user is muscular (from TDEE calculation logic)
+  let weight = userData.weight;
+  let height = userData.height;
+  if (userData.units === 'imperial') {
+    weight = userData.weight / 2.20462; // lbs to kg
+    height = userData.height * 2.54; // inches to cm
+  }
+  const muscular = isMuscular(weight, height, userData.gender, userData.bodyFat);
+
+  // Determine activity level
+  const weeklyExerciseHours = calculateWeeklyExerciseHours(userData);
+  const highActivity = weeklyExerciseHours >= 5;
+
+  // Check for low maintenance calories (potential issue)
+  const lowMaintenance = (userData.gender === 'male' && calories < 2200) || 
+                        (userData.gender === 'female' && calories < 1800);
+
+  // Smart macro logic based on goal and context
+  let protein: number, carbs: number, fats: number;
+
+  // Base protein on body weight and goal
+  const baseProteinGrams = Math.max(weightLbs * 0.75, 100); // Minimum 100g
+  let targetProteinPercentage = Math.round((baseProteinGrams * 4 / calories) * 100);
+
+  // Adjust protein based on context
+  if (userData.goal === 'lose') {
+    // Higher protein for weight loss (35-40%)
+    targetProteinPercentage = Math.max(targetProteinPercentage, 35);
+    if (muscular || highActivity) targetProteinPercentage = Math.min(targetProteinPercentage + 5, 40);
+    
+    protein = targetProteinPercentage;
+    carbs = Math.min(45 - (targetProteinPercentage - 35) * 2, 40); // 30-40% carbs
+    fats = 100 - protein - carbs; // Remaining for fats (20-30%)
+    
+  } else if (userData.goal === 'gain') {
+    // At least 30% protein, adjust based on needs
+    targetProteinPercentage = Math.max(targetProteinPercentage, 30);
+    
+    protein = Math.min(targetProteinPercentage, 35); // Cap at 35% for surplus
+    
+    if (calories < 2500) {
+      // Struggling to gain - higher fats for caloric density
+      fats = 35;
+      carbs = 100 - protein - fats;
+    } else if (highActivity) {
+      // High activity - more carbs for energy
+      carbs = 50;
+      fats = 100 - protein - carbs;
+    } else {
+      // Balanced approach for gaining
+      carbs = 45;
+      fats = 100 - protein - carbs;
+    }
+    
+  } else {
+    // Maintain - most flexible, based on preferences and activity
+    if (lowMaintenance) {
+      // Low maintenance calories - need efficiency
+      protein = Math.max(targetProteinPercentage, 30);
+      fats = 30; // Higher fats for satiety and hormones
+      carbs = 100 - protein - fats;
+    } else if (highActivity) {
+      // High activity - fuel performance
+      protein = Math.max(targetProteinPercentage, 25);
+      carbs = 50;
+      fats = 100 - protein - carbs;
+    } else {
+      // Standard maintenance - balanced approach
+      protein = Math.max(targetProteinPercentage, 30);
+      carbs = 40;
+      fats = 100 - protein - carbs;
+    }
+  }
+
+  // Ensure percentages are reasonable and sum to 100
+  protein = Math.max(20, Math.min(protein, 45)); // 20-45%
+  fats = Math.max(15, Math.min(fats, 50)); // 15-50%  
+  carbs = 100 - protein - fats; // Remaining
+  carbs = Math.max(5, carbs); // Minimum 5% carbs
+
+  // Final adjustment to ensure they sum to exactly 100
+  const total = protein + carbs + fats;
+  if (total !== 100) {
+    const diff = 100 - total;
+    carbs += diff; // Adjust carbs for any rounding errors
+  }
+
+  return { protein, carbs, fats };
+}
+
+export function calculateMacros(calories: number, type: MacroSplit['type'], userData?: UserData): MacroSplit {
   let proteinPercentage: number;
   let carbsPercentage: number;
   let fatsPercentage: number;
@@ -300,6 +424,13 @@ export function calculateMacros(calories: number, type: MacroSplit['type']): Mac
       proteinPercentage = 25;
       carbsPercentage = 5;
       fatsPercentage = 70;
+      break;
+    case 'custom':
+      // Smart logic for MyCalorieLog recommendation
+      const smartMacros = calculateSmartMacros(calories, userData);
+      proteinPercentage = smartMacros.protein;
+      carbsPercentage = smartMacros.carbs;
+      fatsPercentage = smartMacros.fats;
       break;
   }
 
