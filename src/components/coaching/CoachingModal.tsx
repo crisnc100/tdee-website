@@ -26,26 +26,8 @@ export default function CoachingModal({ isOpen, onClose, source = 'other' }: Coa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create email body with form data
-    const emailBody = `
-New Coaching Consultation Request from MyCalorieLog
-
-Name: ${formData.name}
-Email: ${formData.email}
-Phone: ${formData.phone || 'Not provided'}
-Preferred Contact: ${formData.preferredContact}
-
-Primary Goal: ${formData.goal}
-Experience Level: ${formData.experience}
-Time Commitment: ${formData.commitment}
-Current Challenges: ${formData.challenges}
-
-Source: ${source}
-    `.trim();
-
-    // Open email client with pre-filled data
-    const mailtoLink = `mailto:cortegafit@gmail.com?subject=Free Consultation Request - ${formData.name}&body=${encodeURIComponent(emailBody)}`;
-    window.open(mailtoLink);
+    // Redirect to trainwithcris.fit
+    window.open('https://trainwithcris.fit', '_blank');
     
     setCurrentStep('success');
     
@@ -170,6 +152,21 @@ Source: ${source}
                       personalized training and encouragement. Never thought it was possible!"
                     </p>
                     <p className="text-xs text-gray-500 mt-2">— Steve Barsby</p>
+                  </div>
+
+                  {/* Contact Note */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-700">
+                      <strong>Prefer to contact directly?</strong> Visit{' '}
+                      <a 
+                        href="https://trainwithcris.fit" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 font-medium underline"
+                      >
+                        trainwithcris.fit
+                      </a>
+                    </p>
                   </div>
 
                   {/* CTA Buttons */}
@@ -362,14 +359,13 @@ Source: ${source}
                 >
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Request Sent Successfully!
+                    Redirecting You Now!
                   </h3>
                   <p className="text-gray-600">
-                    Your email client has opened with your consultation request. 
-                    Send the email to complete your submission.
+                    You're being redirected to trainwithcris.fit where you can get in touch and schedule your consultation.
                   </p>
                   <p className="text-sm text-gray-500 mt-2">
-                    I'll respond within 24 hours to schedule your free consultation.
+                    If the page didn't open automatically, visit: <a href="https://trainwithcris.fit" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">trainwithcris.fit</a>
                   </p>
                 </motion.div>
               )}

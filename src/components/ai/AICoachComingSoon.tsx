@@ -93,11 +93,28 @@ export default function AICoachComingSoon() {
               <Calendar className="w-5 h-5 text-purple-600" />
               <h3 className="font-semibold text-gray-900">Expected Launch</h3>
             </div>
-            <p className="text-gray-700 font-medium mb-2">October 2025</p>
+            <p className="text-gray-700 font-medium mb-2">In Early 2026</p>
             <p className="text-sm text-gray-600">
               We're working hard to bring you an AI coach that's actually useful, 
               not just another chatbot. Quality takes time, but it'll be worth the wait!
             </p>
+          </div>
+
+          {/* Contact Section */}
+          <div className="mt-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 border border-orange-200">
+            <h3 className="font-semibold text-gray-900 mb-2">Questions or Want to Work Together?</h3>
+            <p className="text-sm text-gray-700 mb-3">
+              For coaching inquiries or to get in touch, visit:
+            </p>
+            <a 
+              href="https://trainwithcris.fit" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium transition-colors"
+            >
+              trainwithcris.fit
+              <span className="text-xs">↗</span>
+            </a>
           </div>
         </div>
 
