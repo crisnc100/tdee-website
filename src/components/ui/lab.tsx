@@ -39,29 +39,43 @@ export function StatusLamp({ label, live = false }: { label: string; live?: bool
 
 /**
  * Numbered section heading: "01  FOUNDATION ———" with an optional hint below.
- * The index is part of the heading text; the rule is decorative.
+ * The index is read as part of the heading unless hideIndex is set, which
+ * keeps the heading's accessible name to the title alone. The rule is
+ * decorative.
  */
 export function SectionHeading({
   index,
   title,
   hint,
   id,
+  hideIndex = false,
   as: Tag = 'h3',
 }: {
   index: string;
   title: string;
   hint?: string;
   id?: string;
+  hideIndex?: boolean;
   as?: 'h2' | 'h3' | 'h4';
 }) {
+  const indexMark = <span className="label-caps text-accent-ink">{index}</span>;
   return (
     <div>
       <div className="flex items-center gap-3">
-        <Tag id={id} className="label-caps text-foreground flex items-baseline gap-3 shrink-0">
-          <span className="text-accent-ink">{index}</span>
-          <span>{title}</span>
-        </Tag>
-        <span aria-hidden="true" className="h-px flex-1 bg-border" />
+        {hideIndex ? (
+          <>
+            <span aria-hidden="true">{indexMark}</span>
+            <Tag id={id} className="label-caps text-foreground min-w-0">
+              {title}
+            </Tag>
+          </>
+        ) : (
+          <Tag id={id} className="label-caps text-foreground flex items-baseline gap-3 min-w-0">
+            {indexMark}
+            <span>{title}</span>
+          </Tag>
+        )}
+        <span aria-hidden="true" className="h-px flex-1 min-w-4 bg-border" />
       </div>
       {hint && <p className="mt-1.5 text-sm text-muted-foreground">{hint}</p>}
     </div>

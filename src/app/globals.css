@@ -279,6 +279,15 @@
     background-repeat: no-repeat;
   }
 
+  /* Cuts a meter bar into 20 segments with gaps in the card colour. */
+  .meter-segments {
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(5% - 2px),
+      var(--color-card) calc(5% - 2px) 5%
+    );
+  }
+
   /* Diagonal hazard stripe, for the one warning callout. */
   .hazard {
     background-image: repeating-linear-gradient(
@@ -298,9 +307,16 @@
   }
 }
 
+/* The gauge sets --sweep-from to its arc length, so the arc grows from empty. */
 @keyframes lab-sweep {
   from {
-    stroke-dashoffset: 100;
+    stroke-dashoffset: var(--sweep-from);
+  }
+}
+
+@keyframes lab-fade {
+  from {
+    opacity: 0;
   }
 }
 
@@ -330,8 +346,13 @@
     animation: lab-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
+  /* Same duration and ease-out-cubic curve as the number's count-up. */
   .lab-sweep {
-    animation: lab-sweep 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: lab-sweep 700ms cubic-bezier(0.33, 1, 0.68, 1) both;
+  }
+
+  .lab-fade {
+    animation: lab-fade 400ms ease-out 550ms both;
   }
 
   .lab-meter {
