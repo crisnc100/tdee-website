@@ -22,6 +22,18 @@ function luminance(hex) {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }
 
+// Composite a foreground drawn at `alpha` opacity onto an opaque background,
+// giving the colour that actually reaches the screen.
+function composite(fg, bg, alpha) {
+  const ch = (hex, i) => parseInt(hex.slice(i, i + 2), 16);
+  return (
+    '#' +
+    [1, 3, 5]
+      .map((i) => Math.round(alpha * ch(fg, i) + (1 - alpha) * ch(bg, i)).toString(16).padStart(2, '0'))
+      .join('')
+  );
+}
+
 function ratio(a, b) {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
@@ -54,6 +66,28 @@ const pairs = [
   ['accent', 'background', 1, 'button fill vs page (info only)'],
 ];
 
+// Text drawn with reduced opacity. The opacity is read from the source, so a
+// change there is checked against the composited colour, not the bare token.
+const lab = readFileSync(new URL('../src/components/ui/lab.tsx', import.meta.url), 'utf8');
+const placeholderRule = css.match(/\.field::placeholder\s*\{([^}]*)\}/);
+const placeholderOpacity = placeholderRule
+  ? Number(placeholderRule[1].match(/opacity:\s*([\d.]+)/)?.[1] ?? 1)
+  : NaN;
+const detailClass = lab.match(/option\.detail && \(?\s*<span className=\{`([^`]*)`\}/)?.[1] ?? '';
+const detailBranches = detailClass.match(/\$\{selected \? '([^']*)' : '([^']*)'\}/);
+const twOpacity = (cls) => Number(cls.match(/(?:^|\s)opacity-(\d+)/)?.[1] ?? 100) / 100;
+const [detailSelected, detailUnselected] = detailBranches
+  ? [twOpacity(detailBranches[1]), twOpacity(detailBranches[2])]
+  : [NaN, NaN];
+
+// [foreground token, background token, opacity, minimum ratio, what it is]
+const alphaPairs = [
+  ['muted-foreground', 'background', placeholderOpacity, TEXT, 'field placeholder (.field::placeholder)'],
+  ['muted-foreground', 'background', detailUnselected, TEXT, 'segmented detail, unselected'],
+  ['foreground', 'muted', detailUnselected, TEXT, 'segmented detail, unselected hover'],
+  ['background', 'foreground', detailSelected, TEXT, 'segmented detail, selected'],
+];
+
 let failed = 0;
 for (const [name, theme] of [['light', light], ['dark', dark]]) {
   console.log(`\n${name.toUpperCase()}`);
@@ -69,6 +103,20 @@ for (const [name, theme] of [['light', light], ['dark', dark]]) {
     const tag = min === 1 ? 'info' : ok ? 'pass' : 'FAIL';
     console.log(
       `  ${tag.padEnd(4)}  ${r.toFixed(2).padStart(5)}:1  (min ${min})  ${fg} ${theme[fg]} on ${bg} ${theme[bg]}  - ${what}`
+    );
+  }
+  for (const [fg, bg, alpha, min, what] of alphaPairs) {
+    if (!theme[fg] || !theme[bg] || !(alpha >= 0 && alpha <= 1)) {
+      console.log(`  MISSING  ${fg} on ${bg} (opacity ${alpha}) - ${what}; source pattern not found`);
+      failed++;
+      continue;
+    }
+    const eff = composite(theme[fg], theme[bg], alpha);
+    const r = ratio(eff, theme[bg]);
+    const ok = r >= min;
+    if (!ok) failed++;
+    console.log(
+      `  ${(ok ? 'pass' : 'FAIL').padEnd(4)}  ${r.toFixed(2).padStart(5)}:1  (min ${min})  ${fg} ${theme[fg]} @ ${alpha} = ${eff} on ${bg} ${theme[bg]}  - ${what}`
     );
   }
 }

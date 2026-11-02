@@ -119,7 +119,9 @@ export function Segmented<T extends string>({
             }`}
           >
             <span className="label-caps">{option.label}</span>
-            {option.detail && <span className="font-mono text-xs opacity-80">{option.detail}</span>}
+            {option.detail && (
+              <span className={`font-mono text-xs ${selected ? 'opacity-80' : 'opacity-100'}`}>{option.detail}</span>
+            )}
           </button>
         );
       })}

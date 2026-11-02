@@ -166,7 +166,7 @@
 
   .field::placeholder {
     color: var(--color-muted-foreground);
-    opacity: 0.8;
+    opacity: 1;
   }
 
   .field:hover {
