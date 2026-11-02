@@ -40,7 +40,7 @@ export default function ResultHero({ result, displayTdee }: ResultHeroProps) {
             upper={result.errorMargin.upper}
           />
 
-          <dl className="grid grid-cols-2 md:grid-cols-1 border border-border divide-x md:divide-x-0 md:divide-y divide-border bg-card rounded-[2px]">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 border border-border divide-y sm:divide-y-0 sm:divide-x md:divide-x-0 md:divide-y divide-border bg-card rounded-[2px]">
             <div className="p-3 sm:p-4">
               <dt className="label-caps text-muted-foreground">Error margin</dt>
               <dd className="mt-1 readout text-foreground">
@@ -69,7 +69,7 @@ export default function ResultHero({ result, displayTdee }: ResultHeroProps) {
         <div className="border border-border rounded-[2px] overflow-hidden">
           <table aria-labelledby="goals-heading" className="w-full text-sm">
             <thead className="bg-muted">
-              <tr className="label-caps text-muted-foreground">
+              <tr className="label-caps tracking-[0.06em] sm:tracking-[0.14em] text-muted-foreground">
                 <th scope="col" className="text-left font-medium px-2 sm:px-3 py-2">Goal</th>
                 <th scope="col" className="text-right font-medium px-2 sm:px-3 py-2">
                   Change<span className="sr-only"> (calories per day)</span>

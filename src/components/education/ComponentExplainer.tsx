@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { HelpCircle, X, Brain, Activity, Zap, Dumbbell, Cookie, TrendingUp } from 'lucide-react';
 
 interface ExplainerTooltipProps {
@@ -86,99 +85,97 @@ const explanations = {
   }
 };
 
+
 export default function ComponentExplainer({ component, value }: ExplainerTooltipProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const info = explanations[component];
   const Icon = info.icon;
+  const panelId = `explainer-${component}`;
 
   return (
     <div className="relative inline-block">
       <button
+        type="button"
         onClick={() => setShowTooltip(!showTooltip)}
-        className="ml-1 p-0.5 text-muted-foreground hover:text-amber-600 transition-colors"
+        className="inline-flex items-center justify-center w-11 h-11 -my-3 text-muted-foreground hover:text-accent-ink transition-colors cursor-pointer"
         aria-label={`Learn more about ${info.title}`}
+        aria-expanded={showTooltip}
+        aria-controls={showTooltip ? panelId : undefined}
       >
         <HelpCircle className="w-4 h-4" />
       </button>
 
-      <AnimatePresence>
-        {showTooltip && (
-          <>
-            {/* Backdrop for mobile */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/20 z-40 md:hidden"
-              onClick={() => setShowTooltip(false)}
-            />
+      {showTooltip && (
+        <>
+          {/* Backdrop for mobile */}
+          <div
+            className="fixed inset-0 bg-background/70 z-40 md:hidden"
+            onClick={() => setShowTooltip(false)}
+          />
 
-            {/* Tooltip */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 md:w-96 bg-card rounded-xl shadow-2xl border border-border z-50 p-5"
-            >
-              {/* Arrow */}
-              <div className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 bg-card border-r border-b border-border rotate-45" />
-              
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-amber-100 rounded-lg">
-                    <Icon className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-foreground">{info.title}</h4>
-                    <p className="text-xs text-muted-foreground">{info.short}</p>
-                  </div>
+          {/* Bottom sheet on mobile, popover above the button from md up */}
+          <div
+            id={panelId}
+            role="dialog"
+            aria-label={info.title}
+            className="panel fixed inset-x-3 bottom-3 max-h-[80vh] overflow-auto z-50 p-4 sm:p-5 shadow-2xl lab-enter md:absolute md:inset-x-auto md:bottom-full md:left-1/2 md:-translate-x-1/2 md:mb-1 md:w-96 md:max-h-none md:overflow-visible"
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <span className="inline-flex items-center justify-center w-9 h-9 shrink-0 border border-border bg-muted rounded-[2px] text-accent-ink">
+                  <Icon className="w-4 h-4" />
+                </span>
+                <div className="min-w-0">
+                  <h4 className="label-caps text-foreground">{info.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">{info.short}</p>
                 </div>
-                <button
-                  onClick={() => setShowTooltip(false)}
-                  className="p-1 hover:bg-muted rounded-lg transition-colors"
-                >
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowTooltip(false)}
+                aria-label="Close"
+                className="inline-flex items-center justify-center w-11 h-11 -mr-2 -mt-2 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted rounded-[2px] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-              {/* Content */}
-              <div className="space-y-3">
-                <p className="text-sm text-foreground leading-relaxed">
-                  {info.detailed}
+            {/* Content */}
+            <div className="space-y-3">
+              <p className="text-sm text-foreground leading-relaxed">
+                {info.detailed}
+              </p>
+
+              <div className="border-l-2 border-accent-ink bg-muted/70 px-3 py-2.5">
+                <p className="label-caps text-foreground mb-1">Why This Matters:</p>
+                <p className="text-sm text-foreground">
+                  {info.whyItMatters}
                 </p>
-
-                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                  <p className="text-sm font-semibold text-amber-900 mb-1">Why This Matters:</p>
-                  <p className="text-sm text-amber-800">
-                    {info.whyItMatters}
-                  </p>
-                </div>
-
-                {value && (
-                  <div className="p-2 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      Your contribution: <span className="font-bold text-foreground">{value} calories/day</span>
-                    </p>
-                  </div>
-                )}
-
-                <div className="pt-3 border-t border-border">
-                  <p className="text-xs font-semibold text-foreground mb-2">Quick Facts:</p>
-                  <ul className="space-y-1">
-                    {info.tips.map((tip, index) => (
-                      <li key={index} className="text-xs text-muted-foreground flex items-start gap-1">
-                        <span className="text-amber-500 mt-0.5">•</span>
-                        {tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+
+              {!!value && (
+                <p className="flex items-baseline justify-between gap-3 border border-border px-3 py-2 text-sm text-muted-foreground">
+                  Your contribution:{' '}
+                  <span className="readout font-semibold text-foreground">{value} calories/day</span>
+                </p>
+              )}
+
+              <div className="pt-3 border-t border-border">
+                <p className="label-caps text-muted-foreground mb-2">Quick Facts:</p>
+                <ul className="space-y-1">
+                  {info.tips.map((tip, index) => (
+                    <li key={index} className="text-xs text-muted-foreground flex items-start gap-2">
+                      <span aria-hidden="true" className="font-mono text-accent-ink">—</span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -853,7 +853,8 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
 }
 
 const labelClass = 'label-caps block text-foreground mb-2';
-const smallLabelClass = 'label-caps block text-muted-foreground mb-1.5';
+// Tighter tracking so 'Minutes/Session' fits a half-width cell at 360px.
+const smallLabelClass = 'label-caps tracking-[0.08em] block text-muted-foreground mb-1.5';
 const hintClass = 'mt-1.5 text-xs text-muted-foreground';
 const errorClass = 'mt-1.5 text-xs text-danger';
 // Inputs that sit beside a unit cell lose their right-hand corners; focus

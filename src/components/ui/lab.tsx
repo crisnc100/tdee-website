@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 
 // Small shared pieces of the "lab instrument" look. Colours come from the
 // tokens in globals.css; nothing here holds a hard-coded colour.
@@ -122,6 +123,92 @@ export function Segmented<T extends string>({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/** Shell for the legal pages: a bracketed sheet with a caps document label. */
+export function DocSheet({
+  label,
+  title,
+  updated,
+  children,
+}: {
+  label: string;
+  title: string;
+  updated: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="py-8 sm:py-12">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4">
+        <article className="panel brackets">
+          <div aria-hidden="true" className="ruler opacity-70" />
+          <div className="p-5 sm:p-10">
+            <p className="label-caps text-muted-foreground">
+              Document <span className="mx-1">{'//'}</span> {label}
+            </p>
+            <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">{title}</h1>
+            <p className="mt-2 readout text-sm text-muted-foreground">{updated}</p>
+            <div className="mt-8 border-t border-border">{children}</div>
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+/** A numbered section of a legal page, e.g. "§01  Summary". */
+export function DocSection({
+  index,
+  title,
+  children,
+  className = '',
+}: {
+  index: number;
+  title: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`grid gap-2 sm:grid-cols-[4rem_minmax(0,1fr)] py-6 border-b border-border ${className}`}>
+      <span aria-hidden="true" className="readout text-sm text-accent-ink pt-0.5">
+        §{String(index).padStart(2, '0')}
+      </span>
+      <div>
+        <h2 className="label-caps text-foreground mb-3">{title}</h2>
+        <div className="space-y-3 text-foreground leading-relaxed">{children}</div>
+      </div>
+    </section>
+  );
+}
+
+/** Bulleted list with mono dash markers. */
+export function DashList({ items }: { items: ReactNode[] }) {
+  return (
+    <ul className="space-y-2">
+      {items.map((item, i) => (
+        <li key={i} className="flex gap-3">
+          <span aria-hidden="true" className="font-mono text-muted-foreground">
+            —
+          </span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Back link at the foot of a document. */
+export function BackLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <div className="mt-8">
+      <Link
+        href={href}
+        className="inline-flex items-center gap-2 min-h-11 label-caps text-accent-ink hover:underline underline-offset-4"
+      >
+        {children}
+      </Link>
     </div>
   );
 }

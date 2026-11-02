@@ -77,76 +77,6 @@
     --color-deficit: #ff9a6b;
     --color-surplus: #74c4ff;
     --color-warning: #f2c14e;
-
-    /* Colored callouts (bg-*-50..300 with text-*-600..900) are written for a
-       light page. In dark mode the light tints become dark tints and the dark
-       text shades become light ones, so every callout stays readable without
-       per-element dark: classes. Shades 400 and 500 are left as they are.
-       Tints are mixed into the dark card colour (#18181b). */
-    --color-red-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 12%, #18181b);
-    --color-red-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 20%, #18181b);
-    --color-red-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 32%, #18181b);
-    --color-red-300: color-mix(in oklab, oklch(63.7% 0.237 25.331) 45%, #18181b);
-    --color-red-600: oklch(70.4% 0.191 22.216);
-    --color-red-700: oklch(80.8% 0.114 19.571);
-    --color-red-800: oklch(88.5% 0.062 18.334);
-    --color-red-900: oklch(93.6% 0.032 17.717);
-    --color-orange-50: color-mix(in oklab, oklch(70.5% 0.213 47.604) 12%, #18181b);
-    --color-orange-100: color-mix(in oklab, oklch(70.5% 0.213 47.604) 20%, #18181b);
-    --color-orange-200: color-mix(in oklab, oklch(70.5% 0.213 47.604) 32%, #18181b);
-    --color-orange-300: color-mix(in oklab, oklch(70.5% 0.213 47.604) 45%, #18181b);
-    --color-orange-600: oklch(75% 0.183 55.934);
-    --color-orange-700: oklch(83.7% 0.128 66.29);
-    --color-orange-800: oklch(90.1% 0.076 70.697);
-    --color-orange-900: oklch(95.4% 0.038 75.164);
-    --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 12%, #18181b);
-    --color-amber-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 20%, #18181b);
-    --color-amber-200: color-mix(in oklab, oklch(76.9% 0.188 70.08) 32%, #18181b);
-    --color-amber-300: color-mix(in oklab, oklch(76.9% 0.188 70.08) 45%, #18181b);
-    --color-amber-600: oklch(82.8% 0.189 84.429);
-    --color-amber-700: oklch(87.9% 0.169 91.605);
-    --color-amber-800: oklch(92.4% 0.12 95.746);
-    --color-amber-900: oklch(96.2% 0.059 95.617);
-    --color-yellow-50: color-mix(in oklab, oklch(79.5% 0.184 86.047) 12%, #18181b);
-    --color-yellow-100: color-mix(in oklab, oklch(79.5% 0.184 86.047) 20%, #18181b);
-    --color-yellow-200: color-mix(in oklab, oklch(79.5% 0.184 86.047) 32%, #18181b);
-    --color-yellow-300: color-mix(in oklab, oklch(79.5% 0.184 86.047) 45%, #18181b);
-    --color-yellow-600: oklch(85.2% 0.199 91.936);
-    --color-yellow-700: oklch(90.5% 0.182 98.111);
-    --color-yellow-800: oklch(94.5% 0.129 101.54);
-    --color-yellow-900: oklch(97.3% 0.071 103.193);
-    --color-green-50: color-mix(in oklab, oklch(72.3% 0.219 149.579) 12%, #18181b);
-    --color-green-100: color-mix(in oklab, oklch(72.3% 0.219 149.579) 20%, #18181b);
-    --color-green-200: color-mix(in oklab, oklch(72.3% 0.219 149.579) 32%, #18181b);
-    --color-green-300: color-mix(in oklab, oklch(72.3% 0.219 149.579) 45%, #18181b);
-    --color-green-600: oklch(79.2% 0.209 151.711);
-    --color-green-700: oklch(87.1% 0.15 154.449);
-    --color-green-800: oklch(92.5% 0.084 155.995);
-    --color-green-900: oklch(96.2% 0.044 156.743);
-    --color-cyan-50: color-mix(in oklab, oklch(71.5% 0.143 215.221) 12%, #18181b);
-    --color-cyan-100: color-mix(in oklab, oklch(71.5% 0.143 215.221) 20%, #18181b);
-    --color-cyan-200: color-mix(in oklab, oklch(71.5% 0.143 215.221) 32%, #18181b);
-    --color-cyan-300: color-mix(in oklab, oklch(71.5% 0.143 215.221) 45%, #18181b);
-    --color-cyan-600: oklch(78.9% 0.154 211.53);
-    --color-cyan-700: oklch(86.5% 0.127 207.078);
-    --color-cyan-800: oklch(91.7% 0.08 205.041);
-    --color-cyan-900: oklch(95.6% 0.045 203.388);
-    --color-blue-50: color-mix(in oklab, oklch(62.3% 0.214 259.815) 12%, #18181b);
-    --color-blue-100: color-mix(in oklab, oklch(62.3% 0.214 259.815) 20%, #18181b);
-    --color-blue-200: color-mix(in oklab, oklch(62.3% 0.214 259.815) 32%, #18181b);
-    --color-blue-300: color-mix(in oklab, oklch(62.3% 0.214 259.815) 45%, #18181b);
-    --color-blue-600: oklch(70.7% 0.165 254.624);
-    --color-blue-700: oklch(80.9% 0.105 251.813);
-    --color-blue-800: oklch(88.2% 0.059 254.128);
-    --color-blue-900: oklch(93.2% 0.032 255.585);
-    --color-purple-50: color-mix(in oklab, oklch(62.7% 0.265 303.9) 12%, #18181b);
-    --color-purple-100: color-mix(in oklab, oklch(62.7% 0.265 303.9) 20%, #18181b);
-    --color-purple-200: color-mix(in oklab, oklch(62.7% 0.265 303.9) 32%, #18181b);
-    --color-purple-300: color-mix(in oklab, oklch(62.7% 0.265 303.9) 45%, #18181b);
-    --color-purple-600: oklch(71.4% 0.203 305.504);
-    --color-purple-700: oklch(82.7% 0.119 306.383);
-    --color-purple-800: oklch(90.2% 0.063 306.703);
-    --color-purple-900: oklch(94.6% 0.033 307.174);
   }
 
   :focus-visible {
@@ -341,23 +271,26 @@
   }
 }
 
+/* Entrances fill backwards only: once finished they leave no transform behind,
+   which would otherwise make the wrapper the containing block for fixed
+   children such as the explainer's mobile bottom sheet. */
 @media (prefers-reduced-motion: no-preference) {
   .lab-enter {
-    animation: lab-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: lab-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
   }
 
   /* Same duration and ease-out-cubic curve as the number's count-up. */
   .lab-sweep {
-    animation: lab-sweep 700ms cubic-bezier(0.33, 1, 0.68, 1) both;
+    animation: lab-sweep 700ms cubic-bezier(0.33, 1, 0.68, 1) backwards;
   }
 
   .lab-fade {
-    animation: lab-fade 400ms ease-out 550ms both;
+    animation: lab-fade 400ms ease-out 550ms backwards;
   }
 
   .lab-meter {
     transform-origin: left center;
-    animation: lab-meter 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: lab-meter 700ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
   }
 
   .lab-scan {

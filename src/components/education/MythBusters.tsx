@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, CheckCircle, X, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle, X, ChevronDown } from 'lucide-react';
 
 interface Myth {
   myth: string;
@@ -98,140 +97,132 @@ export default function MythBusters() {
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-amber-600 bg-amber-50 border-amber-200';
-      case 'low': return 'text-blue-600 bg-blue-50 border-blue-200';
-      default: return 'text-muted-foreground bg-muted border-border';
+      case 'high': return 'text-danger border-danger';
+      case 'medium': return 'text-warning border-warning';
+      case 'low': return 'text-muted-foreground border-border-strong';
+      default: return 'text-muted-foreground border-border';
     }
   };
 
-  return (
-    <div className="bg-card rounded-xl p-3 sm:p-6 shadow-lg border border-border">
-      <div className="flex items-center gap-2 mb-4 sm:mb-6">
-        <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
-        <h3 className="text-base sm:text-xl font-bold text-foreground">Common Fitness Myths Debunked</h3>
-      </div>
+  const pageCount = Math.ceil(myths.length / mythsPerPage);
 
-      <div className="space-y-4">
+  return (
+    <section aria-labelledby="myths-heading">
+      <div className="flex items-center gap-3 mb-1">
+        <AlertTriangle aria-hidden="true" className="w-4 h-4 text-warning shrink-0" />
+        <h3 id="myths-heading" className="label-caps text-foreground">Common Fitness Myths Debunked</h3>
+        <span aria-hidden="true" className="h-px flex-1 min-w-4 bg-border" />
+      </div>
+      <p className="readout text-xs text-muted-foreground mb-5">
+        {String(currentPage * mythsPerPage + 1).padStart(2, '0')}–{String(Math.min(myths.length, (currentPage + 1) * mythsPerPage)).padStart(2, '0')} / {myths.length}
+      </p>
+
+      <div className="space-y-3">
         {paginatedMyths.map((myth, index) => {
           const actualIndex = currentPage * mythsPerPage + index;
           const isExpanded = expandedIndex === actualIndex;
-          
+          const panelId = `myth-${actualIndex}`;
+
           return (
-            <motion.div
+            <div
               key={actualIndex}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="border border-border rounded-lg overflow-hidden"
+              className="border border-border rounded-[3px] bg-card lab-enter"
+              style={{ animationDelay: `${index * 60}ms` }}
             >
               <button
+                type="button"
                 onClick={() => setExpandedIndex(isExpanded ? null : actualIndex)}
-                className="w-full p-3 sm:p-4 text-left hover:bg-muted transition-colors"
+                aria-expanded={isExpanded}
+                aria-controls={isExpanded ? panelId : undefined}
+                className="w-full p-3 sm:p-4 text-left hover:bg-muted/60 transition-colors cursor-pointer"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="space-y-3">
-                      {/* Myth */}
-                      <div className="flex items-start gap-2">
-                        <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-xs text-red-600 font-medium uppercase tracking-wide mb-1">Myth</p>
-                          <p className="text-sm sm:text-base text-foreground leading-relaxed">
-                            {myth.myth}
-                          </p>
-                        </div>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="flex-1 space-y-3">
+                    {/* Myth */}
+                    <div className="flex items-start gap-2.5">
+                      <X aria-hidden="true" className="w-4 h-4 text-danger mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="label-caps text-danger mb-1">Myth</p>
+                        <p className="text-sm sm:text-base text-foreground leading-relaxed">
+                          {myth.myth}
+                        </p>
                       </div>
-                      
-                      {/* Truth */}
-                      <div className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-xs text-green-600 font-medium uppercase tracking-wide mb-1">Truth</p>
-                          <p className="text-sm sm:text-base text-foreground leading-relaxed">
-                            {myth.truth}
-                          </p>
-                        </div>
+                    </div>
+
+                    {/* Truth */}
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle aria-hidden="true" className="w-4 h-4 text-accent-ink mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="label-caps text-accent-ink mb-1">Truth</p>
+                        <p className="text-sm sm:text-base text-foreground leading-relaxed">
+                          {myth.truth}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 mt-2 sm:mt-0">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getImpactColor(myth.impact)}`}>
+
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 pl-6 sm:pl-0">
+                    <span className={`label-caps px-1.5 py-0.5 border rounded-[2px] ${getImpactColor(myth.impact)}`}>
                       {myth.impact} impact
                     </span>
-                    <motion.div
-                      animate={{ rotate: isExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Info className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-                    </motion.div>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                    />
                   </div>
                 </div>
               </button>
 
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="border-t border-border"
-                  >
-                    <div className="p-3 sm:p-4 bg-muted">
-                      <p className="text-xs sm:text-sm text-foreground leading-relaxed">
-                        {myth.explanation}
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+              {isExpanded && (
+                <div id={panelId} className="border-t border-border lab-enter">
+                  <div className="p-3 sm:p-4 bg-muted/70">
+                    <p className="text-xs sm:text-sm text-foreground leading-relaxed">
+                      {myth.explanation}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
 
       {/* Pagination */}
       {myths.length > mythsPerPage && (
-        <div className="flex justify-center items-center gap-4 mt-6">
+        <nav aria-label="Myth pages" className="flex justify-between sm:justify-center items-center gap-4 mt-5">
           <button
+            type="button"
             onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
             disabled={currentPage === 0}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              currentPage === 0
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-            }`}
+            className="min-h-11 px-4 border border-input rounded-[3px] label-caps text-foreground hover:bg-muted transition-colors cursor-pointer disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-transparent"
           >
             Previous
           </button>
-          
-          <span className="text-sm text-muted-foreground">
-            Page {currentPage + 1} of {Math.ceil(myths.length / mythsPerPage)}
+
+          <span className="readout text-sm text-muted-foreground">
+            Page {currentPage + 1} of {pageCount}
           </span>
-          
+
           <button
-            onClick={() => setCurrentPage(Math.min(Math.ceil(myths.length / mythsPerPage) - 1, currentPage + 1))}
-            disabled={currentPage >= Math.ceil(myths.length / mythsPerPage) - 1}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              currentPage >= Math.ceil(myths.length / mythsPerPage) - 1
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-            }`}
+            type="button"
+            onClick={() => setCurrentPage(Math.min(pageCount - 1, currentPage + 1))}
+            disabled={currentPage >= pageCount - 1}
+            className="min-h-11 px-4 border border-input rounded-[3px] label-caps text-foreground hover:bg-muted transition-colors cursor-pointer disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-transparent"
           >
             Next
           </button>
-        </div>
+        </nav>
       )}
 
-      <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
-        <p className="text-sm text-amber-800">
-          <span className="font-semibold">💡 The Truth:</span> 90% of fitness advice is marketing BS. The science is simple: 
-          maintain a moderate calorie deficit (15-25%), eat 0.7-1g protein per pound, lift weights 3-4x weekly, 
+      <div className="mt-6 border border-border rounded-[3px] overflow-hidden">
+        <div aria-hidden="true" className="h-1.5 hazard opacity-70" />
+        <p className="px-4 py-3 text-sm text-foreground leading-relaxed">
+          <span className="label-caps text-warning mr-2">The Truth:</span>
+          90% of fitness advice is marketing BS. The science is simple:
+          maintain a moderate calorie deficit (15-25%), eat 0.7-1g protein per pound, lift weights 3-4x weekly,
           sleep 7-9 hours, and be patient. That&apos;s literally it. Everything else is noise designed to sell you something.
         </p>
       </div>
-    </div>
+    </section>
   );
 }
