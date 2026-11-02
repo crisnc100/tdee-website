@@ -1,16 +1,17 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, BookOpen } from 'lucide-react';
+import { Calculator, BookOpen, RotateCcw } from 'lucide-react';
 import { UserData, TDEEResult } from '@/types/calculator';
 import { calculateTDEE } from '@/lib/calculator';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import TDEEForm from './TDEEForm';
 import TDEEResults from './TDEEResults';
+import ResultHero from './ResultHero';
 import MythBusters from '../education/MythBusters';
 import QuickTips from '../education/QuickTips';
 import QuickAccess from './QuickAccess';
+import { StatusLamp } from '@/components/ui/lab';
 
 type Tab = 'calculator' | 'education';
 
@@ -195,33 +196,36 @@ export default function TDEECalculator() {
   };
 
   return (
-    <div className="bg-card text-foreground rounded-xl shadow-xl border border-border">
-   
-
+    <div className="panel brackets text-foreground">
       {/* Calculator */}
-      <div className="p-6" ref={resultsRef}>
+      <div className="p-4 sm:p-6 lg:p-8 scroll-mt-20" ref={resultsRef}>
         {isCalculating ? (
           /* Skeleton Loader */
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="w-full max-w-4xl mx-auto py-12"
-          >
-            <div className="text-center mb-6 text-sm text-muted-foreground">
-              Calculating… {calculationSteps[calcStepIndex]}
+          <div className="w-full max-w-4xl mx-auto py-6 sm:py-10 lab-enter">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <StatusLamp label="Running" live />
+              <p role="status" className="label-caps text-muted-foreground">
+                Calculating… {calculationSteps[calcStepIndex]}
+              </p>
             </div>
-            <div className="animate-pulse space-y-6">
-              <div className="h-6 bg-muted rounded w-48 mx-auto" />
-              <div className="h-12 bg-muted rounded w-40 mx-auto" />
-              <div className="h-4 bg-muted rounded w-56 mx-auto" />
-              <div className="h-16 bg-muted rounded w-full" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="h-20 bg-muted rounded" />
-                <div className="h-20 bg-muted rounded" />
-                <div className="h-20 bg-muted rounded" />
+            <div aria-hidden="true" className="relative h-0.5 bg-muted overflow-hidden mb-8">
+              <div className="absolute inset-y-0 left-0 w-1/4 bg-accent-ink lab-scan" />
+            </div>
+            <div aria-hidden="true" className="animate-pulse space-y-6">
+              <div className="grid gap-6 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] items-center">
+                <div className="mx-auto w-56 h-40 rounded-t-full border-[12px] border-b-0 border-muted" />
+                <div className="space-y-3">
+                  <div className="h-16 bg-muted" />
+                  <div className="h-16 bg-muted" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div key={i} className="h-9 bg-muted" />
+                ))}
               </div>
             </div>
-          </motion.div>
+          </div>
         ) : !showResults ? (
           /* Input Form - Full Width */
           <div className="max-w-4xl mx-auto">
@@ -231,9 +235,14 @@ export default function TDEECalculator() {
               onRecalculate={handleQuickAccessRecalculate}
             />
 
-            <div className="flex items-center justify-center mb-8">
-              <Calculator className="w-6 h-6 text-accent mr-3" />
-              <h2 className="text-2xl font-bold text-foreground">Your Information</h2>
+            <div className="flex items-end justify-between gap-4 mb-8">
+              <div>
+                <p aria-hidden="true" className="label-caps text-muted-foreground mb-1">
+                  Input {'//'} 4 phases
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Your Information</h2>
+              </div>
+              <StatusLamp label="Ready" />
             </div>
 
             <TDEEForm
@@ -244,122 +253,74 @@ export default function TDEECalculator() {
           </div>
         ) : (
           /* Results - Full Width Clean Layout */
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-6xl mx-auto"
-          >
+          <div className="max-w-6xl mx-auto lab-enter">
             {/* Header with Recalculate Button */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mr-4">
-                  <Calculator className="w-6 h-6 text-accent-foreground" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold text-foreground">Your TDEE Results</h2>
-                  <p className="text-foreground">Personalized for your body and lifestyle</p>
-                </div>
+            <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+              <div>
+                <p aria-hidden="true" className="label-caps text-muted-foreground mb-1">
+                  Result {'//'} estimate
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Your TDEE Results</h2>
+                <p className="text-sm text-muted-foreground mt-1">Personalized for your body and lifestyle</p>
               </div>
               <button
+                type="button"
                 onClick={handleRecalculate}
-                className="px-6 py-3 bg-muted hover:bg-border text-foreground rounded-lg font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                className="min-h-11 px-4 border border-input rounded-[3px] text-foreground hover:bg-muted hover:border-foreground transition-colors flex items-center gap-2 label-caps cursor-pointer"
               >
-                <Calculator className="w-4 h-4" />
+                <RotateCcw className="w-4 h-4" />
                 Recalculate
               </button>
             </div>
 
             {result && (
-              <>
+              <div className="space-y-8">
+                {/* Main TDEE Display: gauge, error margin and goal targets */}
+                <ResultHero result={result} displayTdee={displayTdee} />
+
                 {/* Quick Tips */}
                 <QuickTips userData={userData} />
-                
-                {/* Main TDEE Display */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-8 mb-8 border border-orange-200"
-                >
-                  <div className="text-center">
-                    <div className="text-6xl font-bold text-orange-600 mb-2">
-                      {displayTdee.toLocaleString()}
-                    </div>
-                    <div className="text-2xl text-foreground mb-4">calories per day</div>
-                    <div className="text-lg text-muted-foreground mb-6">
-                      Range: {result.errorMargin.lower.toLocaleString()} - {result.errorMargin.upper.toLocaleString()} calories
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                      <div className="bg-card/60 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-red-600">{result.recommendation.weightLoss}</div>
-                        <div className="text-sm text-muted-foreground">Weight Loss</div>
-                      </div>
-                      <div className="bg-card/60 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-foreground">{result.recommendation.maintain}</div>
-                        <div className="text-sm text-muted-foreground">Maintenance</div>
-                      </div>
-                      <div className="bg-card/60 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-green-600">{result.recommendation.weightGain}</div>
-                        <div className="text-sm text-muted-foreground">Weight Gain</div>
-                      </div>
-                    </div>
+
+                <div>
+                  {/* Tab Navigation */}
+                  <div role="group" aria-label="Result details" className="flex border-b border-border mb-6">
+                    {tabs.map(({ id, label, icon: Icon }) => {
+                      const active = activeTab === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setActiveTab(id)}
+                          aria-pressed={active}
+                          className={`relative -mb-px min-h-11 px-4 sm:px-5 flex items-center gap-2 label-caps border-b-2 transition-colors cursor-pointer ${
+                            active
+                              ? 'border-accent-ink text-foreground'
+                              : 'border-transparent text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
-                </motion.div>
 
-                {/* Tab Navigation */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                  className="flex flex-wrap justify-center gap-2 mb-8 bg-muted rounded-lg p-2 "
-                >
-                  {tabs.map(({ id, label, icon: Icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => setActiveTab(id)}
-                      className={`flex items-center gap-2 py-3 px-6 rounded-md font-medium transition-all duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 ${
-                        activeTab === id
-                          ? 'bg-card text-accent shadow-md'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-card/60'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {label}
-                    </button>
-                  ))}
-                </motion.div>
-
-                {/* Tab Content */}
-                <AnimatePresence mode="wait">
+                  {/* Tab Content */}
                   {activeTab === 'calculator' && (
-                    <motion.div
-                      key="results-tab"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                    >
+                    <div key="results-tab" className="lab-enter">
                       <TDEEResults result={result} />
-                    </motion.div>
+                    </div>
                   )}
 
                   {activeTab === 'education' && (
-                    <motion.div
-                      key="education-tab"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                      className="space-y-8"
-                    >
+                    <div key="education-tab" className="space-y-8 lab-enter">
                       <MythBusters />
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
-              </>
+                </div>
+              </div>
             )}
-          </motion.div>
+          </div>
         )}
       </div>
     </div>

@@ -27,22 +27,31 @@ export default function FAQSection() {
   ];
 
   return (
-    <div className="mt-16 pb-16 px-4">
-      <h2 className="text-2xl font-bold text-foreground mb-8 text-center">
-        Frequently Asked Questions
-      </h2>
-      
-      <div className="space-y-6 max-w-3xl mx-auto">
+    <section aria-labelledby="faq-heading" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6 pb-16">
+      <div className="flex items-center gap-3 mb-6">
+        <span aria-hidden="true" className="label-caps text-accent-ink">FAQ</span>
+        <h2 id="faq-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+          Frequently Asked Questions
+        </h2>
+        <span aria-hidden="true" className="h-px flex-1 min-w-4 bg-border" />
+      </div>
+
+      <div className="panel divide-y divide-border">
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="bg-card border border-border rounded-lg p-6 shadow-sm"
+            className="grid gap-2 lg:gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] p-5 sm:p-6"
           >
-            <h3 className="font-semibold mb-2 text-foreground">{faq.question}</h3>
-            <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+            <h3 className="font-semibold text-foreground flex gap-3">
+              <span aria-hidden="true" className="readout text-sm font-normal text-muted-foreground pt-0.5 shrink-0">
+                Q.{String(index + 1).padStart(2, '0')}
+              </span>
+              <span>{faq.question}</span>
+            </h3>
+            <p className="text-muted-foreground leading-relaxed pl-12 lg:pl-0">{faq.answer}</p>
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

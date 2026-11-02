@@ -4,18 +4,36 @@
    script in layout.tsx (saved choice, else the OS preference). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* "Lab instrument" tokens. Light is the paper lab sheet; .dark below remaps the
+   same names to the instrument-panel palette. Every text and UI pair is checked
+   by scripts/check-contrast.mjs. */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-background: #fafafa;
-  --color-foreground: #18181b;
-  --color-card: #ffffff;
-  --color-muted: #f4f4f5;
-  --color-muted-foreground: #52525b;
-  --color-border: #e4e4e7;
-  --color-input: #d4d4d8;
-  --color-accent: #c2410c;
-  --color-accent-foreground: #ffffff;
+  --color-background: #f3f3ee;
+  --color-foreground: #121512;
+  --color-card: #fafaf7;
+  --color-muted: #e8e9e2;
+  --color-muted-foreground: #4f554e;
+  --color-border: #d5d7ce;
+  --color-border-strong: #a9ada1;
+  --color-input: #7a8075;
+  --color-grid: #1215120a;
+  --color-grid-major: #12151214;
+
+  /* The one accent: a highlighter-lime fill, plus a deep ink of the same hue
+     for text and strokes, where the bright fill would not read on paper. */
+  --color-accent: #c5f03c;
+  --color-accent-foreground: #121512;
+  --color-accent-ink: #3f6300;
+  --color-ring: #3f6300;
+
+  /* Semantic colours, used only where the meaning needs them. */
+  --color-danger: #b42318;
+  --color-deficit: #b0400e;
+  --color-surplus: #1b5a9b;
+  --color-warning: #855300;
 }
 
 @layer base {
@@ -26,89 +44,336 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    /* Graph paper: a fine 24px grid with a major line every 120px. */
+    background-image:
+      linear-gradient(var(--color-grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid-major) 1px, transparent 1px),
+      linear-gradient(var(--color-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    background-position: -1px -1px;
   }
 
   .dark {
     color-scheme: dark;
 
-    --color-background: #09090b;
-    --color-foreground: #fafafa;
-    --color-card: #18181b;
-    --color-muted: #27272a;
-    --color-muted-foreground: #a1a1aa;
-    --color-border: #3f3f46;
-    --color-input: #52525b;
-    --color-accent: #fb923c;
-    --color-accent-foreground: #18181b;
+    --color-background: #0a0c0b;
+    --color-foreground: #e6eae4;
+    --color-card: #111412;
+    --color-muted: #181c19;
+    --color-muted-foreground: #9aa298;
+    --color-border: #252b26;
+    --color-border-strong: #3d453e;
+    --color-input: #66705f;
+    --color-grid: #e6eae408;
+    --color-grid-major: #e6eae40f;
 
-    /* Colored callouts (bg-*-50..300 with text-*-600..900) are written for a
-       light page. In dark mode the light tints become dark tints and the dark
-       text shades become light ones, so every callout stays readable without
-       per-element dark: classes. Shades 400 and 500 are left as they are.
-       Tints are mixed into the dark card colour (#18181b). */
-    --color-red-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 12%, #18181b);
-    --color-red-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 20%, #18181b);
-    --color-red-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 32%, #18181b);
-    --color-red-300: color-mix(in oklab, oklch(63.7% 0.237 25.331) 45%, #18181b);
-    --color-red-600: oklch(70.4% 0.191 22.216);
-    --color-red-700: oklch(80.8% 0.114 19.571);
-    --color-red-800: oklch(88.5% 0.062 18.334);
-    --color-red-900: oklch(93.6% 0.032 17.717);
-    --color-orange-50: color-mix(in oklab, oklch(70.5% 0.213 47.604) 12%, #18181b);
-    --color-orange-100: color-mix(in oklab, oklch(70.5% 0.213 47.604) 20%, #18181b);
-    --color-orange-200: color-mix(in oklab, oklch(70.5% 0.213 47.604) 32%, #18181b);
-    --color-orange-300: color-mix(in oklab, oklch(70.5% 0.213 47.604) 45%, #18181b);
-    --color-orange-600: oklch(75% 0.183 55.934);
-    --color-orange-700: oklch(83.7% 0.128 66.29);
-    --color-orange-800: oklch(90.1% 0.076 70.697);
-    --color-orange-900: oklch(95.4% 0.038 75.164);
-    --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 12%, #18181b);
-    --color-amber-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 20%, #18181b);
-    --color-amber-200: color-mix(in oklab, oklch(76.9% 0.188 70.08) 32%, #18181b);
-    --color-amber-300: color-mix(in oklab, oklch(76.9% 0.188 70.08) 45%, #18181b);
-    --color-amber-600: oklch(82.8% 0.189 84.429);
-    --color-amber-700: oklch(87.9% 0.169 91.605);
-    --color-amber-800: oklch(92.4% 0.12 95.746);
-    --color-amber-900: oklch(96.2% 0.059 95.617);
-    --color-yellow-50: color-mix(in oklab, oklch(79.5% 0.184 86.047) 12%, #18181b);
-    --color-yellow-100: color-mix(in oklab, oklch(79.5% 0.184 86.047) 20%, #18181b);
-    --color-yellow-200: color-mix(in oklab, oklch(79.5% 0.184 86.047) 32%, #18181b);
-    --color-yellow-300: color-mix(in oklab, oklch(79.5% 0.184 86.047) 45%, #18181b);
-    --color-yellow-600: oklch(85.2% 0.199 91.936);
-    --color-yellow-700: oklch(90.5% 0.182 98.111);
-    --color-yellow-800: oklch(94.5% 0.129 101.54);
-    --color-yellow-900: oklch(97.3% 0.071 103.193);
-    --color-green-50: color-mix(in oklab, oklch(72.3% 0.219 149.579) 12%, #18181b);
-    --color-green-100: color-mix(in oklab, oklch(72.3% 0.219 149.579) 20%, #18181b);
-    --color-green-200: color-mix(in oklab, oklch(72.3% 0.219 149.579) 32%, #18181b);
-    --color-green-300: color-mix(in oklab, oklch(72.3% 0.219 149.579) 45%, #18181b);
-    --color-green-600: oklch(79.2% 0.209 151.711);
-    --color-green-700: oklch(87.1% 0.15 154.449);
-    --color-green-800: oklch(92.5% 0.084 155.995);
-    --color-green-900: oklch(96.2% 0.044 156.743);
-    --color-cyan-50: color-mix(in oklab, oklch(71.5% 0.143 215.221) 12%, #18181b);
-    --color-cyan-100: color-mix(in oklab, oklch(71.5% 0.143 215.221) 20%, #18181b);
-    --color-cyan-200: color-mix(in oklab, oklch(71.5% 0.143 215.221) 32%, #18181b);
-    --color-cyan-300: color-mix(in oklab, oklch(71.5% 0.143 215.221) 45%, #18181b);
-    --color-cyan-600: oklch(78.9% 0.154 211.53);
-    --color-cyan-700: oklch(86.5% 0.127 207.078);
-    --color-cyan-800: oklch(91.7% 0.08 205.041);
-    --color-cyan-900: oklch(95.6% 0.045 203.388);
-    --color-blue-50: color-mix(in oklab, oklch(62.3% 0.214 259.815) 12%, #18181b);
-    --color-blue-100: color-mix(in oklab, oklch(62.3% 0.214 259.815) 20%, #18181b);
-    --color-blue-200: color-mix(in oklab, oklch(62.3% 0.214 259.815) 32%, #18181b);
-    --color-blue-300: color-mix(in oklab, oklch(62.3% 0.214 259.815) 45%, #18181b);
-    --color-blue-600: oklch(70.7% 0.165 254.624);
-    --color-blue-700: oklch(80.9% 0.105 251.813);
-    --color-blue-800: oklch(88.2% 0.059 254.128);
-    --color-blue-900: oklch(93.2% 0.032 255.585);
-    --color-purple-50: color-mix(in oklab, oklch(62.7% 0.265 303.9) 12%, #18181b);
-    --color-purple-100: color-mix(in oklab, oklch(62.7% 0.265 303.9) 20%, #18181b);
-    --color-purple-200: color-mix(in oklab, oklch(62.7% 0.265 303.9) 32%, #18181b);
-    --color-purple-300: color-mix(in oklab, oklch(62.7% 0.265 303.9) 45%, #18181b);
-    --color-purple-600: oklch(71.4% 0.203 305.504);
-    --color-purple-700: oklch(82.7% 0.119 306.383);
-    --color-purple-800: oklch(90.2% 0.063 306.703);
-    --color-purple-900: oklch(94.6% 0.033 307.174);
+    --color-accent: #c5f03c;
+    --color-accent-foreground: #0a0c0b;
+    --color-accent-ink: #c5f03c;
+    --color-ring: #c5f03c;
+
+    --color-danger: #ff8a80;
+    --color-deficit: #ff9a6b;
+    --color-surplus: #74c4ff;
+    --color-warning: #f2c14e;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+}
+
+@layer components {
+  /* A card: flat surface, one hairline border, square-ish corners. */
+  .panel {
+    position: relative;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+  }
+
+  /* Corner brackets drawn on the border, like registration marks. One
+     pseudo-element, eight strokes. The host needs position: relative. */
+  .brackets::before {
+    --bracket-color: var(--color-foreground);
+    --bracket-size: 10px;
+    content: "";
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--bracket-color) 0 0) top left / var(--bracket-size) 1px,
+      linear-gradient(var(--bracket-color) 0 0) top left / 1px var(--bracket-size),
+      linear-gradient(var(--bracket-color) 0 0) top right / var(--bracket-size) 1px,
+      linear-gradient(var(--bracket-color) 0 0) top right / 1px var(--bracket-size),
+      linear-gradient(var(--bracket-color) 0 0) bottom left / var(--bracket-size) 1px,
+      linear-gradient(var(--bracket-color) 0 0) bottom left / 1px var(--bracket-size),
+      linear-gradient(var(--bracket-color) 0 0) bottom right / var(--bracket-size) 1px,
+      linear-gradient(var(--bracket-color) 0 0) bottom right / 1px var(--bracket-size);
+    background-repeat: no-repeat;
+  }
+
+  /* Mono small-caps label, e.g. TDEE // CALCULATOR. */
+  .label-caps {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .readout {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* A ruler strip: a minor tick every 8px and a major tick every 40px. */
+  .ruler {
+    height: 7px;
+    background-image:
+      repeating-linear-gradient(90deg, var(--color-border-strong) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, var(--color-border) 0 1px, transparent 1px 8px);
+    background-size: 100% 7px, 100% 4px;
+    background-position: left bottom, left bottom;
+    background-repeat: no-repeat;
+  }
+
+  /* Text inputs and selects. Error styling keys off aria-invalid, which the
+     form already sets, so the markup carries no colour conditionals. */
+  .field {
+    display: block;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.625rem 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-foreground);
+    background-color: var(--color-background);
+    border: 1px solid var(--color-input);
+    border-radius: 2px;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+
+  .field::placeholder {
+    color: var(--color-muted-foreground);
+    opacity: 1;
+  }
+
+  .field:hover {
+    border-color: var(--color-foreground);
+  }
+
+  .field:focus,
+  .field:focus-visible {
+    outline: none;
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 1px var(--color-ring), 0 0 0 4px color-mix(in oklab, var(--color-ring) 22%, transparent);
+  }
+
+  .field[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+
+  .field[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 1px var(--color-danger), 0 0 0 4px color-mix(in oklab, var(--color-danger) 22%, transparent);
+  }
+
+  .field-sm {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Native select with a drawn chevron (two gradient triangles in the text
+     colour, so it follows the theme without an image). */
+  select.field {
+    appearance: none;
+    padding-right: 2.5rem;
+    font-family: var(--font-sans);
+    background-image:
+      linear-gradient(45deg, transparent 50%, currentColor 50%),
+      linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position:
+      calc(100% - 1.125rem) 50%,
+      calc(100% - 0.8125rem) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+
+  /* Cuts a meter bar into 20 segments with gaps in the card colour. */
+  .meter-segments {
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(5% - 2px),
+      var(--color-card) calc(5% - 2px) 5%
+    );
+  }
+
+  /* Diagonal hazard stripe, for the one warning callout. */
+  .hazard {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--color-warning) 0 6px,
+      transparent 6px 12px
+    );
+  }
+}
+
+/* Motion. Everything renders fully visible without it: these only play an
+   entrance from a hidden start, and only when the user allows motion. */
+@keyframes lab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* The gauge sets --sweep-from to its arc length, so the arc grows from empty. */
+@keyframes lab-sweep {
+  from {
+    stroke-dashoffset: var(--sweep-from);
+  }
+}
+
+@keyframes lab-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lab-meter {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes lab-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes lab-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Entrances fill backwards only: once finished they leave no transform behind,
+   which would otherwise make the wrapper the containing block for fixed
+   children such as the explainer's mobile bottom sheet. */
+@media (prefers-reduced-motion: no-preference) {
+  .lab-enter {
+    animation: lab-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  }
+
+  /* Same duration and ease-out-cubic curve as the number's count-up. */
+  .lab-sweep {
+    animation: lab-sweep 700ms cubic-bezier(0.33, 1, 0.68, 1) backwards;
+  }
+
+  .lab-fade {
+    animation: lab-fade 400ms ease-out 550ms backwards;
+  }
+
+  .lab-meter {
+    transform-origin: left center;
+    animation: lab-meter 700ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  }
+
+  .lab-scan {
+    animation: lab-scan 1.4s linear infinite;
+  }
+
+  .lab-blink {
+    animation: lab-blink 1.6s steps(2, jump-none) infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Range input (error margin). The filled share comes from --range-pct, set
+   inline; track and thumb are drawn per engine. The input itself is 44px tall
+   so the whole strip is a tap target. */
+@layer components {
+  .range {
+    --range-pct: 50%;
+    appearance: none;
+    width: 100%;
+    height: 2.75rem;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .range:focus {
+    outline: none;
+  }
+
+  .range::-webkit-slider-runnable-track {
+    height: 4px;
+    background: linear-gradient(
+      to right,
+      var(--color-accent-ink) 0 var(--range-pct),
+      var(--color-border-strong) var(--range-pct) 100%
+    );
+  }
+
+  .range::-moz-range-track {
+    height: 4px;
+    background: var(--color-border-strong);
+  }
+
+  .range::-moz-range-progress {
+    height: 4px;
+    background: var(--color-accent-ink);
+  }
+
+  .range::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -7px;
+    background: var(--color-card);
+    border: 2px solid var(--color-accent-ink);
+    border-radius: 2px;
+  }
+
+  .range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--color-card);
+    border: 2px solid var(--color-accent-ink);
+    border-radius: 2px;
+  }
+
+  .range:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+
+  .range:focus-visible::-moz-range-thumb {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
   }
 }

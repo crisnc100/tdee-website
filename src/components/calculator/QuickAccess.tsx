@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Calculator, RefreshCw, ChevronRight, Clock, Target } from 'lucide-react';
+import { RefreshCw, ChevronRight, Clock, X } from 'lucide-react';
 import { TDEEResult } from '@/types/calculator';
 
 interface StoredResult {
@@ -127,85 +126,61 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
   }
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-          className="mb-6"
+    <section aria-labelledby="quick-access-heading" className="mb-8 border border-border rounded-[3px] bg-background/60 lab-enter">
+      <div className="flex items-start justify-between gap-3 border-b border-border pl-3 sm:pl-4">
+        <div className="py-2.5 min-w-0">
+          <h2 id="quick-access-heading" className="label-caps text-foreground">Welcome Back!</h2>
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+            <Clock aria-hidden="true" className="w-3 h-3" />
+            Last calculated {lastCalculatedDate}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleDismiss}
+          className="inline-flex items-center justify-center w-11 h-11 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          aria-label="Dismiss quick access"
         >
-          <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-1">
-            <div className="bg-card rounded-xl p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground">Welcome Back!</h2>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Last calculated {lastCalculatedDate}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleDismiss}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Dismiss quick access"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+          <X className="w-4 h-4" />
+        </button>
+      </div>
 
-              {storedResult && (
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">Your TDEE</span>
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-orange-500" />
-                      <span className="text-2xl font-bold text-foreground">
-                        {storedResult.tdee.toLocaleString()}
-                      </span>
-                      <span className="text-sm text-muted-foreground">cal/day</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Range: {storedResult.errorMargin.lower.toLocaleString()} - {storedResult.errorMargin.upper.toLocaleString()} calories
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleViewResults}
-                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-3 rounded-lg font-medium hover:shadow-lg transition-all cursor-pointer"
-                >
-                  <Calculator className="w-4 h-4" />
-                  View Full Results
-                  <ChevronRight className="w-4 h-4" />
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onRecalculate}
-                  className="flex items-center justify-center gap-2 bg-card border-2 border-orange-500 text-orange-600 px-4 py-3 rounded-lg font-medium hover:bg-orange-50 transition-all cursor-pointer"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Recalculate
-                </motion.button>
-              </div>
+      <div className="p-3 sm:p-4">
+        {storedResult && (
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 mb-4">
+            <div>
+              <p className="label-caps text-muted-foreground">Your TDEE</p>
+              <p className="readout mt-1">
+                <span className="text-3xl font-semibold text-accent-ink">{storedResult.tdee.toLocaleString()}</span>{' '}
+                <span className="text-xs text-muted-foreground">cal/day</span>
+              </p>
             </div>
+            <p className="readout text-xs text-muted-foreground">
+              Range: {storedResult.errorMargin.lower.toLocaleString()} - {storedResult.errorMargin.upper.toLocaleString()} calories
+            </p>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleViewResults}
+            className="group min-h-11 px-4 flex items-center justify-center gap-2 bg-accent text-accent-foreground border border-accent-ink rounded-[3px] label-caps hover:brightness-105 active:translate-y-px transition cursor-pointer"
+          >
+            View Full Results
+            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onRecalculate}
+            className="min-h-11 px-4 flex items-center justify-center gap-2 border border-input rounded-[3px] text-foreground label-caps hover:bg-muted hover:border-foreground transition-colors cursor-pointer"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Recalculate
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }

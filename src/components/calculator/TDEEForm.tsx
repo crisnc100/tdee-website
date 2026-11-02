@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { UserData, Exercise } from '@/types/calculator';
-import { Calculator, Plus, Trash2, Info, Eye, EyeOff, X } from 'lucide-react';
+import { Plus, Trash2, Info, Eye, EyeOff, X } from 'lucide-react';
+import { Reticle, Segmented, SectionHeading } from '@/components/ui/lab';
 
 interface TDEEFormProps {
   userData: UserData;
@@ -185,83 +185,69 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
     onCalculate();
   };
 
+  const marginPct = userData.errorMarginPreference || 7;
+  const bodyFatOutOfRange = !!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50);
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-10">
       {/* Phase 1: Foundation (Required) */}
-      <div className="space-y-6">
-        <div className="border-l-4 border-orange-500 pl-4">
-          <h3 className="text-lg font-semibold text-foreground mb-2">Phase 1: Foundation</h3>
-          <p className="text-sm text-muted-foreground">Core requirements for BMR calculation</p>
-        </div>
+      <section className="space-y-6">
+        <SectionHeading index="Phase 01" title="Foundation" hint="Core requirements for BMR calculation" />
 
         {/* 1. Units Selection */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <p id="units-label" className={labelClass}>
             Units System
-          </label>
-          <div className="flex justify-center">
-            <div className="bg-muted rounded-lg p-1 flex w-fit">
-              <button
-                type="button"
-                onClick={() => handleUnitsChange('metric')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  userData.units === 'metric'
-                    ? 'bg-accent text-accent-foreground shadow-md'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-card'
-                }`}
-              >
-                Metric (kg/cm)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUnitsChange('imperial')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  userData.units === 'imperial'
-                    ? 'bg-accent text-accent-foreground shadow-md'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-card'
-                }`}
-              >
-                Imperial (lbs/in)
-              </button>
-            </div>
-          </div>
+          </p>
+          <Segmented
+            labelledBy="units-label"
+            value={userData.units}
+            onSelect={handleUnitsChange}
+            options={[
+              { value: 'metric', label: 'Metric', detail: 'kg / cm' },
+              { value: 'imperial', label: 'Imperial', detail: 'lbs / in' },
+            ]}
+          />
         </div>
 
         {/* 2. Basic Demographics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label htmlFor="age" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="age" className={labelClass}>
               Age
             </label>
-            <input
-              type="number"
-              value={userData.age || ''}
-              onChange={(e) => handleInputChange('age', e.target.value ? parseInt(e.target.value) : 0)}
-              id="age"
-              inputMode="numeric"
-              onBlur={() => setTouched((t) => ({ ...t, age: true }))}
-              aria-invalid={showAgeError}
-              aria-describedby={showAgeError ? 'age-error' : undefined}
-              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showAgeError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
-              min="15"
-              max="80"
-              placeholder="e.g., 30"
-              required
-            />
+            <div className="flex">
+              <input
+                type="number"
+                value={userData.age || ''}
+                onChange={(e) => handleInputChange('age', e.target.value ? parseInt(e.target.value) : 0)}
+                id="age"
+                inputMode="numeric"
+                onBlur={() => setTouched((t) => ({ ...t, age: true }))}
+                aria-invalid={showAgeError}
+                aria-describedby={showAgeError ? 'age-error' : undefined}
+                className={groupedFieldClass}
+                min="15"
+                max="80"
+                placeholder="e.g., 30"
+                required
+              />
+              <UnitCell>yrs</UnitCell>
+            </div>
             {showAgeError && (
-              <p id="age-error" className="mt-1 text-xs text-red-600">Age must be between 15–80.</p>
+              <p id="age-error" className={errorClass}>Age must be between 15–80.</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="gender" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="gender" className={labelClass}>
               Gender
             </label>
             <select
               value={userData.gender}
               onChange={(e) => handleInputChange('gender', e.target.value as UserData['gender'])}
               id="gender"
-              className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              className="field"
             >
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -269,131 +255,141 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2" htmlFor={userData.units === 'metric' ? 'height-cm' : 'height-feet'}>
-              Height {userData.units === 'metric' ? '(cm)' : '(feet & inches)'}
+            <label className={labelClass} htmlFor={userData.units === 'metric' ? 'height-cm' : 'height-feet'}>
+              Height<span className="sr-only"> {userData.units === 'metric' ? '(cm)' : '(feet & inches)'}</span>
             </label>
             {userData.units === 'metric' ? (
-              <input
-                type="number"
-                value={userData.height || ''}
-                onChange={(e) => handleInputChange('height', e.target.value ? parseInt(e.target.value) : 0)}
-                id="height-cm"
-                inputMode="numeric"
-                onBlur={() => setTouched((t) => ({ ...t, heightCm: true }))}
-                aria-invalid={showHeightMetricError}
-                aria-describedby={showHeightMetricError ? 'height-error' : undefined}
-                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightMetricError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
-                min="120"
-                max="220"
-                step="1"
-                placeholder="e.g., 175"
-                required
-              />
+              <div className="flex">
+                <input
+                  type="number"
+                  value={userData.height || ''}
+                  onChange={(e) => handleInputChange('height', e.target.value ? parseInt(e.target.value) : 0)}
+                  id="height-cm"
+                  inputMode="numeric"
+                  onBlur={() => setTouched((t) => ({ ...t, heightCm: true }))}
+                  aria-invalid={showHeightMetricError}
+                  aria-describedby={showHeightMetricError ? 'height-error' : undefined}
+                  className={groupedFieldClass}
+                  min="120"
+                  max="220"
+                  step="1"
+                  placeholder="e.g., 175"
+                  required
+                />
+                <UnitCell>cm</UnitCell>
+              </div>
             ) : (
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <input
-                    type="number"
-                    value={userData.heightFeet === 0 ? '' : userData.heightFeet || ''}
-                    onChange={(e) => {
-                      const feet = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                      handleHeightChange(feet, userData.heightInches || 0);
-                    }}
-                    id="height-feet"
-                    inputMode="numeric"
-                    onBlur={() => setTouched((t) => ({ ...t, heightFeet: true }))}
-                    aria-invalid={showHeightFeetError}
-                    aria-describedby={showHeightFeetError ? 'height-feet-error' : undefined}
-                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightFeetError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
-                    min="4"
-                    max="7"
-                    placeholder="5"
-                    required
-                  />
-                  <label className="block text-xs text-muted-foreground mt-1 text-center">feet</label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="flex">
+                    <input
+                      type="number"
+                      value={userData.heightFeet === 0 ? '' : userData.heightFeet || ''}
+                      onChange={(e) => {
+                        const feet = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                        handleHeightChange(feet, userData.heightInches || 0);
+                      }}
+                      id="height-feet"
+                      inputMode="numeric"
+                      onBlur={() => setTouched((t) => ({ ...t, heightFeet: true }))}
+                      aria-invalid={showHeightFeetError}
+                      aria-describedby={showHeightFeetError ? 'height-feet-error' : undefined}
+                      className={groupedFieldClass}
+                      min="4"
+                      max="7"
+                      placeholder="5"
+                      required
+                    />
+                    <UnitCell>ft</UnitCell>
+                  </div>
                   {showHeightFeetError && (
-                    <p id="height-feet-error" className="mt-1 text-xs text-red-600 text-center">Feet must be between 4–7.</p>
+                    <p id="height-feet-error" className={errorClass}>Feet must be between 4–7.</p>
                   )}
                 </div>
-                <div className="flex-1">
-                  <input
-                    type="number"
-                    value={userData.heightInches === 0 ? '' : userData.heightInches || ''}
-                    onChange={(e) => {
-                      const inches = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                      handleHeightChange(userData.heightFeet || 0, inches);
-                    }}
-                    id="height-inches"
-                    inputMode="numeric"
-                    onBlur={() => setTouched((t) => ({ ...t, heightInches: true }))}
-                    aria-invalid={showHeightInchesError}
-                    aria-describedby={showHeightInchesError ? 'height-inches-error' : undefined}
-                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightInchesError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
-                    min="0"
-                    max="11"
-                    placeholder="9"
-                    required
-                  />
-                  <label className="block text-xs text-muted-foreground mt-1 text-center">inches</label>
+                <div>
+                  <label htmlFor="height-inches" className="sr-only">
+                    Height, inches
+                  </label>
+                  <div className="flex">
+                    <input
+                      type="number"
+                      value={userData.heightInches === 0 ? '' : userData.heightInches || ''}
+                      onChange={(e) => {
+                        const inches = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                        handleHeightChange(userData.heightFeet || 0, inches);
+                      }}
+                      id="height-inches"
+                      inputMode="numeric"
+                      onBlur={() => setTouched((t) => ({ ...t, heightInches: true }))}
+                      aria-invalid={showHeightInchesError}
+                      aria-describedby={showHeightInchesError ? 'height-inches-error' : undefined}
+                      className={groupedFieldClass}
+                      min="0"
+                      max="11"
+                      placeholder="9"
+                      required
+                    />
+                    <UnitCell>in</UnitCell>
+                  </div>
                   {showHeightInchesError && (
-                    <p id="height-inches-error" className="mt-1 text-xs text-red-600 text-center">Inches must be 0–11.</p>
+                    <p id="height-inches-error" className={errorClass}>Inches must be 0–11.</p>
                   )}
                 </div>
               </div>
             )}
             {(showHeightMetricError) && (
-              <p id="height-error" className="mt-1 text-xs text-red-600">Height must be between 120–220 cm.</p>
+              <p id="height-error" className={errorClass}>Height must be between 120–220 cm.</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="weight" className="block text-sm font-medium text-foreground mb-2">
-              Weight ({userData.units === 'metric' ? 'kg' : 'lbs'})
+            <label htmlFor="weight" className={labelClass}>
+              Weight<span className="sr-only"> ({userData.units === 'metric' ? 'kg' : 'lbs'})</span>
             </label>
-            <input
-              type="number"
-              value={userData.weight || ''}
-              onChange={(e) => handleInputChange('weight', e.target.value ? parseFloat(e.target.value) : 0)}
-              id="weight"
-              inputMode="numeric"
-              onBlur={() => setTouched((t) => ({ ...t, weight: true }))}
-              aria-invalid={showWeightError}
-              aria-describedby={showWeightError ? 'weight-error' : undefined}
-              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showWeightError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
-              min={userData.units === 'metric' ? "30" : "66"}
-              max={userData.units === 'metric' ? "200" : "440"}
-              step="0.1"
-              placeholder={userData.units === 'metric' ? "e.g., 70" : "e.g., 154"}
-              required
-            />
+            <div className="flex">
+              <input
+                type="number"
+                value={userData.weight || ''}
+                onChange={(e) => handleInputChange('weight', e.target.value ? parseFloat(e.target.value) : 0)}
+                id="weight"
+                inputMode="numeric"
+                onBlur={() => setTouched((t) => ({ ...t, weight: true }))}
+                aria-invalid={showWeightError}
+                aria-describedby={showWeightError ? 'weight-error' : undefined}
+                className={groupedFieldClass}
+                min={userData.units === 'metric' ? "30" : "66"}
+                max={userData.units === 'metric' ? "200" : "440"}
+                step="0.1"
+                placeholder={userData.units === 'metric' ? "e.g., 70" : "e.g., 154"}
+                required
+              />
+              <UnitCell>{userData.units === 'metric' ? 'kg' : 'lbs'}</UnitCell>
+            </div>
             {showWeightError && (
-              <p id="weight-error" className="mt-1 text-xs text-red-600">
+              <p id="weight-error" className={errorClass}>
                 {userData.units === 'metric' ? 'Weight must be between 30–200 kg.' : 'Weight must be between 66–440 lbs.'}
               </p>
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Phase 2: Lifestyle Context (Required) */}
-      <div className="space-y-6">
-        <div className="border-l-4 border-orange-500 pl-4">
-          <h3 className="text-lg font-semibold text-foreground mb-2">Phase 2: Lifestyle Context</h3>
-          <p className="text-sm text-muted-foreground">Daily occupational and movement patterns</p>
-        </div>
+      <section className="space-y-6">
+        <SectionHeading index="Phase 02" title="Lifestyle Context" hint="Daily occupational and movement patterns" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label htmlFor="job-activity" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="job-activity" className={labelClass}>
               Job Activity Level
             </label>
             <select
               value={userData.jobActivity}
               onChange={(e) => handleInputChange('jobActivity', e.target.value as UserData['jobActivity'])}
               id="job-activity"
-              className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              className="field"
             >
               <option value="desk">Desk Job (mostly sitting)</option>
               <option value="standing">Standing Job (retail, teaching)</option>
@@ -404,84 +400,67 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
           </div>
 
           <div>
-            <label htmlFor="steps" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="steps" className={labelClass}>
               Daily Steps
             </label>
-            <input
-              type="number"
-              value={userData.steps}
-              onChange={(e) => handleInputChange('steps', parseInt(e.target.value))}
-              id="steps"
-              inputMode="numeric"
-              onBlur={() => setTouched((t) => ({ ...t, steps: true }))}
-              aria-invalid={showStepsError}
-              aria-describedby={showStepsError ? 'steps-error' : undefined}
-              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showStepsError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
-              min="1000"
-              max="30000"
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="flex">
+              <input
+                type="number"
+                value={userData.steps}
+                onChange={(e) => handleInputChange('steps', parseInt(e.target.value))}
+                id="steps"
+                inputMode="numeric"
+                onBlur={() => setTouched((t) => ({ ...t, steps: true }))}
+                aria-invalid={showStepsError}
+                aria-describedby={showStepsError ? 'steps-error steps-hint' : 'steps-hint'}
+                className={groupedFieldClass}
+                min="1000"
+                max="30000"
+                required
+              />
+              <UnitCell>/ day</UnitCell>
+            </div>
+            <p id="steps-hint" className={hintClass}>
               Average daily steps from phone/watch
             </p>
             {showStepsError && (
-              <p id="steps-error" className="mt-1 text-xs text-red-600">Steps must be between 1,000–30,000.</p>
+              <p id="steps-error" className={errorClass}>Steps must be between 1,000–30,000.</p>
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Phase 3: Exercise Details (Required) */}
-      <div className="space-y-6">
-        <div className="border-l-4 border-orange-500 pl-4">
-          <h3 className="text-lg font-semibold text-foreground mb-2">Phase 3: Exercise Details</h3>
-          <p className="text-sm text-muted-foreground">Choose your preferred tracking method</p>
-        </div>
+      <section className="space-y-6">
+        <SectionHeading index="Phase 03" title="Exercise Details" hint="Choose your preferred tracking method" />
 
         {/* Exercise Input Method Selection */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <p id="exercise-method-label" className={labelClass}>
             Exercise Input Method
-          </label>
-          <div className="flex justify-center">
-            <div className="bg-muted rounded-lg p-1 flex w-fit">
-              <button
-                type="button"
-                onClick={() => handleInputChange('calculatorMode', 'simple')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  userData.calculatorMode === 'simple'
-                    ? 'bg-accent text-accent-foreground shadow-md'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-card'
-                }`}
-              >
-                Simple (Preset Levels)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleInputChange('calculatorMode', 'advanced')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  userData.calculatorMode === 'advanced'
-                    ? 'bg-accent text-accent-foreground shadow-md'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-card'
-                }`}
-              >
-                Advanced (Detailed)
-              </button>
-            </div>
-          </div>
+          </p>
+          <Segmented
+            labelledBy="exercise-method-label"
+            value={userData.calculatorMode}
+            onSelect={(mode) => handleInputChange('calculatorMode', mode)}
+            options={[
+              { value: 'simple', label: 'Simple', detail: 'Preset levels' },
+              { value: 'advanced', label: 'Advanced', detail: 'Detailed' },
+            ]}
+          />
         </div>
 
         {/* Simple Exercise Input */}
         {userData.calculatorMode === 'simple' && (
           <div>
-            <label htmlFor="simple-exercise-level" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="simple-exercise-level" className={labelClass}>
               Exercise Level
             </label>
             <select
               value={userData.simpleExerciseLevel || 'none'}
               onChange={(e) => handleInputChange('simpleExerciseLevel', e.target.value as UserData['simpleExerciseLevel'])}
               id="simple-exercise-level"
-              className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              className="field"
             >
               <option value="none">No regular exercise</option>
               <option value="very_light">Very Light - 1 light exercise a week</option>
@@ -495,36 +474,37 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
 
         {/* Advanced Exercise Input */}
         {userData.calculatorMode === 'advanced' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="space-y-4"
-          >
-            {/* Exercises List */}
-            <div className="space-y-4">
-              {(userData.exercises || []).map((exercise, index) => (
-                <div key={exercise.id} className="p-4 border border-border rounded-lg bg-muted">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-foreground">Exercise {index + 1}</h4>
+          <div className="space-y-3 lab-enter">
+            {(userData.exercises || []).map((exercise, index) => {
+              const minutesInvalid = exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300);
+              const daysInvalid = exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7);
+              return (
+                <div key={exercise.id} className="border border-border bg-muted/60 rounded-[3px]">
+                  <div className="flex items-center justify-between border-b border-border pl-3">
+                    <h4 className="label-caps text-foreground flex items-baseline gap-2">
+                      <span aria-hidden="true" className="text-accent-ink">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span>Exercise {index + 1}</span>
+                    </h4>
                     <button
                       type="button"
                       onClick={() => removeExercise(exercise.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
+                      className="inline-flex items-center justify-center w-11 h-11 text-danger hover:bg-danger/10 transition-colors cursor-pointer"
                       aria-label={`Remove exercise ${index + 1}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div>
-                      <label htmlFor={`ex-type-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Type</label>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3">
+                    <div className="col-span-2 md:col-span-1">
+                      <label htmlFor={`ex-type-${exercise.id}`} className={smallLabelClass}>Type</label>
                       <select
                         value={exercise.type}
                         onChange={(e) => updateExercise(exercise.id, 'type', e.target.value as Exercise['type'])}
                         id={`ex-type-${exercise.id}`}
-                        className="w-full px-3 py-2 text-sm rounded-md border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="field field-sm"
                       >
                         <option value="weight_lifting">Weight Lifting</option>
                         <option value="cardio">Cardio</option>
@@ -533,14 +513,15 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                         <option value="sports">Sports</option>
                       </select>
                     </div>
-                    
-                    <div>
-                      <label htmlFor={`ex-intensity-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Intensity</label>
+
+                    <div className="col-span-2 md:col-span-1">
+                      <label htmlFor={`ex-intensity-${exercise.id}`} className={smallLabelClass}>Intensity</label>
                       <select
                         value={exercise.intensity}
                         onChange={(e) => updateExercise(exercise.id, 'intensity', e.target.value as Exercise['intensity'])}
                         id={`ex-intensity-${exercise.id}`}
-                        className="w-full px-3 py-2 text-sm rounded-md border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        aria-describedby={`ex-intensity-desc-${exercise.id}`}
+                        className="field field-sm"
                       >
                         {intensityDescriptions[exercise.type].map(option => (
                           <option key={option.value} value={option.value}>
@@ -548,13 +529,13 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                           </option>
                         ))}
                       </select>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p id={`ex-intensity-desc-${exercise.id}`} className={hintClass}>
                         {intensityDescriptions[exercise.type].find(opt => opt.value === exercise.intensity)?.description}
                       </p>
                     </div>
-                    
+
                     <div>
-                      <label htmlFor={`ex-min-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Minutes/Session</label>
+                      <label htmlFor={`ex-min-${exercise.id}`} className={smallLabelClass}>Minutes/Session</label>
                       <input
                         type="number"
                         value={exercise.minutes === 0 ? '' : exercise.minutes}
@@ -567,20 +548,20 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                         }}
                         id={`ex-min-${exercise.id}`}
                         inputMode="numeric"
-                        aria-invalid={exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300)}
-                        aria-describedby={exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) ? `ex-min-err-${exercise.id}` : undefined}
-                        className={`w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:border-transparent ${exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
+                        aria-invalid={minutesInvalid}
+                        aria-describedby={minutesInvalid ? `ex-min-err-${exercise.id}` : undefined}
+                        className="field field-sm"
                         min="5"
                         max="300"
                         placeholder="60"
                       />
-                      {exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) && (
-                        <p id={`ex-min-err-${exercise.id}`} className="mt-1 text-xs text-red-600">Minutes must be 5–300.</p>
+                      {minutesInvalid && (
+                        <p id={`ex-min-err-${exercise.id}`} className={errorClass}>Minutes must be 5–300.</p>
                       )}
                     </div>
-                    
+
                     <div>
-                      <label htmlFor={`ex-freq-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Days/Week</label>
+                      <label htmlFor={`ex-freq-${exercise.id}`} className={smallLabelClass}>Days/Week</label>
                       <input
                         type="number"
                         value={exercise.frequency === 0 ? '' : exercise.frequency}
@@ -593,138 +574,135 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                         }}
                         id={`ex-freq-${exercise.id}`}
                         inputMode="numeric"
-                        aria-invalid={exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7)}
-                        aria-describedby={exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) ? `ex-freq-err-${exercise.id}` : undefined}
-                        className={`w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:border-transparent ${exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
+                        aria-invalid={daysInvalid}
+                        aria-describedby={daysInvalid ? `ex-freq-err-${exercise.id}` : undefined}
+                        className="field field-sm"
                         min="1"
                         max="7"
                         placeholder="3"
                       />
-                      {exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) && (
-                        <p id={`ex-freq-err-${exercise.id}`} className="mt-1 text-xs text-red-600">Days must be 1–7.</p>
+                      {daysInvalid && (
+                        <p id={`ex-freq-err-${exercise.id}`} className={errorClass}>Days must be 1–7.</p>
                       )}
                     </div>
                   </div>
                 </div>
-              ))}
-              
-              {/* Add Exercise Button */}
-              <button
-                type="button"
-                onClick={addExercise}
-                className="w-full py-3 px-4 border-2 border-dashed border-orange-300 rounded-lg text-orange-600 hover:border-orange-400 hover:text-orange-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Exercise Type
-              </button>
-            </div>
+              );
+            })}
 
-          </motion.div>
+            {/* Add Exercise Button */}
+            <button
+              type="button"
+              onClick={addExercise}
+              className="w-full min-h-12 px-4 border border-dashed border-border-strong rounded-[3px] text-foreground hover:border-accent-ink hover:text-accent-ink transition-colors flex items-center justify-center gap-2 label-caps cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Add Exercise Type
+            </button>
+          </div>
         )}
-      </div>
+      </section>
 
       {/* Phase 4: Optimization (Optional but Important) */}
-      <div className="space-y-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
-        <div className="border-l-4 border-orange-500 pl-4">
-          <h3 className="text-lg font-semibold text-foreground mb-2">Phase 4: Optimization</h3>
-          <p className="text-sm text-muted-foreground">Optional settings for enhanced accuracy</p>
-        </div>
+      <section className="space-y-6 border border-dashed border-border-strong rounded-[3px] p-4 sm:p-5">
+        <SectionHeading index="Phase 04" title="Optimization" hint="Optional settings for enhanced accuracy" />
 
         {/* Body Fat Percentage */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-foreground">
-              Body Fat % (optional - improves accuracy)
+          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1 mb-2">
+            <label htmlFor="body-fat" className="block">
+              <span className="label-caps text-foreground">Body Fat %</span>{' '}
+              <span className="text-xs text-muted-foreground">(optional - improves accuracy)</span>
             </label>
             <button
               type="button"
               onClick={() => setShowBodyFatGuide(!showBodyFatGuide)}
-              className="flex items-center gap-2 px-3 py-1 text-sm text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+              aria-expanded={showBodyFatGuide}
+              className="inline-flex items-center gap-2 min-h-11 -my-2 px-2 -mr-2 label-caps text-accent-ink hover:underline underline-offset-4 cursor-pointer"
             >
               {showBodyFatGuide ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               {showBodyFatGuide ? 'Hide' : 'Show'} Visual Guide
             </button>
           </div>
-          
-          <input
-            type="number"
-            value={userData.bodyFat || ''}
-            onChange={(e) => handleInputChange('bodyFat', e.target.value ? parseFloat(e.target.value) : undefined)}
-            id="body-fat"
-            inputMode="numeric"
-            aria-invalid={!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50)}
-            aria-describedby={!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) ? 'body-fat-error' : undefined}
-            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
-            min="5"
-            max="50"
-            step="0.1"
-            placeholder="e.g., 15"
-          />
-          {!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) && (
-            <p id="body-fat-error" className="mt-1 text-xs text-red-600">Body fat must be 5–50% if provided.</p>
+
+          <div className="flex">
+            <input
+              type="number"
+              value={userData.bodyFat || ''}
+              onChange={(e) => handleInputChange('bodyFat', e.target.value ? parseFloat(e.target.value) : undefined)}
+              id="body-fat"
+              inputMode="numeric"
+              aria-invalid={bodyFatOutOfRange}
+              aria-describedby={bodyFatOutOfRange ? 'body-fat-error' : undefined}
+              className={groupedFieldClass}
+              min="5"
+              max="50"
+              step="0.1"
+              placeholder="e.g., 15"
+            />
+            <UnitCell>%</UnitCell>
+          </div>
+          {bodyFatOutOfRange && (
+            <p id="body-fat-error" className={errorClass}>Body fat must be 5–50% if provided.</p>
           )}
-          
-          <div className="mt-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
-            <p className="text-sm text-orange-800">
-              <strong>Accuracy boost:</strong> Adding a body fat estimate enables the Katch–McArdle (lean mass) formula, which can improve precision for muscular or lean users.
+
+          <div className="mt-3 border-l-2 border-accent-ink bg-muted/70 px-3 py-2.5">
+            <p className="text-sm text-foreground">
+              <strong className="font-semibold">Accuracy boost:</strong> Adding a body fat estimate enables the Katch–McArdle (lean mass) formula, which can improve precision for muscular or lean users.
             </p>
-            <p className="text-xs text-orange-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Only add if you have a close estimate from DEXA, BodPod, or calipers. If unsure, leave blank.
             </p>
           </div>
 
           {/* Visual Body Fat Guide */}
           {showBodyFatGuide && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mt-4 p-4 bg-card rounded-lg border border-border"
-            >
-              <h4 className="font-medium text-foreground mb-3 text-center">
+            <div className="mt-4 p-3 sm:p-4 bg-card border border-border rounded-[3px] lab-enter">
+              <h4 className="label-caps text-foreground mb-3 text-center">
                 Body Fat Percentage Visual Guide - {userData.gender === 'male' ? 'Male' : 'Female'}
               </h4>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {bodyFatGuide[userData.gender].map((item, index) => (
                   <div key={index} className="text-center">
-                    <div 
-                      className="relative mb-2 cursor-pointer" 
+                    <button
+                      type="button"
+                      className="group relative block w-full mb-2 cursor-pointer rounded-[2px] overflow-hidden border border-border"
                       onClick={() => setSelectedBodyFatImage(item)}
+                      aria-label={`Enlarge ${item.range} body fat reference`}
                     >
                       <img
                         src={item.image}
                         alt={`${userData.gender} ${item.range} body fat`}
-                        className="w-full h-32 object-cover rounded-lg shadow-sm hover:opacity-80 transition-opacity"
+                        className="w-full h-32 object-cover group-hover:opacity-85 transition-opacity"
                       />
-                      <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded pointer-events-none">
+                      <span className="absolute top-1.5 left-1.5 bg-background/90 text-foreground font-mono text-xs px-1.5 py-0.5 rounded-[2px] pointer-events-none">
                         {item.range}
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20 rounded-lg pointer-events-none">
-                        <Eye className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
+                      </span>
+                      <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <span className="bg-background/90 text-foreground p-1.5 rounded-[2px]">
+                          <Eye className="w-5 h-5" />
+                        </span>
+                      </span>
+                    </button>
                     <p className="text-xs text-muted-foreground leading-tight">
                       {item.description}
                     </p>
                   </div>
                 ))}
               </div>
-              
-              <div className="mt-4 p-3 bg-muted rounded-lg">
-                <p className="text-xs text-muted-foreground text-center">
-                  <strong>Note:</strong> These are visual approximations. For accuracy, use professional measurement methods (DEXA, BodPod, calipers).
-                </p>
-              </div>
-            </motion.div>
+
+              <p className="mt-4 p-3 bg-muted text-xs text-muted-foreground text-center rounded-[2px]">
+                <strong>Note:</strong> These are visual approximations. For accuracy, use professional measurement methods (DEXA, BodPod, calipers).
+              </p>
+            </div>
           )}
         </div>
 
         {/* Error Margin Preference */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <label className="block text-sm font-medium text-foreground">
+          <div className="flex items-center gap-1 mb-1">
+            <label htmlFor="error-margin" className="label-caps text-foreground">
               Error Margin Preference
             </label>
             <div className="relative">
@@ -732,52 +710,67 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                 type="button"
                 onMouseEnter={() => setShowErrorMarginInfo(true)}
                 onMouseLeave={() => setShowErrorMarginInfo(false)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                onFocus={() => setShowErrorMarginInfo(true)}
+                onBlur={() => setShowErrorMarginInfo(false)}
+                aria-label="What is error margin?"
+                aria-describedby={showErrorMarginInfo ? 'error-margin-info' : undefined}
+                className="inline-flex items-center justify-center w-11 h-11 -my-3 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Info className="w-4 h-4" />
               </button>
               {showErrorMarginInfo && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                  <p className="font-medium mb-1">What is Error Margin?</p>
-                  <p>TDEE calculations are estimates. Error margin shows the range your actual TDEE might fall within. Lower = tighter range but may miss individual variations. Higher = wider safety buffer.</p>
+                <div
+                  id="error-margin-info"
+                  role="tooltip"
+                  className="absolute bottom-full right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 mb-1 w-64 max-w-[calc(100vw-2rem)] p-3 bg-foreground text-background text-xs rounded-[3px] shadow-lg z-10"
+                >
+                  <p className="label-caps mb-1">What is Error Margin?</p>
+                  <p className="leading-relaxed">TDEE calculations are estimates. Error margin shows the range your actual TDEE might fall within. Lower = tighter range but may miss individual variations. Higher = wider safety buffer.</p>
                 </div>
               )}
             </div>
           </div>
-          
-          <div className="space-y-3">
+
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Conservative (safer)</span>
-              <span className="text-sm text-muted-foreground">Precise (tighter)</span>
+              <span className="text-xs text-muted-foreground">Conservative (safer)</span>
+              <span className="text-xs text-muted-foreground">Precise (tighter)</span>
             </div>
-            
-            <div className="relative">
+
+            <div>
               <input
                 type="range"
                 min="3"
                 max="12"
                 step="1"
-                value={userData.errorMarginPreference || 7}
+                value={marginPct}
                 onChange={(e) => handleInputChange('errorMarginPreference', parseInt(e.target.value))}
                 id="error-margin"
-                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
-                style={{
-                  background: `linear-gradient(to right, var(--color-accent) 0%, var(--color-accent) ${((userData.errorMarginPreference || 7) - 3) * 11.11}%, var(--color-border) ${((userData.errorMarginPreference || 7) - 3) * 11.11}%, var(--color-border) 100%)`
-                }}
+                aria-valuetext={`plus or minus ${marginPct} percent`}
+                className="range block"
+                style={{ '--range-pct': `${(marginPct - 3) * 11.11}%` } as CSSProperties}
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>3%</span>
-                <span>7%</span>
-                <span>12%</span>
+              {/* One tick per step, inset by half the thumb so each sits under a stop. */}
+              <div aria-hidden="true" className="flex justify-between px-[9px] -mt-2.5 h-2">
+                {Array.from({ length: 10 }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`w-px ${i === 0 || i === 4 || i === 9 ? 'h-2 bg-foreground/60' : 'h-1 bg-border-strong'}`}
+                  />
+                ))}
+              </div>
+              <div aria-hidden="true" className="relative h-4 mt-1 mx-[9px] font-mono text-xs text-muted-foreground">
+                <span className="absolute left-0 -translate-x-1/2">3%</span>
+                <span className="absolute left-[44.44%] -translate-x-1/2">7%</span>
+                <span className="absolute right-0 translate-x-1/2">12%</span>
               </div>
             </div>
-            
-            <div className="text-center">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-3">
+              <span className="readout inline-flex items-center px-2 py-1 rounded-[2px] text-sm font-medium bg-foreground text-background">
                 ±{userData.errorMarginPreference || 7}% Error Margin
               </span>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground">
                 {userData.errorMarginPreference === 3 && "Very tight range - for precise trackers"}
                 {userData.errorMarginPreference === 7 && "Recommended - good balance of accuracy and safety"}
                 {userData.errorMarginPreference === 12 && "Wide range - safer buffer for casual tracking"}
@@ -786,76 +779,95 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <motion.button
+      <button
         type="submit"
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className="w-full bg-accent text-accent-foreground py-4 px-6 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3 hover:bg-accent/90 cursor-pointer"
+        className="group w-full min-h-14 px-6 bg-accent text-accent-foreground border border-accent-ink rounded-[3px] flex items-center justify-center gap-3 label-caps text-sm hover:brightness-105 active:translate-y-px transition cursor-pointer"
       >
-        <Calculator className="w-5 h-5" />
+        <Reticle className="w-5 h-5" />
         Calculate My TDEE
-      </motion.button>
+        <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
+      </button>
 
       {/* Body Fat Image Modal */}
       {selectedBodyFatImage && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+        <div
+          className="fixed inset-0 bg-background/85 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-4"
           onClick={() => setSelectedBodyFatImage(null)}
         >
-          <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-auto relative shadow-2xl border border-border"
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="body-fat-modal-title"
+            className="panel brackets max-w-3xl w-full max-h-[90vh] overflow-auto shadow-2xl lab-enter"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
+              type="button"
               onClick={() => setSelectedBodyFatImage(null)}
-              className="absolute top-4 right-4 bg-card hover:bg-muted text-muted-foreground hover:text-foreground rounded-full p-2 z-10 shadow-lg border border-border transition-colors"
+              aria-label="Close"
+              className="absolute top-2 right-2 inline-flex items-center justify-center w-11 h-11 bg-card hover:bg-muted text-muted-foreground hover:text-foreground border border-border rounded-[2px] z-10 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-            
+
             {/* Large Image */}
-            <div className="p-8">
-              <div className="text-center mb-6">
-                <h3 className="text-3xl font-bold text-foreground mb-2">
+            <div className="p-5 sm:p-8">
+              <div className="mb-5 pr-12">
+                <h3 id="body-fat-modal-title" className="readout text-3xl font-semibold text-foreground mb-1">
                   {selectedBodyFatImage.range} Body Fat
                 </h3>
-                <p className="text-lg text-muted-foreground">
+                <p className="label-caps text-muted-foreground">
                   {userData.gender === 'male' ? 'Male' : 'Female'} Reference
                 </p>
               </div>
-              
-              <div className="bg-muted rounded-xl p-4 mb-6">
+
+              <div className="bg-muted border border-border rounded-[2px] p-3 sm:p-4 mb-5">
                 <img
                   src={selectedBodyFatImage.image}
                   alt={`${userData.gender} ${selectedBodyFatImage.range} body fat`}
-                  className="w-full h-96 object-contain rounded-lg"
+                  className="w-full h-72 sm:h-96 object-contain"
                 />
               </div>
-              
+
               {/* Image Info */}
               <div className="space-y-4">
-                <p className="text-foreground text-lg leading-relaxed">
+                <p className="text-foreground text-base sm:text-lg leading-relaxed">
                   {selectedBodyFatImage.description}
                 </p>
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">
-                  <p className="text-orange-800">
-                    <strong>💡 Tip:</strong> If this looks similar to your physique, you can use this range as an estimate for more accurate TDEE calculations.
+                <div className="border-l-2 border-accent-ink bg-muted/70 px-3 py-2.5">
+                  <p className="text-sm text-foreground">
+                    <strong className="label-caps mr-2">Tip</strong>
+                    If this looks similar to your physique, you can use this range as an estimate for more accurate TDEE calculations.
                   </p>
                 </div>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </form>
+  );
+}
+
+const labelClass = 'label-caps block text-foreground mb-2';
+// Tighter tracking so 'Minutes/Session' fits a half-width cell at 360px.
+const smallLabelClass = 'label-caps tracking-[0.08em] block text-muted-foreground mb-1.5';
+const hintClass = 'mt-1.5 text-xs text-muted-foreground';
+const errorClass = 'mt-1.5 text-xs text-danger';
+// Inputs that sit beside a unit cell lose their right-hand corners; focus
+// lifts them above the cell so the ring is not clipped.
+const groupedFieldClass = 'field relative focus:z-10 rounded-r-none min-w-0';
+
+function UnitCell({ children }: { children: ReactNode }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-flex items-center shrink-0 px-3 border border-l-0 border-input bg-muted label-caps text-muted-foreground rounded-r-[2px]"
+    >
+      {children}
+    </span>
   );
 }

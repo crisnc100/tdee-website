@@ -1,57 +1,55 @@
 import Link from 'next/link';
-import { Heart, Shield, Star } from 'lucide-react';
+
+const notes = [
+  {
+    title: 'Straightforward',
+    body: 'An estimate built from published formulas and your own activity, shown with a range instead of a single exact number.',
+  },
+  {
+    title: 'Private',
+    body: "No accounts. Your inputs and results are saved only in your browser's local storage on this device.",
+  },
+  {
+    title: 'Free',
+    body: 'No sign-up and no subscription.',
+  },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <h3 className="text-xl font-bold mb-4 flex items-center">
-              <Heart className="w-5 h-5 mr-2 text-red-500" />
-              Straightforward
-            </h3>
-            <p className="text-gray-300 leading-relaxed">
-              An estimate built from published formulas and your own activity,
-              shown with a range instead of a single exact number.
-            </p>
-          </div>
+    <footer className="border-t border-border bg-card">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <dl className="grid grid-cols-1 md:grid-cols-3 border border-border divide-y md:divide-y-0 md:divide-x divide-border">
+          {notes.map((note, i) => (
+            <div key={note.title} className="p-5">
+              <dt className="label-caps text-foreground flex items-baseline gap-3">
+                <span className="text-accent-ink">{String(i + 1).padStart(2, '0')}</span>
+                {note.title}
+              </dt>
+              <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">{note.body}</dd>
+            </div>
+          ))}
+        </dl>
 
-          <div>
-            <h3 className="text-xl font-bold mb-4 flex items-center">
-              <Shield className="w-5 h-5 mr-2 text-green-500" />
-              Private
-            </h3>
-            <p className="text-gray-300 leading-relaxed">
-              No accounts. Your inputs and results are saved only in your
-              browser&apos;s local storage on this device.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-bold mb-4 flex items-center">
-              <Star className="w-5 h-5 mr-2 text-yellow-500" />
-              Free
-            </h3>
-            <p className="text-gray-300 leading-relaxed">
-              No sign-up and no subscription.
-            </p>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-700 mt-8 pt-8 text-center">
-          <p className="text-sm text-gray-400">
-            Estimates only. Not medical advice.
-          </p>
-          <div className="text-xs text-gray-400 mt-4 space-x-4">
-            <Link href="/privacy" className="hover:text-white transition-colors">
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="label-caps text-muted-foreground">Estimates only. Not medical advice.</p>
+          <nav aria-label="Legal" className="flex items-center gap-1 -mx-2">
+            <Link
+              href="/privacy"
+              className="label-caps text-muted-foreground hover:text-foreground inline-flex items-center min-h-11 px-2 transition-colors"
+            >
               Privacy Policy
             </Link>
-            <span aria-hidden="true">|</span>
-            <Link href="/terms" className="hover:text-white transition-colors">
+            <span aria-hidden="true" className="text-border-strong">
+              /
+            </span>
+            <Link
+              href="/terms"
+              className="label-caps text-muted-foreground hover:text-foreground inline-flex items-center min-h-11 px-2 transition-colors"
+            >
               Terms of Service
             </Link>
-          </div>
+          </nav>
         </div>
       </div>
     </footer>

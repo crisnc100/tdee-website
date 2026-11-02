@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb, RefreshCw, Clock, Sun, Moon } from 'lucide-react';
 import { UserData } from '@/types/calculator';
 
@@ -194,55 +193,46 @@ export default function QuickTips({ userData }: { userData: UserData }) {
   if (!currentTip) return null;
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Lightbulb className="w-4 h-4 text-blue-600" />
-          </div>
-          <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-foreground">Quick Tip</h4>
-            <TimeIcon className="w-4 h-4 text-muted-foreground" />
-          </div>
+    <aside aria-label="Quick tip" className="border border-border bg-background/60 rounded-[3px]">
+      <div className="flex items-center justify-between gap-3 border-b border-border pl-3 sm:pl-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Lightbulb className="w-4 h-4 text-accent-ink" />
+          <h4 className="label-caps text-foreground">Quick Tip</h4>
+          <TimeIcon className="w-3.5 h-3.5" />
         </div>
-        
+
         <button
+          type="button"
           onClick={rotateTip}
-          className="p-1.5 hover:bg-blue-100 rounded-lg transition-all group cursor-pointer"
+          className="group inline-flex items-center justify-center w-11 h-11 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           aria-label="Next tip"
         >
-          <RefreshCw className={`w-4 h-4 text-blue-600 transition-transform ${
+          <RefreshCw className={`w-4 h-4 transition-transform ${
             isRotating ? 'animate-spin' : 'group-hover:rotate-180'
           }`} />
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
+      <div className="px-3 sm:px-4 py-3 min-h-[5.5rem]" aria-live="polite">
         {!isRotating && currentTip && (
-          <motion.div
-            key={currentTip.text}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 10 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div key={currentTip.text} className="lab-enter">
             <p className="text-sm text-foreground leading-relaxed">
               {currentTip.text}
             </p>
-            
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs text-muted-foreground capitalize bg-card/50 px-2 py-0.5 rounded">
+
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="label-caps text-muted-foreground bg-muted px-1.5 py-0.5 rounded-[2px]">
                 {currentTip.category.replace('-', ' ')}
               </span>
               {userData.goal && currentTip.relevantFor && (
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                <span className="label-caps text-foreground border border-border px-1.5 py-0.5 rounded-[2px]">
                   Personalized for you
                 </span>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-    </div>
+      </div>
+    </aside>
   );
 }
