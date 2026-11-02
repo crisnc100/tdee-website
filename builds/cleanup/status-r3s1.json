@@ -1,0 +1,1 @@
+{"f1":{"status":"rejected","reason":"Cache uses ACTIONS_RUNTIME_TOKEN, not GITHUB_TOKEN; permissions block does not gate it. REFUTED by dispute.","evidence":".github/workflows/ci.yml:7-8"}}
