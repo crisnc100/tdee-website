@@ -2,29 +2,21 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MacroSplit } from '@/types/calculator';
+import { MacroSplit, UserData } from '@/types/calculator';
 import { calculateMacros } from '@/lib/calculator';
-import { 
-  Calculator, 
-  Loader2, 
-  Target, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Calculator,
+  Loader2,
+  Target,
+  TrendingUp,
+  TrendingDown,
   Info,
-  Clock,
-  DollarSign,
-  Zap,
-  Brain,
-  Sparkles,
-  Star,
-  AlertCircle
+  Brain
 } from 'lucide-react';
-import { AI_MODELS, AIModelId } from '@/types/ai';
-import { useUserPreferences } from '@/hooks/useUserPreferences';
 
 interface MacroCalculatorProps {
   defaultCalories: number;
-  userData?: any;
+  userData?: UserData;
 }
 
 export default function MacroCalculator({ defaultCalories, userData }: MacroCalculatorProps) {
@@ -38,22 +30,12 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
   const [loading, setLoading] = useState(false);
   const [showProteinInfo, setShowProteinInfo] = useState(false);
   const [selectedMacroInfo, setSelectedMacroInfo] = useState<string | null>(null);
-  
-  // AI Performance Indicators
-  const [aiPerformance, setAiPerformance] = useState<{
-    modelUsed?: AIModelId;
-    responseTime?: number;
-    estimatedCost?: number;
-    confidence?: number;
-    usedFallback?: boolean;
-  }>({});
-  
-  const { preferences, trackModelUsage } = useUserPreferences();
+
 
   // Macro type explanations
   const macroExplanations = {
     custom: {
-      title: "MyCalorieLog Recommended",
+      title: "Recommended",
       description: "Personalized based on your goals, body composition, and activity level",
       reasoning: "Our smart algorithm considers your specific needs and optimizes protein, carbs, and fats for your individual situation."
     },
@@ -110,11 +92,11 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
     
     // Calculate macros - 4 standard types + 1 custom
     const macroTypes: MacroSplit['type'][] = ['custom', 'balanced', 'low_carb', 'high_carb', 'keto'];
-    const userDataWithGoal = { ...userData, goal };
+    const userDataWithGoal = userData ? { ...userData, goal } : undefined;
     const calculatedMacros = macroTypes.map(type => calculateMacros(targetCalories, type, userDataWithGoal));
     
     // Smart recommendation - recommend custom by default, or match if it's close to a standard
-    let recommendedIndex = 0; // Default to custom (MyCalorieLog recommended)
+    let recommendedIndex = 0; // Default to custom
     
     // Check if custom matches any standard type closely (within 3% for each macro)
     const customMacro = calculatedMacros[0];
@@ -175,15 +157,7 @@ export default function MacroCalculator({ defaultCalories, userData }: MacroCalc
     setRecommended(recommendedIndex);
     setMessage(personalizedMessage);
     setInsights(insights);
-    
-    // Set dummy AI performance for UI compatibility
-    setAiPerformance({
-      modelUsed: 'local' as AIModelId,
-      responseTime: 10,
-      estimatedCost: 0,
-      confidence: 1,
-      usedFallback: false
-    });
+
     
     setLoading(false);
   };
