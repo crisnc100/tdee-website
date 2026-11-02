@@ -27,7 +27,7 @@ export interface UserData {
   
   // Advanced mode fields
   bodyFat?: number; // percentage
-  errorMarginPreference?: number; // percentage (10-20)
+  errorMarginPreference?: number; // percentage (form slider 3-12; unset or out of range -> 7)
   activityLevel?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extra_active';
   exercises?: Exercise[];
   muscleMass?: 'low' | 'average' | 'high';

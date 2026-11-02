@@ -1,4 +1,56 @@
-import { UserData, TDEEResult, ComparisonData, MacroSplit } from '@/types/calculator';
+import { UserData, TDEEResult, ComparisonData, MacroSplit, Exercise } from '@/types/calculator';
+
+// Lowest daily intake a weight-loss target may suggest without medical supervision.
+const MIN_LOSS_CALORIES = { male: 1500, female: 1200 };
+const DEFAULT_ERROR_MARGIN = 0.07;
+const MAX_DAYS_PER_WEEK = 7;
+
+// Blank form fields arrive as NaN; negatives and Infinity are never meaningful here.
+function nonNegative(value: number | undefined | null): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function validBodyFat(bodyFat: number | undefined): number | undefined {
+  return typeof bodyFat === 'number' && Number.isFinite(bodyFat) && bodyFat > 0 && bodyFat < 100
+    ? bodyFat
+    : undefined;
+}
+
+// Own-key lookup so stale or unknown values (e.g. from localStorage) can't yield undefined/NaN.
+function lookup<T>(table: Record<string, T>, key: string | undefined, fallback: T): T {
+  return key !== undefined && Object.prototype.hasOwnProperty.call(table, key) ? table[key] : fallback;
+}
+
+function toMetric(userData: UserData): { weight: number; height: number; age: number } {
+  const weight = nonNegative(userData.weight);
+  const height = nonNegative(userData.height);
+  const age = nonNegative(userData.age);
+  if (userData.units === 'imperial') {
+    return { weight: weight / 2.20462, height: height * 2.54, age }; // lbs -> kg, inches -> cm
+  }
+  return { weight, height, age };
+}
+
+function daysPerWeek(frequency: number | undefined): number {
+  return Math.min(nonNegative(frequency), MAX_DAYS_PER_WEEK);
+}
+
+function hasLegacyExercise(userData: UserData): boolean {
+  return userData.exerciseType != null || userData.exerciseIntensity != null ||
+    userData.exerciseMinutes != null || userData.trainingFrequency != null;
+}
+
+const exerciseRates: Record<Exercise['type'], Record<Exercise['intensity'], number>> = {
+  weight_lifting: { light: 3.5, moderate: 5.5, vigorous: 4.5 },
+  cardio: { light: 6, moderate: 9, vigorous: 12.5 },
+  hiit: { light: 7, moderate: 10, vigorous: 13.5 },
+  yoga: { light: 2.5, moderate: 4, vigorous: 5 },
+  sports: { light: 6, moderate: 9, vigorous: 11 }
+};
+
+function exerciseRate(type: string, intensity: string): number {
+  return lookup(lookup<Record<string, number>>(exerciseRates, type, {}), intensity, 0);
+}
 
 // Height-based minimum weight thresholds for muscle mass detection
 const muscleWeightThresholds = {
@@ -29,6 +81,7 @@ function getMinWeightForHeight(height: number, gender: 'male' | 'female'): numbe
 
 function isMuscular(weight: number, height: number, gender: 'male' | 'female', bodyFat?: number): boolean {
   if (!bodyFat) return false;
+  if (gender !== 'male' && gender !== 'female') return false;
   
   // Check body fat requirements
   const bodyFatThreshold = gender === 'male' ? 15 : 22;
@@ -40,47 +93,47 @@ function isMuscular(weight: number, height: number, gender: 'male' | 'female', b
 }
 
 function calculateWeeklyExerciseHours(userData: UserData): number {
+  // Simple mode takes exercise from simpleExerciseLevel; advanced-mode exercises
+  // left in saved state are hidden there and must not count.
+  if (userData.calculatorMode === 'simple') return 0;
+
   if (!userData.exercises || userData.exercises.length === 0) {
     // Fallback to legacy fields
     if (userData.exerciseMinutes && userData.trainingFrequency) {
-      return (userData.exerciseMinutes * userData.trainingFrequency) / 60;
+      return (nonNegative(userData.exerciseMinutes) * daysPerWeek(userData.trainingFrequency)) / 60;
     }
     return 0;
   }
-  
+
   return userData.exercises.reduce((total, exercise) => {
-    return total + ((exercise.minutes * exercise.frequency) / 60);
+    return total + ((nonNegative(exercise.minutes) * daysPerWeek(exercise.frequency)) / 60);
   }, 0);
 }
 
 export function calculateTDEE(userData: UserData): TDEEResult {
   // Convert imperial units to metric for calculations if needed
-  let weight = userData.weight; // kg
-  let height = userData.height; // cm
-  
-  if (userData.units === 'imperial') {
-    weight = userData.weight / 2.20462; // lbs to kg
-    height = userData.height * 2.54; // inches to cm
-  }
+  const { weight, height, age } = toMetric(userData); // kg, cm, years
+  const bodyFat = validBodyFat(userData.bodyFat);
 
   // 1. Calculate BMR
   let bmr: number;
-  
-  if (userData.calculatorMode === 'advanced' && userData.bodyFat && userData.bodyFat > 0) {
+
+  if (userData.calculatorMode === 'advanced' && bodyFat !== undefined) {
     // Advanced mode: Katch-McArdle formula (more accurate with body fat percentage)
-    const leanMass = weight * (1 - userData.bodyFat / 100);
+    const leanMass = weight * (1 - bodyFat / 100);
     bmr = 370 + (21.6 * leanMass);
   } else {
     // Simple mode or Advanced without body fat: Mifflin-St Jeor formula
     if (userData.gender === 'male') {
-      bmr = 10 * weight + 6.25 * height - 5 * userData.age + 5;
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
     } else {
-      bmr = 10 * weight + 6.25 * height - 5 * userData.age - 161;
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
     }
   }
+  bmr = Math.max(0, bmr);
 
   // 2. Muscle Factor (automatic detection)
-  const muscular = isMuscular(weight, height, userData.gender, userData.bodyFat);
+  const muscular = isMuscular(weight, height, userData.gender, bodyFat);
   const muscleFactor = muscular ? 1.05 : 1.0;
 
   // 3. Job Activity Adder (0-400 calories based on job type)
@@ -91,10 +144,10 @@ export function calculateTDEE(userData: UserData): TDEEResult {
     physical: 300,
     heavy_physical: 400
   };
-  const jobActivity = jobActivityMap[userData.jobActivity];
+  const jobActivity = lookup(jobActivityMap, userData.jobActivity, jobActivityMap.desk);
 
   // 4. NEAT Calculation: (0.06 × daily_steps × weight_kg) / 100
-  const neat = (0.06 * userData.steps * weight) / 100;
+  const neat = (0.06 * nonNegative(userData.steps) * weight) / 100;
 
   // 5. Exercise Calculation
   let exerciseCalories: number;
@@ -109,33 +162,28 @@ export function calculateTDEE(userData: UserData): TDEEResult {
       active: 325,
       very_active: 450
     };
-    exerciseCalories = simpleExerciseMap[userData.simpleExerciseLevel || 'none'];
+    exerciseCalories = lookup(simpleExerciseMap, userData.simpleExerciseLevel || 'none', 0);
   } else {
-    // Advanced mode: Specific kcal/min rates per exercise type
-    const exerciseRates = {
-      weight_lifting: { light: 3.5, moderate: 5.5, vigorous: 4.5 },
-      cardio: { light: 6, moderate: 9, vigorous: 12.5 },
-      hiit: { light: 7, moderate: 10, vigorous: 13.5 },
-      yoga: { light: 2.5, moderate: 4, vigorous: 5 },
-      sports: { light: 6, moderate: 9, vigorous: 11 }
-    };
-
+    // Advanced mode: Specific kcal/min rates per exercise type (exerciseRates above)
     if (userData.exercises && userData.exercises.length > 0) {
       // New multiple exercise system
       exerciseCalories = userData.exercises.reduce((total, exercise) => {
-        const rate = exerciseRates[exercise.type][exercise.intensity];
-        const dailyCalories = (rate * exercise.minutes * exercise.frequency) / 7;
+        const rate = exerciseRate(exercise.type, exercise.intensity);
+        const dailyCalories = (rate * nonNegative(exercise.minutes) * daysPerWeek(exercise.frequency)) / 7;
         return total + dailyCalories;
       }, 0);
-    } else {
+    } else if (hasLegacyExercise(userData)) {
       // Fallback to legacy single exercise calculation
       const exerciseType = userData.exerciseType || 'weight_lifting';
       const intensity = userData.exerciseIntensity || 'moderate';
-      const rate = exerciseRates[exerciseType][intensity];
-      const minutes = userData.exerciseMinutes || 60;
-      const frequency = userData.trainingFrequency || 3;
+      const rate = exerciseRate(exerciseType, intensity);
+      const minutes = nonNegative(userData.exerciseMinutes || 60);
+      const frequency = daysPerWeek(userData.trainingFrequency || 3);
       const dailyMinutes = (minutes * frequency) / 7;
       exerciseCalories = rate * dailyMinutes;
+    } else {
+      // Advanced mode with no exercises added
+      exerciseCalories = 0;
     }
   }
 
@@ -149,24 +197,29 @@ export function calculateTDEE(userData: UserData): TDEEResult {
 
   // 7. Error Margin Range
   let errorPercentage: number;
-  if (userData.errorMarginPreference) {
+  const preference = userData.errorMarginPreference;
+  if (preference !== undefined && Number.isFinite(preference) && preference > 0 && preference < 100) {
     // Use user's preference
-    errorPercentage = userData.errorMarginPreference / 100;
+    errorPercentage = preference / 100;
   } else {
     // Default to 7%
-    errorPercentage = 0.07;
+    errorPercentage = DEFAULT_ERROR_MARGIN;
   }
   const errorMargin = {
     lower: Math.round(tdee * (1 - errorPercentage)),
     upper: Math.round(tdee * (1 + errorPercentage))
   };
 
+  // Loss targets stop at the floor, and never rise above maintenance when TDEE is already below it.
+  const minCalories = userData.gender === 'male' ? MIN_LOSS_CALORIES.male : MIN_LOSS_CALORIES.female;
+  const lossTarget = (deficit: number) => Math.round(Math.min(tdee, Math.max(tdee - deficit, minCalories)));
+
   return {
     bmr: Math.round(adjustedBMR),
     tdee: Math.round(tdee),
     errorMargin,
     components: {
-      bmr: Math.round(adjustedBMR),
+      bmr: Math.round(bmr), // Formula BMR; the muscle bonus is its own line so the breakdown sums to TDEE
       muscleFactor: Math.round(adjustedBMR - bmr), // Show the muscle bonus separately
       jobActivity: Math.round(jobActivity),
       neat: Math.round(neat),
@@ -175,9 +228,9 @@ export function calculateTDEE(userData: UserData): TDEEResult {
     },
     recommendation: {
       maintain: Math.round(tdee),
-      mildWeightLoss: Math.round(tdee - 250),
-      weightLoss: Math.round(tdee - 500),
-      extremeWeightLoss: Math.round(tdee - 750),
+      mildWeightLoss: lossTarget(250),
+      weightLoss: lossTarget(500),
+      extremeWeightLoss: lossTarget(750),
       mildWeightGain: Math.round(tdee + 250),
       weightGain: Math.round(tdee + 500)
     }
@@ -186,25 +239,20 @@ export function calculateTDEE(userData: UserData): TDEEResult {
 
 export function calculateComparison(userData: UserData): ComparisonData {
   const ourResult = calculateTDEE(userData);
-  
+
   // Convert imperial units to metric for calculations if needed
-  let weight = userData.weight; // kg
-  let height = userData.height; // cm
-  
-  if (userData.units === 'imperial') {
-    weight = userData.weight / 2.20462; // lbs to kg
-    height = userData.height * 2.54; // inches to cm
-  }
-  
+  const { weight, height, age } = toMetric(userData); // kg, cm, years
+  const bodyFat = validBodyFat(userData.bodyFat);
+
   // Mifflin-St Jeor BMR (used by MyFitnessPal, Calculator.net, TDEECalculator.net)
-  const mifflinBMR = userData.gender === 'male' 
-    ? 10 * weight + 6.25 * height - 5 * userData.age + 5
-    : 10 * weight + 6.25 * height - 5 * userData.age - 161;
-  
+  const mifflinBMR = userData.gender === 'male'
+    ? 10 * weight + 6.25 * height - 5 * age + 5
+    : 10 * weight + 6.25 * height - 5 * age - 161;
+
   // Harris-Benedict Revised BMR (alternative formula offered by Calculator.net & Sailrabbit)
   const harrisBenedictBMR = userData.gender === 'male'
-    ? 13.397 * weight + 4.799 * height - 5.677 * userData.age + 88.362
-    : 9.247 * weight + 3.098 * height - 4.330 * userData.age + 447.593;
+    ? 13.397 * weight + 4.799 * height - 5.677 * age + 88.362
+    : 9.247 * weight + 3.098 * height - 4.330 * age + 447.593;
   
   // Standard activity multipliers used by all major calculators
   const activityMultipliers = {
@@ -232,11 +280,11 @@ export function calculateComparison(userData: UserData): ComparisonData {
     }
   } else {
     // For advanced mode, calculate total weekly exercise sessions
-    const weeklyExerciseSessions = userData.exercises?.reduce((total, ex) => total + ex.frequency, 0) || 0;
+    const weeklyExerciseSessions = userData.exercises?.reduce((total, ex) => total + daysPerWeek(ex.frequency), 0) || 0;
     const jobIsActive = userData.jobActivity === 'physical' || userData.jobActivity === 'heavy_physical';
-    const highSteps = userData.steps >= 10000;
-    
-    if (weeklyExerciseSessions === 0 && !jobIsActive && userData.steps < 5000) {
+    const steps = nonNegative(userData.steps);
+
+    if (weeklyExerciseSessions === 0 && !jobIsActive && steps < 5000) {
       activityLevel = 'sedentary';
     } else if (weeklyExerciseSessions <= 3 && !jobIsActive) {
       activityLevel = 'lightly_active'; 
@@ -252,35 +300,37 @@ export function calculateComparison(userData: UserData): ComparisonData {
   // Calculate additional BMR formulas first
   // Harris-Benedict Original BMR (older formula)
   const harrisOriginalBMR = userData.gender === 'male'
-    ? 66.4730 + (13.7516 * weight) + (5.0033 * height) - (6.7550 * userData.age)
-    : 655.0955 + (9.5634 * weight) + (1.8496 * height) - (4.6756 * userData.age);
-  
+    ? 66.4730 + (13.7516 * weight) + (5.0033 * height) - (6.7550 * age)
+    : 655.0955 + (9.5634 * weight) + (1.8496 * height) - (4.6756 * age);
+
   // Katch-McArdle (if body fat available)
   let katchBMR = mifflinBMR; // Fallback to Mifflin if no body fat
-  if (userData.bodyFat && userData.bodyFat > 0) {
-    const leanMass = weight * (1 - userData.bodyFat / 100);
+  if (bodyFat !== undefined) {
+    const leanMass = weight * (1 - bodyFat / 100);
     katchBMR = 370 + (21.6 * leanMass);
   }
-  
+
   // Cunningham formula (athletic)
-  const cunninghamBMR = userData.bodyFat && userData.bodyFat > 0
-    ? 500 + (22 * (weight * (1 - userData.bodyFat / 100)))
+  const cunninghamBMR = bodyFat !== undefined
+    ? 500 + (22 * (weight * (1 - bodyFat / 100)))
     : mifflinBMR; // Fallback if no body fat
-  
-  // Now calculate each calculator's TDEE
+
+  // Now calculate each calculator's TDEE (BMR clamped at 0 so absurd inputs can't go negative)
+  const estimate = (bmr: number) => Math.round(Math.max(0, bmr) * activityMultipliers[activityLevel]);
+
   // MyFitnessPal: Mifflin-St Jeor with standard multipliers
-  const myFitnessPal = Math.round(mifflinBMR * activityMultipliers[activityLevel]);
-  
+  const myFitnessPal = estimate(mifflinBMR);
+
   // Calculator.net: Mifflin-St Jeor (default) OR Katch-McArdle if body fat provided
-  const calculatorNetBMR = (userData.bodyFat && userData.bodyFat > 0) ? katchBMR : mifflinBMR;
-  const calculatorNet = Math.round(calculatorNetBMR * activityMultipliers[activityLevel]);
-  
+  const calculatorNetBMR = bodyFat !== undefined ? katchBMR : mifflinBMR;
+  const calculatorNet = estimate(calculatorNetBMR);
+
   // Sailrabbit: Average of multiple BMR formulas (they use 5+ formulas)
   const sailrabbitBMRs = [mifflinBMR, harrisBenedictBMR, harrisOriginalBMR, katchBMR, cunninghamBMR];
-  const sailrabbitAvg = Math.round((sailrabbitBMRs.reduce((a, b) => a + b) / sailrabbitBMRs.length) * activityMultipliers[activityLevel]);
-  
+  const sailrabbitAvg = estimate(sailrabbitBMRs.reduce((a, b) => a + b) / sailrabbitBMRs.length);
+
   // TDEECalculator.net: Mifflin-St Jeor with standard multipliers
-  const tdeeCalculatorNet = Math.round(mifflinBMR * activityMultipliers[activityLevel]);
+  const tdeeCalculatorNet = estimate(mifflinBMR);
 
   return {
     ourCalculator: ourResult.tdee,
@@ -298,25 +348,20 @@ export function calculateComparison(userData: UserData): ComparisonData {
 }
 
 function calculateSmartMacros(calories: number, userData?: UserData): { protein: number; carbs: number; fats: number } {
-  if (!userData) {
-    // Fallback to balanced if no user data
+  if (!userData || !(calories > 0)) {
+    // Fallback to balanced if no user data (or no calories to split)
     return { protein: 35, carbs: 40, fats: 25 };
   }
 
   // Convert weight to lbs if needed for protein calculation
-  let weightLbs = userData.weight;
+  let weightLbs = nonNegative(userData.weight);
   if (userData.units === 'metric') {
-    weightLbs = userData.weight * 2.20462; // kg to lbs
+    weightLbs = weightLbs * 2.20462; // kg to lbs
   }
 
   // Determine if user is muscular (from TDEE calculation logic)
-  let weight = userData.weight;
-  let height = userData.height;
-  if (userData.units === 'imperial') {
-    weight = userData.weight / 2.20462; // lbs to kg
-    height = userData.height * 2.54; // inches to cm
-  }
-  const muscular = isMuscular(weight, height, userData.gender, userData.bodyFat);
+  const { weight, height } = toMetric(userData);
+  const muscular = isMuscular(weight, height, userData.gender, validBodyFat(userData.bodyFat));
 
   // Determine activity level
   const weeklyExerciseHours = calculateWeeklyExerciseHours(userData);
@@ -399,7 +444,8 @@ function calculateSmartMacros(calories: number, userData?: UserData): { protein:
   return { protein, carbs, fats };
 }
 
-export function calculateMacros(calories: number, type: MacroSplit['type'], userData?: UserData): MacroSplit {
+export function calculateMacros(rawCalories: number, type: MacroSplit['type'], userData?: UserData): MacroSplit {
+  const calories = nonNegative(rawCalories);
   let proteinPercentage: number;
   let carbsPercentage: number;
   let fatsPercentage: number;
