@@ -11,6 +11,7 @@ import TDEEResults from './TDEEResults';
 import MythBusters from '../education/MythBusters';
 import QuickTips from '../education/QuickTips';
 import QuickAccess from './QuickAccess';
+import { StatusLamp } from '@/components/ui/lab';
 
 type Tab = 'calculator' | 'education';
 
@@ -199,7 +200,7 @@ export default function TDEECalculator() {
    
 
       {/* Calculator */}
-      <div className="p-6" ref={resultsRef}>
+      <div className="p-4 sm:p-6 lg:p-8 scroll-mt-20" ref={resultsRef}>
         {isCalculating ? (
           /* Skeleton Loader */
           <motion.div
@@ -231,9 +232,14 @@ export default function TDEECalculator() {
               onRecalculate={handleQuickAccessRecalculate}
             />
 
-            <div className="flex items-center justify-center mb-8">
-              <Calculator className="w-6 h-6 text-accent mr-3" />
-              <h2 className="text-2xl font-bold text-foreground">Your Information</h2>
+            <div className="flex items-end justify-between gap-4 mb-8">
+              <div>
+                <p aria-hidden="true" className="label-caps text-muted-foreground mb-1">
+                  Input {'//'} 4 phases
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Your Information</h2>
+              </div>
+              <StatusLamp label="Ready" />
             </div>
 
             <TDEEForm

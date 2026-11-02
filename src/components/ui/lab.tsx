@@ -67,3 +67,47 @@ export function SectionHeading({
     </div>
   );
 }
+
+/**
+ * Two-or-more-way switch. Each option is a toggle button with aria-pressed;
+ * the group is named by the element whose id is passed as labelledBy.
+ */
+export function Segmented<T extends string>({
+  labelledBy,
+  value,
+  options,
+  onSelect,
+}: {
+  labelledBy: string;
+  value: T;
+  options: { value: T; label: string; detail?: string }[];
+  onSelect: (value: T) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-labelledby={labelledBy}
+      className="grid auto-cols-fr grid-flow-col gap-0.5 p-0.5 border border-input rounded-[3px] bg-background"
+    >
+      {options.map((option) => {
+        const selected = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onSelect(option.value)}
+            className={`min-h-11 px-2 sm:px-3 py-1.5 rounded-[2px] flex flex-col sm:flex-row items-center justify-center gap-x-2 gap-y-0.5 transition-colors cursor-pointer ${
+              selected
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+          >
+            <span className="label-caps">{option.label}</span>
+            {option.detail && <span className="font-mono text-xs opacity-80">{option.detail}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

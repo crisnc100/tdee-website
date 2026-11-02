@@ -358,3 +358,68 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Range input (error margin). The filled share comes from --range-pct, set
+   inline; track and thumb are drawn per engine. The input itself is 44px tall
+   so the whole strip is a tap target. */
+@layer components {
+  .range {
+    --range-pct: 50%;
+    appearance: none;
+    width: 100%;
+    height: 2.75rem;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .range:focus {
+    outline: none;
+  }
+
+  .range::-webkit-slider-runnable-track {
+    height: 4px;
+    background: linear-gradient(
+      to right,
+      var(--color-accent-ink) 0 var(--range-pct),
+      var(--color-border-strong) var(--range-pct) 100%
+    );
+  }
+
+  .range::-moz-range-track {
+    height: 4px;
+    background: var(--color-border-strong);
+  }
+
+  .range::-moz-range-progress {
+    height: 4px;
+    background: var(--color-accent-ink);
+  }
+
+  .range::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -7px;
+    background: var(--color-card);
+    border: 2px solid var(--color-accent-ink);
+    border-radius: 2px;
+  }
+
+  .range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--color-card);
+    border: 2px solid var(--color-accent-ink);
+    border-radius: 2px;
+  }
+
+  .range:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+
+  .range:focus-visible::-moz-range-thumb {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+}
