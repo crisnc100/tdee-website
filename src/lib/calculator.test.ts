@@ -534,9 +534,19 @@ describe('calculateTDEE: edge inputs', () => {
   });
 
   it('treats an unknown job activity as a desk job', () => {
-    const r = calculateTDEE(user({ jobActivity: 'astronaut' as unknown as UserData['jobActivity'] }));
-    expect(r.components.jobActivity).toBe(50);
-    expect(r.tdee).toBe(1830);
+    for (const job of ['astronaut', 'constructor', 'toString']) {
+      const r = calculateTDEE(user({ jobActivity: job as unknown as UserData['jobActivity'] }));
+      expect(r.components.jobActivity).toBe(50);
+      expect(r.tdee).toBe(1830);
+    }
+  });
+
+  it('does not throw for an unknown gender', () => {
+    const odd = user({ gender: 'other' as unknown as UserData['gender'], bodyFat: 12 });
+    expectSane(calculateTDEE(odd));
+    expect(calculateTDEE(odd).components.muscleFactor).toBe(0);
+    expect(() => calculateComparison(odd)).not.toThrow();
+    expect(() => calculateMacros(2000, 'custom', odd)).not.toThrow();
   });
 
   it('treats an unknown simple exercise level as none', () => {
@@ -661,6 +671,7 @@ describe('calculateMacros', () => {
   }
 
   it('uses 4 kcal/g for protein and carbs and 9 kcal/g for fat', () => {
+    expect(calculateMacros(2000, 'balanced').calories).toBe(2000);
     expect(grams(calculateMacros(2000, 'balanced'))).toEqual([175, 200, 56]);
     expect(grams(calculateMacros(2000, 'low_carb'))).toEqual([150, 125, 100]);
     expect(grams(calculateMacros(2000, 'high_carb'))).toEqual([100, 300, 44]);
