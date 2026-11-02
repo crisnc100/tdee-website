@@ -4,18 +4,36 @@
    script in layout.tsx (saved choice, else the OS preference). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* "Lab instrument" tokens. Light is the paper lab sheet; .dark below remaps the
+   same names to the instrument-panel palette. Every text and UI pair is checked
+   by scripts/check-contrast.mjs. */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-background: #fafafa;
-  --color-foreground: #18181b;
-  --color-card: #ffffff;
-  --color-muted: #f4f4f5;
-  --color-muted-foreground: #52525b;
-  --color-border: #e4e4e7;
-  --color-input: #d4d4d8;
-  --color-accent: #c2410c;
-  --color-accent-foreground: #ffffff;
+  --color-background: #f3f3ee;
+  --color-foreground: #121512;
+  --color-card: #fafaf7;
+  --color-muted: #e8e9e2;
+  --color-muted-foreground: #4f554e;
+  --color-border: #d5d7ce;
+  --color-border-strong: #a9ada1;
+  --color-input: #7a8075;
+  --color-grid: #1215120a;
+  --color-grid-major: #12151214;
+
+  /* The one accent: a highlighter-lime fill, plus a deep ink of the same hue
+     for text and strokes, where the bright fill would not read on paper. */
+  --color-accent: #c5f03c;
+  --color-accent-foreground: #121512;
+  --color-accent-ink: #3f6300;
+  --color-ring: #3f6300;
+
+  /* Semantic colours, used only where the meaning needs them. */
+  --color-danger: #b42318;
+  --color-deficit: #b0400e;
+  --color-surplus: #1b5a9b;
+  --color-warning: #855300;
 }
 
 @layer base {
@@ -26,20 +44,39 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    /* Graph paper: a fine 24px grid with a major line every 120px. */
+    background-image:
+      linear-gradient(var(--color-grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid-major) 1px, transparent 1px),
+      linear-gradient(var(--color-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    background-position: -1px -1px;
   }
 
   .dark {
     color-scheme: dark;
 
-    --color-background: #09090b;
-    --color-foreground: #fafafa;
-    --color-card: #18181b;
-    --color-muted: #27272a;
-    --color-muted-foreground: #a1a1aa;
-    --color-border: #3f3f46;
-    --color-input: #52525b;
-    --color-accent: #fb923c;
-    --color-accent-foreground: #18181b;
+    --color-background: #0a0c0b;
+    --color-foreground: #e6eae4;
+    --color-card: #111412;
+    --color-muted: #181c19;
+    --color-muted-foreground: #9aa298;
+    --color-border: #252b26;
+    --color-border-strong: #3d453e;
+    --color-input: #66705f;
+    --color-grid: #e6eae408;
+    --color-grid-major: #e6eae40f;
+
+    --color-accent: #c5f03c;
+    --color-accent-foreground: #0a0c0b;
+    --color-accent-ink: #c5f03c;
+    --color-ring: #c5f03c;
+
+    --color-danger: #ff8a80;
+    --color-deficit: #ff9a6b;
+    --color-surplus: #74c4ff;
+    --color-warning: #f2c14e;
 
     /* Colored callouts (bg-*-50..300 with text-*-600..900) are written for a
        light page. In dark mode the light tints become dark tints and the dark
@@ -110,5 +147,214 @@
     --color-purple-700: oklch(82.7% 0.119 306.383);
     --color-purple-800: oklch(90.2% 0.063 306.703);
     --color-purple-900: oklch(94.6% 0.033 307.174);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+}
+
+@layer components {
+  /* A card: flat surface, one hairline border, square-ish corners. */
+  .panel {
+    position: relative;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+  }
+
+  /* Corner brackets drawn on the border, like registration marks. One
+     pseudo-element, eight strokes. The host needs position: relative. */
+  .brackets::before {
+    --bracket-color: var(--color-foreground);
+    --bracket-size: 10px;
+    content: "";
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--bracket-color) 0 0) top left / var(--bracket-size) 1px,
+      linear-gradient(var(--bracket-color) 0 0) top left / 1px var(--bracket-size),
+      linear-gradient(var(--bracket-color) 0 0) top right / var(--bracket-size) 1px,
+      linear-gradient(var(--bracket-color) 0 0) top right / 1px var(--bracket-size),
+      linear-gradient(var(--bracket-color) 0 0) bottom left / var(--bracket-size) 1px,
+      linear-gradient(var(--bracket-color) 0 0) bottom left / 1px var(--bracket-size),
+      linear-gradient(var(--bracket-color) 0 0) bottom right / var(--bracket-size) 1px,
+      linear-gradient(var(--bracket-color) 0 0) bottom right / 1px var(--bracket-size);
+    background-repeat: no-repeat;
+  }
+
+  /* Mono small-caps label, e.g. TDEE // CALCULATOR. */
+  .label-caps {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .readout {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* A ruler strip: a minor tick every 8px and a major tick every 40px. */
+  .ruler {
+    height: 7px;
+    background-image:
+      repeating-linear-gradient(90deg, var(--color-border-strong) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, var(--color-border) 0 1px, transparent 1px 8px);
+    background-size: 100% 7px, 100% 4px;
+    background-position: left bottom, left bottom;
+    background-repeat: no-repeat;
+  }
+
+  /* Text inputs and selects. Error styling keys off aria-invalid, which the
+     form already sets, so the markup carries no colour conditionals. */
+  .field {
+    display: block;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.625rem 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-foreground);
+    background-color: var(--color-background);
+    border: 1px solid var(--color-input);
+    border-radius: 2px;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+
+  .field::placeholder {
+    color: var(--color-muted-foreground);
+    opacity: 0.8;
+  }
+
+  .field:hover {
+    border-color: var(--color-foreground);
+  }
+
+  .field:focus,
+  .field:focus-visible {
+    outline: none;
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 1px var(--color-ring), 0 0 0 4px color-mix(in oklab, var(--color-ring) 22%, transparent);
+  }
+
+  .field[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+
+  .field[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 1px var(--color-danger), 0 0 0 4px color-mix(in oklab, var(--color-danger) 22%, transparent);
+  }
+
+  .field-sm {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Native select with a drawn chevron (two gradient triangles in the text
+     colour, so it follows the theme without an image). */
+  select.field {
+    appearance: none;
+    padding-right: 2.5rem;
+    font-family: var(--font-sans);
+    background-image:
+      linear-gradient(45deg, transparent 50%, currentColor 50%),
+      linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position:
+      calc(100% - 1.125rem) 50%,
+      calc(100% - 0.8125rem) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+
+  /* Diagonal hazard stripe, for the one warning callout. */
+  .hazard {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--color-warning) 0 6px,
+      transparent 6px 12px
+    );
+  }
+}
+
+/* Motion. Everything renders fully visible without it: these only play an
+   entrance from a hidden start, and only when the user allows motion. */
+@keyframes lab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes lab-sweep {
+  from {
+    stroke-dashoffset: 100;
+  }
+}
+
+@keyframes lab-meter {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes lab-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes lab-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lab-enter {
+    animation: lab-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .lab-sweep {
+    animation: lab-sweep 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .lab-meter {
+    transform-origin: left center;
+    animation: lab-meter 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .lab-scan {
+    animation: lab-scan 1.4s linear infinite;
+  }
+
+  .lab-blink {
+    animation: lab-blink 1.6s steps(2, jump-none) infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

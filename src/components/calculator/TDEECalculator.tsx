@@ -195,7 +195,7 @@ export default function TDEECalculator() {
   };
 
   return (
-    <div className="bg-card text-foreground rounded-xl shadow-xl border border-border">
+    <div className="panel brackets text-foreground">
    
 
       {/* Calculator */}
