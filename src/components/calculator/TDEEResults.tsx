@@ -96,7 +96,7 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
 
       {/* Component Breakdown */}
       <div>
-        <h4 className="text-lg font-semibold text-foreground mb-4">7-Component Breakdown</h4>
+        <h4 className="text-lg font-semibold text-foreground mb-4">6-Component Breakdown</h4>
         <div className="space-y-3">
           {components.map((component, index) => (
             <motion.div
