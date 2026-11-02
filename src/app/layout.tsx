@@ -18,9 +18,6 @@ export const metadata: Metadata = {
   title: "TDEE Calculator",
   description:
     "Estimate your total daily energy expenditure (TDEE) and daily calorie needs from your body, job activity, steps and exercise.",
-  icons: {
-    apple: "/apple-touch-icon.png",
-  },
 };
 
 // Matches --color-background in each theme (globals.css).

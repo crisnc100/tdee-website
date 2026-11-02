@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { GAUGE_ARC, GAUGE_NEEDLE, GAUGE_TRACK } from '@/components/brand/gaugeMark';
 
 // Small shared pieces of the "lab instrument" look. Colours come from the
 // tokens in globals.css; nothing here holds a hard-coded colour.
@@ -11,6 +12,18 @@ export function Reticle({ className = 'w-5 h-5' }: { className?: string }) {
       <circle cx="12" cy="12" r="6.5" stroke="currentColor" strokeWidth="1.5" />
       <path d="M12 1.5v6M12 16.5v6M1.5 12h6M16.5 12h6" stroke="currentColor" strokeWidth="1.5" />
       <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** The app mark without its tile: dial track, reading arc and needle. Decorative. */
+export function GaugeMark({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg viewBox="4 5 24 24" fill="none" aria-hidden="true" className={className}>
+      <path d={GAUGE_TRACK} stroke="var(--color-border-strong)" strokeWidth="3" />
+      <path d={GAUGE_ARC} stroke="var(--color-accent-ink)" strokeWidth="3.5" />
+      <path d={GAUGE_NEEDLE} stroke="var(--color-accent-ink)" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="16" cy="17" r="2.5" fill="var(--color-accent-ink)" />
     </svg>
   );
 }
