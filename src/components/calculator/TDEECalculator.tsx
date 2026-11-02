@@ -1,19 +1,20 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Calculator, BookOpen, RotateCcw } from 'lucide-react';
+import { Calculator, BookOpen, RotateCcw, UtensilsCrossed } from 'lucide-react';
 import { UserData, TDEEResult } from '@/types/calculator';
 import { calculateTDEE } from '@/lib/calculator';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import TDEEForm from './TDEEForm';
 import TDEEResults from './TDEEResults';
 import ResultHero from './ResultHero';
+import MealSuggestions from './MealSuggestions';
 import MythBusters from '../education/MythBusters';
 import QuickTips from '../education/QuickTips';
 import QuickAccess from './QuickAccess';
 import { StatusLamp } from '@/components/ui/lab';
 
-type Tab = 'calculator' | 'education';
+type Tab = 'calculator' | 'meals' | 'education';
 
 // Subtle rotating microcopy for calculation steps
 const calculationSteps = [
@@ -24,6 +25,7 @@ const calculationSteps = [
 
 const tabs: { id: Tab; label: string; icon: typeof Calculator }[] = [
   { id: 'calculator', label: 'Breakdown', icon: Calculator },
+  { id: 'meals', label: 'Meals', icon: UtensilsCrossed },
   { id: 'education', label: 'Learn', icon: BookOpen },
 ];
 
@@ -292,13 +294,13 @@ export default function TDEECalculator() {
                           type="button"
                           onClick={() => setActiveTab(id)}
                           aria-pressed={active}
-                          className={`relative -mb-px min-h-11 px-4 sm:px-5 flex items-center gap-2 label-caps border-b-2 transition-colors cursor-pointer ${
+                          className={`relative -mb-px min-h-11 px-3 sm:px-5 shrink-0 flex items-center gap-2 label-caps border-b-2 transition-colors cursor-pointer ${
                             active
                               ? 'border-accent-ink text-foreground'
                               : 'border-transparent text-muted-foreground hover:text-foreground'
                           }`}
                         >
-                          <Icon className="w-4 h-4" />
+                          <Icon aria-hidden="true" className="hidden sm:block w-4 h-4" />
                           {label}
                         </button>
                       );
@@ -309,6 +311,12 @@ export default function TDEECalculator() {
                   {activeTab === 'calculator' && (
                     <div key="results-tab" className="lab-enter">
                       <TDEEResults result={result} />
+                    </div>
+                  )}
+
+                  {activeTab === 'meals' && (
+                    <div key="meals-tab" className="lab-enter">
+                      <MealSuggestions defaultCalories={result.recommendation.maintain} />
                     </div>
                   )}
 

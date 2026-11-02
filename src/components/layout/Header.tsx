@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
-import { Reticle } from '@/components/ui/lab';
+import { GaugeMark } from '@/components/ui/lab';
 
 export default function Header() {
   return (
@@ -11,7 +11,7 @@ export default function Header() {
             href="/"
             className="flex items-center gap-2.5 min-h-11 text-foreground hover:text-accent-ink transition-colors"
           >
-            <Reticle className="w-5 h-5 text-accent-ink" />
+            <GaugeMark className="w-5 h-5" />
             <h1 className="label-caps text-sm text-foreground">
               TDEE<span className="sr-only"> </span>
               <span aria-hidden="true" className="text-muted-foreground mx-1.5">

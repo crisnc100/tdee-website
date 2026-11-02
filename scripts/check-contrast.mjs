@@ -88,6 +88,13 @@ const alphaPairs = [
   ['background', 'foreground', detailSelected, TEXT, 'segmented detail, selected'],
 ];
 
+// The app icon (src/app/icon.svg) is drawn in fixed colours on its own dark
+// tile, so it is checked once, outside the themes: the lime reading arc
+// against the tile. The grey track is decorative.
+const iconSvg = readFileSync(new URL('../src/app/icon.svg', import.meta.url), 'utf8');
+const iconTile = iconSvg.match(/<rect[^>]*fill="(#[0-9a-fA-F]{6})"/)?.[1];
+const iconLime = iconSvg.match(/stroke="(#[0-9a-fA-F]{6})" stroke-width="3\.5"/)?.[1];
+
 let failed = 0;
 for (const [name, theme] of [['light', light], ['dark', dark]]) {
   console.log(`\n${name.toUpperCase()}`);
@@ -119,6 +126,18 @@ for (const [name, theme] of [['light', light], ['dark', dark]]) {
       `  ${(ok ? 'pass' : 'FAIL').padEnd(4)}  ${r.toFixed(2).padStart(5)}:1  (min ${min})  ${fg} ${theme[fg]} @ ${alpha} = ${eff} on ${bg} ${theme[bg]}  - ${what}`
     );
   }
+}
+console.log('\nAPP ICON');
+if (!iconTile || !iconLime) {
+  console.log('  MISSING  icon tile or arc colour in src/app/icon.svg; source pattern not found');
+  failed++;
+} else {
+  const r = ratio(iconLime, iconTile);
+  const ok = r >= UI;
+  if (!ok) failed++;
+  console.log(
+    `  ${(ok ? 'pass' : 'FAIL').padEnd(4)}  ${r.toFixed(2).padStart(5)}:1  (min ${UI})  arc ${iconLime} on tile ${iconTile}  - app icon reading arc and needle`
+  );
 }
 console.log(failed ? `\n${failed} pair(s) below the minimum` : '\nAll pairs meet their minimum');
 process.exit(failed ? 1 : 0);
