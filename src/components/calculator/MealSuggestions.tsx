@@ -90,8 +90,8 @@ function FilterChips<T extends string>({
 function MacroCell({ label, grams, kcal, total }: { label: string; grams: number; kcal: number; total: number }) {
   const share = total > 0 ? Math.min(1, kcal / total) : 0;
   return (
-    <div className="p-2.5">
-      <dt className="label-caps text-muted-foreground">{label}</dt>
+    <div className="min-w-0 p-2.5">
+      <dt className="label-caps truncate text-muted-foreground">{label}</dt>
       <dd className="mt-0.5 readout text-foreground">
         <span className="text-base font-semibold">{grams}</span>
         <span className="text-xs text-muted-foreground">g</span>
@@ -316,7 +316,7 @@ export default function MealSuggestions({ defaultCalories }: MealSuggestionsProp
         </p>
 
         {suggestions.length > 0 ? (
-          <ul key={`${goal}-${range}-${currentPage}`} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul key={`${goal}-${range}-${currentPage}`} className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))]">
             {paginated.map((meal, i) => (
               <MealCard key={meal.name} meal={meal} index={start + i} />
             ))}
