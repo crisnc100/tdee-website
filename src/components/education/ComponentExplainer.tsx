@@ -95,7 +95,7 @@ export default function ComponentExplainer({ component, value }: ExplainerToolti
     <div className="relative inline-block">
       <button
         onClick={() => setShowTooltip(!showTooltip)}
-        className="ml-1 p-0.5 text-gray-400 hover:text-amber-600 transition-colors"
+        className="ml-1 p-0.5 text-muted-foreground hover:text-amber-600 transition-colors"
         aria-label={`Learn more about ${info.title}`}
       >
         <HelpCircle className="w-4 h-4" />
@@ -118,10 +118,10 @@ export default function ComponentExplainer({ component, value }: ExplainerToolti
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5"
+              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 md:w-96 bg-card rounded-xl shadow-2xl border border-border z-50 p-5"
             >
               {/* Arrow */}
-              <div className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 bg-white border-r border-b border-gray-200 rotate-45" />
+              <div className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 bg-card border-r border-b border-border rotate-45" />
               
               {/* Header */}
               <div className="flex items-start justify-between mb-3">
@@ -130,21 +130,21 @@ export default function ComponentExplainer({ component, value }: ExplainerToolti
                     <Icon className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900">{info.title}</h4>
-                    <p className="text-xs text-gray-500">{info.short}</p>
+                    <h4 className="font-bold text-foreground">{info.title}</h4>
+                    <p className="text-xs text-muted-foreground">{info.short}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowTooltip(false)}
-                  className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-1 hover:bg-muted rounded-lg transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
 
               {/* Content */}
               <div className="space-y-3">
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <p className="text-sm text-foreground leading-relaxed">
                   {info.detailed}
                 </p>
 
@@ -156,18 +156,18 @@ export default function ComponentExplainer({ component, value }: ExplainerToolti
                 </div>
 
                 {value && (
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">
-                      Your contribution: <span className="font-bold text-gray-900">{value} calories/day</span>
+                  <div className="p-2 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      Your contribution: <span className="font-bold text-foreground">{value} calories/day</span>
                     </p>
                   </div>
                 )}
 
-                <div className="pt-3 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Quick Facts:</p>
+                <div className="pt-3 border-t border-border">
+                  <p className="text-xs font-semibold text-foreground mb-2">Quick Facts:</p>
                   <ul className="space-y-1">
                     {info.tips.map((tip, index) => (
-                      <li key={index} className="text-xs text-gray-600 flex items-start gap-1">
+                      <li key={index} className="text-xs text-muted-foreground flex items-start gap-1">
                         <span className="text-amber-500 mt-0.5">•</span>
                         {tip}
                       </li>

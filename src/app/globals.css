@@ -1,103 +1,114 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #fafafa;
-  --foreground: #171717;
-  --card-background: #ffffff;
-  --card-border: #e5e7eb;
-  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --accent-orange: #f97316;
-  --accent-navy: #1e3a8a;
+/* Dark mode follows the .dark class on <html>, set before paint by the inline
+   script in layout.tsx (saved choice, else the OS preference). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: #fafafa;
+  --color-foreground: #18181b;
+  --color-card: #ffffff;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #52525b;
+  --color-border: #e4e4e7;
+  --color-input: #d4d4d8;
+  --color-accent: #c2410c;
+  --color-accent-foreground: #ffffff;
 }
 
-/* Loading progress animation for AI Coach */
-@keyframes progress {
-  0% {
-    width: 0%;
-    transform: translateX(0);
+@layer base {
+  html {
+    color-scheme: light;
   }
-  50% {
-    width: 100%;
-    transform: translateX(0);
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
   }
-  100% {
-    width: 100%;
-    transform: translateX(100%);
+
+  .dark {
+    color-scheme: dark;
+
+    --color-background: #09090b;
+    --color-foreground: #fafafa;
+    --color-card: #18181b;
+    --color-muted: #27272a;
+    --color-muted-foreground: #a1a1aa;
+    --color-border: #3f3f46;
+    --color-input: #52525b;
+    --color-accent: #fb923c;
+    --color-accent-foreground: #18181b;
+
+    /* Colored callouts (bg-*-50..300 with text-*-600..900) are written for a
+       light page. In dark mode the light tints become dark tints and the dark
+       text shades become light ones, so every callout stays readable without
+       per-element dark: classes. Shades 400 and 500 are left as they are.
+       Tints are mixed into the dark card colour (#18181b). */
+    --color-red-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 12%, #18181b);
+    --color-red-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 20%, #18181b);
+    --color-red-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 32%, #18181b);
+    --color-red-300: color-mix(in oklab, oklch(63.7% 0.237 25.331) 45%, #18181b);
+    --color-red-600: oklch(70.4% 0.191 22.216);
+    --color-red-700: oklch(80.8% 0.114 19.571);
+    --color-red-800: oklch(88.5% 0.062 18.334);
+    --color-red-900: oklch(93.6% 0.032 17.717);
+    --color-orange-50: color-mix(in oklab, oklch(70.5% 0.213 47.604) 12%, #18181b);
+    --color-orange-100: color-mix(in oklab, oklch(70.5% 0.213 47.604) 20%, #18181b);
+    --color-orange-200: color-mix(in oklab, oklch(70.5% 0.213 47.604) 32%, #18181b);
+    --color-orange-300: color-mix(in oklab, oklch(70.5% 0.213 47.604) 45%, #18181b);
+    --color-orange-600: oklch(75% 0.183 55.934);
+    --color-orange-700: oklch(83.7% 0.128 66.29);
+    --color-orange-800: oklch(90.1% 0.076 70.697);
+    --color-orange-900: oklch(95.4% 0.038 75.164);
+    --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 12%, #18181b);
+    --color-amber-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 20%, #18181b);
+    --color-amber-200: color-mix(in oklab, oklch(76.9% 0.188 70.08) 32%, #18181b);
+    --color-amber-300: color-mix(in oklab, oklch(76.9% 0.188 70.08) 45%, #18181b);
+    --color-amber-600: oklch(82.8% 0.189 84.429);
+    --color-amber-700: oklch(87.9% 0.169 91.605);
+    --color-amber-800: oklch(92.4% 0.12 95.746);
+    --color-amber-900: oklch(96.2% 0.059 95.617);
+    --color-yellow-50: color-mix(in oklab, oklch(79.5% 0.184 86.047) 12%, #18181b);
+    --color-yellow-100: color-mix(in oklab, oklch(79.5% 0.184 86.047) 20%, #18181b);
+    --color-yellow-200: color-mix(in oklab, oklch(79.5% 0.184 86.047) 32%, #18181b);
+    --color-yellow-300: color-mix(in oklab, oklch(79.5% 0.184 86.047) 45%, #18181b);
+    --color-yellow-600: oklch(85.2% 0.199 91.936);
+    --color-yellow-700: oklch(90.5% 0.182 98.111);
+    --color-yellow-800: oklch(94.5% 0.129 101.54);
+    --color-yellow-900: oklch(97.3% 0.071 103.193);
+    --color-green-50: color-mix(in oklab, oklch(72.3% 0.219 149.579) 12%, #18181b);
+    --color-green-100: color-mix(in oklab, oklch(72.3% 0.219 149.579) 20%, #18181b);
+    --color-green-200: color-mix(in oklab, oklch(72.3% 0.219 149.579) 32%, #18181b);
+    --color-green-300: color-mix(in oklab, oklch(72.3% 0.219 149.579) 45%, #18181b);
+    --color-green-600: oklch(79.2% 0.209 151.711);
+    --color-green-700: oklch(87.1% 0.15 154.449);
+    --color-green-800: oklch(92.5% 0.084 155.995);
+    --color-green-900: oklch(96.2% 0.044 156.743);
+    --color-cyan-50: color-mix(in oklab, oklch(71.5% 0.143 215.221) 12%, #18181b);
+    --color-cyan-100: color-mix(in oklab, oklch(71.5% 0.143 215.221) 20%, #18181b);
+    --color-cyan-200: color-mix(in oklab, oklch(71.5% 0.143 215.221) 32%, #18181b);
+    --color-cyan-300: color-mix(in oklab, oklch(71.5% 0.143 215.221) 45%, #18181b);
+    --color-cyan-600: oklch(78.9% 0.154 211.53);
+    --color-cyan-700: oklch(86.5% 0.127 207.078);
+    --color-cyan-800: oklch(91.7% 0.08 205.041);
+    --color-cyan-900: oklch(95.6% 0.045 203.388);
+    --color-blue-50: color-mix(in oklab, oklch(62.3% 0.214 259.815) 12%, #18181b);
+    --color-blue-100: color-mix(in oklab, oklch(62.3% 0.214 259.815) 20%, #18181b);
+    --color-blue-200: color-mix(in oklab, oklch(62.3% 0.214 259.815) 32%, #18181b);
+    --color-blue-300: color-mix(in oklab, oklch(62.3% 0.214 259.815) 45%, #18181b);
+    --color-blue-600: oklch(70.7% 0.165 254.624);
+    --color-blue-700: oklch(80.9% 0.105 251.813);
+    --color-blue-800: oklch(88.2% 0.059 254.128);
+    --color-blue-900: oklch(93.2% 0.032 255.585);
+    --color-purple-50: color-mix(in oklab, oklch(62.7% 0.265 303.9) 12%, #18181b);
+    --color-purple-100: color-mix(in oklab, oklch(62.7% 0.265 303.9) 20%, #18181b);
+    --color-purple-200: color-mix(in oklab, oklch(62.7% 0.265 303.9) 32%, #18181b);
+    --color-purple-300: color-mix(in oklab, oklch(62.7% 0.265 303.9) 45%, #18181b);
+    --color-purple-600: oklch(71.4% 0.203 305.504);
+    --color-purple-700: oklch(82.7% 0.119 306.383);
+    --color-purple-800: oklch(90.2% 0.063 306.703);
+    --color-purple-900: oklch(94.6% 0.033 307.174);
   }
-}
-
-.animate-progress {
-  animation: progress 2s ease-in-out infinite;
-}
-
-/* Dark mode variables */
-.dark {
-  --background: #111827;
-  --foreground: #f9fafb;
-  --card-background: #1f2937;
-  --card-border: #374151;
-  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  --card-shadow-hover: 0 25px 30px -5px rgba(0, 0, 0, 0.4), 0 15px 15px -5px rgba(0, 0, 0, 0.3);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-}
-
-.bg-pattern {
-  background-image: 
-    radial-gradient(circle at 20% 50%, rgba(249, 168, 37, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(234, 88, 12, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(249, 168, 37, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 60% 60%, rgba(30, 58, 138, 0.03) 0%, transparent 50%);
-}
-
-.card {
-  background: var(--card-background);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card:hover {
-  box-shadow: var(--card-shadow-hover);
-  transform: translateY(-2px);
-}
-
-.card-glass {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
-}
-
-.dark .card-glass {
-  background: rgba(31, 41, 55, 0.95);
-  border: 1px solid var(--card-border);
-}
-
-.gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.glass-morphism {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.calculator-shadow {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-.result-highlight {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }

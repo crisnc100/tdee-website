@@ -201,8 +201,8 @@ export default function QuickTips({ userData }: { userData: UserData }) {
             <Lightbulb className="w-4 h-4 text-blue-600" />
           </div>
           <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-gray-900">Quick Tip</h4>
-            <TimeIcon className="w-4 h-4 text-gray-500" />
+            <h4 className="font-semibold text-foreground">Quick Tip</h4>
+            <TimeIcon className="w-4 h-4 text-muted-foreground" />
           </div>
         </div>
         
@@ -226,12 +226,12 @@ export default function QuickTips({ userData }: { userData: UserData }) {
             exit={{ opacity: 0, x: 10 }}
             transition={{ duration: 0.3 }}
           >
-            <p className="text-sm text-gray-700 leading-relaxed">
+            <p className="text-sm text-foreground leading-relaxed">
               {currentTip.text}
             </p>
             
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs text-gray-500 capitalize bg-white/50 px-2 py-0.5 rounded">
+              <span className="text-xs text-muted-foreground capitalize bg-card/50 px-2 py-0.5 rounded">
                 {currentTip.category.replace('-', ' ')}
               </span>
               {userData.goal && currentTip.relevantFor && (

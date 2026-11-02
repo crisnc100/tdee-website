@@ -104,8 +104,8 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
           
           setIsVisible(true);
         }
-      } catch (error) {
-        // console.error('Error reading stored results:', error);
+      } catch {
+        // Ignore unreadable stored results
       }
     };
 
@@ -137,15 +137,15 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
           className="mb-6"
         >
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-1">
-            <div className="bg-white rounded-xl p-6">
+            <div className="bg-card rounded-xl p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center">
                     <TrendingUp className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Welcome Back!</h2>
-                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                    <h2 className="text-xl font-bold text-foreground">Welcome Back!</h2>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       Last calculated {lastCalculatedDate}
                     </p>
@@ -153,7 +153,7 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
                 </div>
                 <button
                   onClick={handleDismiss}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
                   aria-label="Dismiss quick access"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,16 +165,16 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
               {storedResult && (
                 <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Your TDEE</span>
+                    <span className="text-sm font-medium text-foreground">Your TDEE</span>
                     <div className="flex items-center gap-2">
                       <Target className="w-4 h-4 text-orange-500" />
-                      <span className="text-2xl font-bold text-gray-900">
+                      <span className="text-2xl font-bold text-foreground">
                         {storedResult.tdee.toLocaleString()}
                       </span>
-                      <span className="text-sm text-gray-600">cal/day</span>
+                      <span className="text-sm text-muted-foreground">cal/day</span>
                     </div>
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-muted-foreground">
                     Range: {storedResult.errorMargin.lower.toLocaleString()} - {storedResult.errorMargin.upper.toLocaleString()} calories
                   </div>
                 </div>
@@ -196,17 +196,11 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onRecalculate}
-                  className="flex items-center justify-center gap-2 bg-white border-2 border-orange-500 text-orange-600 px-4 py-3 rounded-lg font-medium hover:bg-orange-50 transition-all cursor-pointer"
+                  className="flex items-center justify-center gap-2 bg-card border-2 border-orange-500 text-orange-600 px-4 py-3 rounded-lg font-medium hover:bg-orange-50 transition-all cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Recalculate
                 </motion.button>
-              </div>
-
-              <div className="mt-4 flex items-center justify-center">
-                <p className="text-xs text-gray-500">
-                  Want to track your progress? Check your results and use our weekly check-in system!
-                </p>
               </div>
             </div>
           </div>

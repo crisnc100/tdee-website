@@ -2,42 +2,29 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import dynamic from 'next/dynamic';
-import { Calculator, BarChart3, Share2, Users, Target, TrendingUp, ChefHat, Brain, BookOpen } from 'lucide-react';
+import { Calculator, BookOpen } from 'lucide-react';
 import { UserData, TDEEResult } from '@/types/calculator';
-import { calculateTDEE, generateShareableId } from '@/lib/calculator';
+import { calculateTDEE } from '@/lib/calculator';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { generateDemoCount } from '@/utils/counter';
 import TDEEForm from './TDEEForm';
 import TDEEResults from './TDEEResults';
-import SocialShare from './SocialShare';
-import AICoachComingSoon from '../ai/AICoachComingSoon';
-import ProgressTracker from '../tracking/ProgressTracker';
-import WeeklyCheckIn from '../progress/WeeklyCheckIn';
-import SuccessStories from '../education/SuccessStories';
 import MythBusters from '../education/MythBusters';
 import QuickTips from '../education/QuickTips';
 import QuickAccess from './QuickAccess';
 
-// Lightweight skeletons for dynamic tabs
-const TabSkeleton = ({ lines = 6 }: { lines?: number }) => (
-  <div className="animate-pulse space-y-3">
-    {Array.from({ length: lines }).map((_, i) => (
-      <div key={i} className="h-5 bg-gray-200 rounded" />
-    ))}
-  </div>
-);
+type Tab = 'calculator' | 'education';
 
-// Lazy-load heavier tabs with simple fallbacks
-const ComparisonTool = dynamic(() => import('./ComparisonTool'), {
-  loading: () => <TabSkeleton lines={8} />,
-});
-const MacroCalculator = dynamic(() => import('../ai/MacroCalculator'), {
-  loading: () => <TabSkeleton lines={10} />,
-});
-const MealSuggestions = dynamic(() => import('../ai/MealSuggestions'), {
-  loading: () => <TabSkeleton lines={10} />,
-});
+// Subtle rotating microcopy for calculation steps
+const calculationSteps = [
+  'Estimating BMR…',
+  'Factoring NEAT (steps)…',
+  'Adjusting for muscle & recovery…'
+];
+
+const tabs: { id: Tab; label: string; icon: typeof Calculator }[] = [
+  { id: 'calculator', label: 'Breakdown', icon: Calculator },
+  { id: 'education', label: 'Learn', icon: BookOpen },
+];
 
 const initialUserData: UserData = {
   age: 0,
@@ -65,38 +52,13 @@ const initialUserData: UserData = {
 
 export default function TDEECalculator() {
   const [userData, setUserData] = useLocalStorage<UserData>('tdee-user-data', initialUserData);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-    // Check URL parameters for specific tabs
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
-    if (tab === 'tracking') {
-      // Only auto-load results if explicitly navigating to tracking tab
-      const storedResult = localStorage.getItem('tdee-last-result');
-      if (storedResult) {
-        const parsed = JSON.parse(storedResult);
-        setResult(parsed);
-        setShowResults(true);
-        setActiveTab('tracking');
-      }
-    }
-  }, []);
   const [result, setResult] = useState<TDEEResult | null>(null);
-  const [shareId, setShareId] = useState<string>('');
   const [showResults, setShowResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'calculator' | 'comparison' | 'macros' | 'meals' | 'coaching' | 'tracking' | 'education' | 'share'>('calculator');
+  const [activeTab, setActiveTab] = useState<Tab>('calculator');
   const resultsRef = useRef<HTMLDivElement>(null);
   const [displayTdee, setDisplayTdee] = useState<number>(0);
 
-  // Subtle rotating microcopy for calculation steps
-  const calculationSteps = [
-    'Estimating BMR…',
-    'Factoring NEAT (steps)…',
-    'Adjusting for muscle & recovery…'
-  ];
   const [calcStepIndex, setCalcStepIndex] = useState(0);
 
   useEffect(() => {
@@ -117,13 +79,6 @@ export default function TDEECalculator() {
       block: 'start' 
     });
     
-    // Increment the calculation count
-    try {
-      await fetch('/api/count', { method: 'POST' });
-    } catch (error) {
-      // console.error('Failed to increment count:', error);
-    }
-    
     // Add a realistic delay for loading animation
     await new Promise(resolve => setTimeout(resolve, 2000));
     
@@ -136,25 +91,13 @@ export default function TDEECalculator() {
     localStorage.setItem('tdee-last-user-data', JSON.stringify(userData));
     localStorage.setItem('tdee-last-user-data-meta', JSON.stringify({ timestamp: new Date().toISOString() }));
     
-    // Track TDEE calculation for coaching prompt
-    localStorage.setItem('lastTDEECalculation', new Date().toISOString());
-    
-    // Track first calculation date for check-ins
+    // First/last calculation dates feed the "Last calculated" line in QuickAccess
     if (!localStorage.getItem('tdee-first-calculation-date')) {
       localStorage.setItem('tdee-first-calculation-date', new Date().toISOString());
     } else {
       // Update the last calculation date for returning users
       localStorage.setItem('tdee-last-calculation-date', new Date().toISOString());
     }
-    
-    // Generate shareable ID and store result
-    const id = generateShareableId();
-    setShareId(id);
-    localStorage.setItem(`tdee-result-${id}`, JSON.stringify({
-      userData,
-      result: calculatedResult,
-      timestamp: new Date().toISOString()
-    }));
     
     setIsCalculating(false);
     setShowResults(true);
@@ -186,14 +129,14 @@ export default function TDEECalculator() {
     return () => {
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [showResults, result?.tdee]);
+  }, [showResults, result]);
 
   // LocalStorage hygiene: purge expired/corrupt entries
   useEffect(() => {
     try {
       const now = Date.now();
       const days = (d: number) => d * 24 * 60 * 60 * 1000;
-      // Remove old shareable results > 30 days
+      // Remove old saved share results (> 30 days); the share feature is gone
       const keys: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
@@ -251,10 +194,8 @@ export default function TDEECalculator() {
     setActiveTab('calculator');
   };
 
-  const todaysCount = generateDemoCount();
-
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/30">
+    <div className="bg-card text-foreground rounded-xl shadow-xl border border-border">
    
 
       {/* Calculator */}
@@ -266,50 +207,41 @@ export default function TDEECalculator() {
             animate={{ opacity: 1 }}
             className="w-full max-w-4xl mx-auto py-12"
           >
-            <div className="text-center mb-6 text-sm text-gray-600">
+            <div className="text-center mb-6 text-sm text-muted-foreground">
               Calculating… {calculationSteps[calcStepIndex]}
             </div>
             <div className="animate-pulse space-y-6">
-              <div className="h-6 bg-gray-200 rounded w-48 mx-auto" />
-              <div className="h-12 bg-gray-200 rounded w-40 mx-auto" />
-              <div className="h-4 bg-gray-200 rounded w-56 mx-auto" />
-              <div className="h-16 bg-gray-200 rounded w-full" />
+              <div className="h-6 bg-muted rounded w-48 mx-auto" />
+              <div className="h-12 bg-muted rounded w-40 mx-auto" />
+              <div className="h-4 bg-muted rounded w-56 mx-auto" />
+              <div className="h-16 bg-muted rounded w-full" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="h-20 bg-gray-200 rounded" />
-                <div className="h-20 bg-gray-200 rounded" />
-                <div className="h-20 bg-gray-200 rounded" />
+                <div className="h-20 bg-muted rounded" />
+                <div className="h-20 bg-muted rounded" />
+                <div className="h-20 bg-muted rounded" />
               </div>
             </div>
           </motion.div>
         ) : !showResults ? (
           /* Input Form - Full Width */
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="max-w-4xl mx-auto"
-          >
+          <div className="max-w-4xl mx-auto">
             {/* Quick Access for Returning Users */}
-            {isClient && (
-              <QuickAccess 
-                onViewResults={handleQuickAccessViewResults}
-                onRecalculate={handleQuickAccessRecalculate}
-              />
-            )}
-            
+            <QuickAccess
+              onViewResults={handleQuickAccessViewResults}
+              onRecalculate={handleQuickAccessRecalculate}
+            />
+
             <div className="flex items-center justify-center mb-8">
-              <Calculator className="w-6 h-6 text-primary-600 mr-3" />
-              <h2 className="text-2xl font-bold text-gray-900">Your Information</h2>
+              <Calculator className="w-6 h-6 text-accent mr-3" />
+              <h2 className="text-2xl font-bold text-foreground">Your Information</h2>
             </div>
-            
-            {isClient && (
-              <TDEEForm 
-                userData={userData} 
-                onChange={setUserData}
-                onCalculate={handleCalculate}
-              />
-            )}
-          </motion.div>
+
+            <TDEEForm
+              userData={userData}
+              onChange={setUserData}
+              onCalculate={handleCalculate}
+            />
+          </div>
         ) : (
           /* Results - Full Width Clean Layout */
           <motion.div
@@ -321,17 +253,17 @@ export default function TDEECalculator() {
             {/* Header with Recalculate Button */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-4">
-                  <Calculator className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mr-4">
+                  <Calculator className="w-6 h-6 text-accent-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900">Your TDEE Results</h2>
-                  <p className="text-gray-700">Personalized for your body and lifestyle</p>
+                  <h2 className="text-3xl font-bold text-foreground">Your TDEE Results</h2>
+                  <p className="text-foreground">Personalized for your body and lifestyle</p>
                 </div>
               </div>
               <button
                 onClick={handleRecalculate}
-                className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                className="px-6 py-3 bg-muted hover:bg-border text-foreground rounded-lg font-medium transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <Calculator className="w-4 h-4" />
                 Recalculate
@@ -340,9 +272,6 @@ export default function TDEECalculator() {
 
             {result && (
               <>
-                {/* Weekly Check-in (shows when applicable) */}
-                <WeeklyCheckIn userData={userData} tdeeResult={result} />
-                
                 {/* Quick Tips */}
                 <QuickTips userData={userData} />
                 
@@ -357,22 +286,22 @@ export default function TDEECalculator() {
                     <div className="text-6xl font-bold text-orange-600 mb-2">
                       {displayTdee.toLocaleString()}
                     </div>
-                    <div className="text-2xl text-gray-700 mb-4">calories per day</div>
-                    <div className="text-lg text-gray-600 mb-6">
+                    <div className="text-2xl text-foreground mb-4">calories per day</div>
+                    <div className="text-lg text-muted-foreground mb-6">
                       Range: {result.errorMargin.lower.toLocaleString()} - {result.errorMargin.upper.toLocaleString()} calories
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                      <div className="bg-white/60 rounded-lg p-4">
+                      <div className="bg-card/60 rounded-lg p-4">
                         <div className="text-2xl font-bold text-red-600">{result.recommendation.weightLoss}</div>
-                        <div className="text-sm text-gray-600">Weight Loss</div>
+                        <div className="text-sm text-muted-foreground">Weight Loss</div>
                       </div>
-                      <div className="bg-white/60 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-gray-700">{result.recommendation.maintain}</div>
-                        <div className="text-sm text-gray-600">Maintenance</div>
+                      <div className="bg-card/60 rounded-lg p-4">
+                        <div className="text-2xl font-bold text-foreground">{result.recommendation.maintain}</div>
+                        <div className="text-sm text-muted-foreground">Maintenance</div>
                       </div>
-                      <div className="bg-white/60 rounded-lg p-4">
+                      <div className="bg-card/60 rounded-lg p-4">
                         <div className="text-2xl font-bold text-green-600">{result.recommendation.weightGain}</div>
-                        <div className="text-sm text-gray-600">Weight Gain</div>
+                        <div className="text-sm text-muted-foreground">Weight Gain</div>
                       </div>
                     </div>
                   </div>
@@ -383,25 +312,16 @@ export default function TDEECalculator() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
-                  className="flex flex-wrap justify-center gap-2 mb-8 bg-gray-100 rounded-lg p-2 "
+                  className="flex flex-wrap justify-center gap-2 mb-8 bg-muted rounded-lg p-2 "
                 >
-                  {[
-                    { id: 'calculator', label: 'Breakdown', icon: Calculator },
-                    { id: 'comparison', label: 'Compare', icon: BarChart3 },
-                    { id: 'macros', label: 'Macros', icon: Target },
-                    { id: 'meals', label: 'Meals', icon: ChefHat },
-                    { id: 'coaching', label: 'AI Coach', icon: Brain },
-                    { id: 'tracking', label: 'Track', icon: TrendingUp },
-                    { id: 'education', label: 'Learn', icon: BookOpen },
-                    { id: 'share', label: 'Share', icon: Share2 }
-                  ].map(({ id, label, icon: Icon }) => (
+                  {tabs.map(({ id, label, icon: Icon }) => (
                     <button
                       key={id}
-                      onClick={() => setActiveTab(id as any)}
+                      onClick={() => setActiveTab(id)}
                       className={`flex items-center gap-2 py-3 px-6 rounded-md font-medium transition-all duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 ${
                         activeTab === id
-                          ? 'bg-white text-orange-600 shadow-md'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                          ? 'bg-card text-accent shadow-md'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-card/60'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -423,67 +343,7 @@ export default function TDEECalculator() {
                       <TDEEResults result={result} />
                     </motion.div>
                   )}
-                  
-                  {activeTab === 'comparison' && (
-                    <motion.div
-                      key="comparison-tab"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <ComparisonTool userData={userData} ourResult={result.tdee} />
-                    </motion.div>
-                  )}
-                  
-                  {activeTab === 'macros' && (
-                    <motion.div
-                      key="macros-tab"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <MacroCalculator defaultCalories={result.recommendation.maintain} userData={userData} />
-                    </motion.div>
-                  )}
-                  
-                  {activeTab === 'meals' && (
-                    <motion.div
-                      key="meals-tab"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <MealSuggestions defaultCalories={result.recommendation.maintain} />
-                    </motion.div>
-                  )}
-                  
-                  {activeTab === 'coaching' && (
-                    <motion.div
-                      key="coaching-tab"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <AICoachComingSoon />
-                    </motion.div>
-                  )}
-                  
-                  {activeTab === 'tracking' && (
-                    <motion.div
-                      key="tracking-tab"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <ProgressTracker userData={userData} currentTDEE={result.tdee} />
-                    </motion.div>
-                  )}
-                  
+
                   {activeTab === 'education' && (
                     <motion.div
                       key="education-tab"
@@ -493,20 +353,7 @@ export default function TDEECalculator() {
                       transition={{ duration: 0.4 }}
                       className="space-y-8"
                     >
-                      <SuccessStories userData={userData} />
                       <MythBusters />
-                    </motion.div>
-                  )}
-                  
-                  {activeTab === 'share' && (
-                    <motion.div
-                      key="share-tab"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <SocialShare result={result} shareId={shareId} />
                     </motion.div>
                   )}
                 </AnimatePresence>
