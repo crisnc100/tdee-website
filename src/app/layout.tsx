@@ -3,11 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import SimplePWA from "@/components/SimplePWA";
 // import NotificationSchedulerProvider from "@/components/NotificationSchedulerProvider"; // Disabled for MVP
 import CoachingPrompt from "@/components/coaching/CoachingPrompt";
 import VisitTracker from "@/components/VisitTracker";
-import DarkModeProvider from "@/components/DarkModeProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,14 +35,19 @@ export const metadata: Metadata = {
   },
 };
 
+// Runs before first paint so the page never flashes the wrong theme: the
+// saved choice wins, otherwise the OS preference.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d)}catch(e){}})()`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -57,9 +60,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="MyCalorieLog" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased bg-pattern`}>
-        <DarkModeProvider />
-        <SimplePWA />
+      <body className="font-sans antialiased">
         {/* <NotificationSchedulerProvider /> */} {/* Disabled for MVP */}
         <VisitTracker />
         <CoachingPrompt />

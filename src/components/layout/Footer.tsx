@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Heart, Shield, Star } from 'lucide-react';
 import { useCoachingModal } from '@/hooks/useCoachingModal';
 import CoachingModal from '@/components/coaching/CoachingModal';
@@ -11,12 +10,7 @@ export default function Footer() {
 
   return (
     <>
-    <motion.footer 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, delay: 0.3 }}
-      className="bg-gray-900 text-white"
-    >
+    <footer className="bg-gray-900 text-white">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
@@ -58,7 +52,7 @@ export default function Footer() {
             Built by Cristian Ortega, CPT | 
             <button
               onClick={() => openModal('footer')}
-              className="text-primary-400 hover:text-primary-300 ml-1 cursor-pointer"
+              className="text-orange-400 hover:text-white ml-1 cursor-pointer"
             >
               Available for 1-on-1 coaching
             </button>
@@ -70,7 +64,7 @@ export default function Footer() {
             © 2025 MyCalorieLog. Questions or coaching inquiries? 
             <button
               onClick={() => openModal('footer')}
-              className="text-primary-400 hover:text-primary-300 ml-1 cursor-pointer"
+              className="text-orange-400 hover:text-white ml-1 cursor-pointer"
             >
               Get in touch
             </button>
@@ -86,7 +80,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
-    </motion.footer>
+    </footer>
     
     <CoachingModal 
       isOpen={isOpen}

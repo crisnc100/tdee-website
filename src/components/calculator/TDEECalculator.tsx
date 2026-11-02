@@ -23,7 +23,7 @@ import QuickAccess from './QuickAccess';
 const TabSkeleton = ({ lines = 6 }: { lines?: number }) => (
   <div className="animate-pulse space-y-3">
     {Array.from({ length: lines }).map((_, i) => (
-      <div key={i} className="h-5 bg-gray-200 rounded" />
+      <div key={i} className="h-5 bg-muted rounded" />
     ))}
   </div>
 );
@@ -65,10 +65,8 @@ const initialUserData: UserData = {
 
 export default function TDEECalculator() {
   const [userData, setUserData] = useLocalStorage<UserData>('tdee-user-data', initialUserData);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
     // Check URL parameters for specific tabs
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
@@ -254,7 +252,7 @@ export default function TDEECalculator() {
   const todaysCount = generateDemoCount();
 
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/30">
+    <div className="bg-card text-foreground rounded-xl shadow-xl border border-border">
    
 
       {/* Calculator */}
@@ -266,50 +264,41 @@ export default function TDEECalculator() {
             animate={{ opacity: 1 }}
             className="w-full max-w-4xl mx-auto py-12"
           >
-            <div className="text-center mb-6 text-sm text-gray-600">
+            <div className="text-center mb-6 text-sm text-muted-foreground">
               Calculating… {calculationSteps[calcStepIndex]}
             </div>
             <div className="animate-pulse space-y-6">
-              <div className="h-6 bg-gray-200 rounded w-48 mx-auto" />
-              <div className="h-12 bg-gray-200 rounded w-40 mx-auto" />
-              <div className="h-4 bg-gray-200 rounded w-56 mx-auto" />
-              <div className="h-16 bg-gray-200 rounded w-full" />
+              <div className="h-6 bg-muted rounded w-48 mx-auto" />
+              <div className="h-12 bg-muted rounded w-40 mx-auto" />
+              <div className="h-4 bg-muted rounded w-56 mx-auto" />
+              <div className="h-16 bg-muted rounded w-full" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="h-20 bg-gray-200 rounded" />
-                <div className="h-20 bg-gray-200 rounded" />
-                <div className="h-20 bg-gray-200 rounded" />
+                <div className="h-20 bg-muted rounded" />
+                <div className="h-20 bg-muted rounded" />
+                <div className="h-20 bg-muted rounded" />
               </div>
             </div>
           </motion.div>
         ) : !showResults ? (
           /* Input Form - Full Width */
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="max-w-4xl mx-auto"
-          >
+          <div className="max-w-4xl mx-auto">
             {/* Quick Access for Returning Users */}
-            {isClient && (
-              <QuickAccess 
-                onViewResults={handleQuickAccessViewResults}
-                onRecalculate={handleQuickAccessRecalculate}
-              />
-            )}
-            
+            <QuickAccess
+              onViewResults={handleQuickAccessViewResults}
+              onRecalculate={handleQuickAccessRecalculate}
+            />
+
             <div className="flex items-center justify-center mb-8">
-              <Calculator className="w-6 h-6 text-primary-600 mr-3" />
-              <h2 className="text-2xl font-bold text-gray-900">Your Information</h2>
+              <Calculator className="w-6 h-6 text-accent mr-3" />
+              <h2 className="text-2xl font-bold text-foreground">Your Information</h2>
             </div>
-            
-            {isClient && (
-              <TDEEForm 
-                userData={userData} 
-                onChange={setUserData}
-                onCalculate={handleCalculate}
-              />
-            )}
-          </motion.div>
+
+            <TDEEForm
+              userData={userData}
+              onChange={setUserData}
+              onCalculate={handleCalculate}
+            />
+          </div>
         ) : (
           /* Results - Full Width Clean Layout */
           <motion.div
@@ -321,17 +310,17 @@ export default function TDEECalculator() {
             {/* Header with Recalculate Button */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-4">
-                  <Calculator className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mr-4">
+                  <Calculator className="w-6 h-6 text-accent-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900">Your TDEE Results</h2>
-                  <p className="text-gray-700">Personalized for your body and lifestyle</p>
+                  <h2 className="text-3xl font-bold text-foreground">Your TDEE Results</h2>
+                  <p className="text-foreground">Personalized for your body and lifestyle</p>
                 </div>
               </div>
               <button
                 onClick={handleRecalculate}
-                className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                className="px-6 py-3 bg-muted hover:bg-border text-foreground rounded-lg font-medium transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <Calculator className="w-4 h-4" />
                 Recalculate
@@ -357,22 +346,22 @@ export default function TDEECalculator() {
                     <div className="text-6xl font-bold text-orange-600 mb-2">
                       {displayTdee.toLocaleString()}
                     </div>
-                    <div className="text-2xl text-gray-700 mb-4">calories per day</div>
-                    <div className="text-lg text-gray-600 mb-6">
+                    <div className="text-2xl text-foreground mb-4">calories per day</div>
+                    <div className="text-lg text-muted-foreground mb-6">
                       Range: {result.errorMargin.lower.toLocaleString()} - {result.errorMargin.upper.toLocaleString()} calories
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                      <div className="bg-white/60 rounded-lg p-4">
+                      <div className="bg-card/60 rounded-lg p-4">
                         <div className="text-2xl font-bold text-red-600">{result.recommendation.weightLoss}</div>
-                        <div className="text-sm text-gray-600">Weight Loss</div>
+                        <div className="text-sm text-muted-foreground">Weight Loss</div>
                       </div>
-                      <div className="bg-white/60 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-gray-700">{result.recommendation.maintain}</div>
-                        <div className="text-sm text-gray-600">Maintenance</div>
+                      <div className="bg-card/60 rounded-lg p-4">
+                        <div className="text-2xl font-bold text-foreground">{result.recommendation.maintain}</div>
+                        <div className="text-sm text-muted-foreground">Maintenance</div>
                       </div>
-                      <div className="bg-white/60 rounded-lg p-4">
+                      <div className="bg-card/60 rounded-lg p-4">
                         <div className="text-2xl font-bold text-green-600">{result.recommendation.weightGain}</div>
-                        <div className="text-sm text-gray-600">Weight Gain</div>
+                        <div className="text-sm text-muted-foreground">Weight Gain</div>
                       </div>
                     </div>
                   </div>
@@ -383,7 +372,7 @@ export default function TDEECalculator() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
-                  className="flex flex-wrap justify-center gap-2 mb-8 bg-gray-100 rounded-lg p-2 "
+                  className="flex flex-wrap justify-center gap-2 mb-8 bg-muted rounded-lg p-2 "
                 >
                   {[
                     { id: 'calculator', label: 'Breakdown', icon: Calculator },
@@ -400,8 +389,8 @@ export default function TDEECalculator() {
                       onClick={() => setActiveTab(id as any)}
                       className={`flex items-center gap-2 py-3 px-6 rounded-md font-medium transition-all duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 ${
                         activeTab === id
-                          ? 'bg-white text-orange-600 shadow-md'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                          ? 'bg-card text-accent shadow-md'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-card/60'
                       }`}
                     >
                       <Icon className="w-4 h-4" />

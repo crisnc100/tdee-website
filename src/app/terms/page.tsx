@@ -1,33 +1,25 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import { FileText, Scale, AlertCircle, CheckCircle, Ban, Mail } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="py-12">
       <div className="max-w-4xl mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white rounded-lg shadow-lg p-8"
-        >
+        <div className="bg-card rounded-lg shadow-lg p-8 border border-border">
           <div className="flex items-center gap-3 mb-6">
-            <FileText className="w-8 h-8 text-purple-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Terms of Service</h1>
+            <FileText className="w-8 h-8 text-accent" />
+            <h1 className="text-3xl font-bold text-foreground">Terms of Service</h1>
           </div>
           
-          <p className="text-gray-600 mb-8">
+          <p className="text-muted-foreground mb-8">
             Last updated: December {new Date().getFullYear()}
           </p>
 
-          <div className="space-y-8 text-gray-700">
+          <div className="space-y-8 text-foreground">
             {/* Agreement */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Scale className="w-5 h-5 text-purple-600" />
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Scale className="w-5 h-5 text-accent" />
                 Agreement to Terms
               </h2>
               <p className="leading-relaxed">
@@ -38,7 +30,7 @@ export default function TermsOfService() {
 
             {/* Service Description */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Service Description
               </h2>
               <p className="leading-relaxed mb-3">
@@ -55,7 +47,7 @@ export default function TermsOfService() {
 
             {/* Acceptable Use */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 Acceptable Use
               </h2>
@@ -73,7 +65,7 @@ export default function TermsOfService() {
 
             {/* Prohibited Uses */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Ban className="w-5 h-5 text-red-600" />
                 Prohibited Uses
               </h2>
@@ -91,7 +83,7 @@ export default function TermsOfService() {
 
             {/* Medical Disclaimer */}
             <section className="bg-yellow-50 p-4 rounded-lg">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-yellow-600" />
                 Medical Disclaimer
               </h2>
@@ -115,7 +107,7 @@ export default function TermsOfService() {
 
             {/* Accuracy of Information */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Accuracy of Calculations
               </h2>
               <p className="leading-relaxed">
@@ -131,7 +123,7 @@ export default function TermsOfService() {
 
             {/* Intellectual Property */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Intellectual Property
               </h2>
               <p className="leading-relaxed">
@@ -143,7 +135,7 @@ export default function TermsOfService() {
 
             {/* Limitation of Liability */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Limitation of Liability
               </h2>
               <p className="leading-relaxed">
@@ -155,7 +147,7 @@ export default function TermsOfService() {
 
             {/* Changes to Terms */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Changes to Terms
               </h2>
               <p className="leading-relaxed">
@@ -166,7 +158,7 @@ export default function TermsOfService() {
 
             {/* Termination */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Termination
               </h2>
               <p className="leading-relaxed">
@@ -178,8 +170,8 @@ export default function TermsOfService() {
 
             {/* Contact */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Mail className="w-5 h-5 text-purple-600" />
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Mail className="w-5 h-5 text-accent" />
                 Contact Information
               </h2>
               <p className="leading-relaxed">
@@ -188,15 +180,15 @@ export default function TermsOfService() {
             </section>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="mt-12 pt-8 border-t border-border">
             <Link 
               href="/"
-              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+              className="inline-flex items-center gap-2 text-accent hover:underline font-medium"
             >
               ← Back to Calculator
             </Link>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

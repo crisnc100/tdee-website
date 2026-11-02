@@ -1,175 +1,28 @@
-const CACHE_NAME = 'mycalorielog-v1';
-const urlsToCache = [
-  '/',
-  '/offline.html',
-  '/manifest.json',
-  // Add other static assets that should be cached
-];
+// Kill-switch service worker.
+//
+// An earlier version of this site registered a cache-first service worker at
+// /sw.js that kept serving a stale copy of the page (a blank screen until a
+// hard refresh). Browsers re-check this URL for updates, so shipping this file
+// at the same path replaces the old worker for every returning visitor. It
+// deletes all caches, unregisters itself and reloads open tabs from the
+// network. The site no longer registers a service worker, but this file must
+// stay deployed so visitors who still have the old one recover.
 
-// Install event - cache resources
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        // Track service worker installation
-        fetch('/api/analytics/pwa', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: 'sw_installed',
-            platform: 'unknown',
-            standalone: false
-          })
-        }).catch(() => {});
-        return cache.addAll(urlsToCache);
-      })
-  );
-  // Force the waiting service worker to become the active service worker
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+      await self.clients.claim();
+      await self.registration.unregister();
+      const windows = await self.clients.matchAll({ type: 'window' });
+      await Promise.all(
+        windows.map((client) => client.navigate(client.url).catch(() => undefined))
       );
-    })
-  );
-  // Claim all clients
-  self.clients.claim();
-});
-
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // Skip requests to different origins
-  if (!event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
-
-  // Skip API requests - always fetch from network
-  if (event.request.url.includes('/api/')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            })
-            .catch(() => {
-              // Ignore cache errors
-            });
-
-          return response;
-        })
-        .catch(() => {
-          // Network error - try to serve from cache or offline page
-          return caches.match(event.request)
-            .then((cachedResponse) => {
-              if (cachedResponse) {
-                return cachedResponse;
-              }
-              // If it's a navigation request and no cache, show offline page
-              if (event.request.destination === 'document') {
-                return caches.match('/offline.html');
-              }
-              // For other requests, just fail
-              return new Response('Network error', { status: 503 });
-            });
-        });
-      })
+    })()
   );
 });
-
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  
-  // Handle different notification types
-  const notificationData = event.notification.data || {};
-  let targetUrl = '/';
-  
-  switch (notificationData.type) {
-    case 'check-in':
-      targetUrl = '/#progress-tracker';
-      break;
-    case 'meal':
-      targetUrl = '/#meal-suggestions';
-      break;
-    case 'exercise':
-      targetUrl = '/#calculator';
-      break;
-    case 'progress':
-      targetUrl = '/#progress-tracker';
-      break;
-    default:
-      targetUrl = '/';
-  }
-  
-  // Open or focus the app
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if app is already open
-        for (const client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            client.focus();
-            client.navigate(targetUrl);
-            return;
-          }
-        }
-        // Open new window if not open
-        if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
-        }
-      })
-  );
-});
-
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-progress') {
-    event.waitUntil(syncProgressData());
-  }
-});
-
-async function syncProgressData() {
-  try {
-    // Get any pending data from IndexedDB or cache
-    const cache = await caches.open(CACHE_NAME);
-    // Sync logic here
-    console.log('Syncing progress data...');
-  } catch (error) {
-    console.error('Sync failed:', error);
-  }
-}

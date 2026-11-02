@@ -101,15 +101,15 @@ export default function MythBusters() {
       case 'high': return 'text-red-600 bg-red-50 border-red-200';
       case 'medium': return 'text-amber-600 bg-amber-50 border-amber-200';
       case 'low': return 'text-blue-600 bg-blue-50 border-blue-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      default: return 'text-muted-foreground bg-muted border-border';
     }
   };
 
   return (
-    <div className="bg-white rounded-xl p-3 sm:p-6 shadow-lg border border-gray-200">
+    <div className="bg-card rounded-xl p-3 sm:p-6 shadow-lg border border-border">
       <div className="flex items-center gap-2 mb-4 sm:mb-6">
         <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
-        <h3 className="text-base sm:text-xl font-bold text-gray-900">Common Fitness Myths Debunked</h3>
+        <h3 className="text-base sm:text-xl font-bold text-foreground">Common Fitness Myths Debunked</h3>
       </div>
 
       <div className="space-y-4">
@@ -123,11 +123,11 @@ export default function MythBusters() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="border border-gray-200 rounded-lg overflow-hidden"
+              className="border border-border rounded-lg overflow-hidden"
             >
               <button
                 onClick={() => setExpandedIndex(isExpanded ? null : actualIndex)}
-                className="w-full p-3 sm:p-4 text-left hover:bg-gray-50 transition-colors"
+                className="w-full p-3 sm:p-4 text-left hover:bg-muted transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                   <div className="flex-1">
@@ -137,7 +137,7 @@ export default function MythBusters() {
                         <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 mt-0.5 flex-shrink-0" />
                         <div className="flex-1">
                           <p className="text-xs text-red-600 font-medium uppercase tracking-wide mb-1">Myth</p>
-                          <p className="text-sm sm:text-base text-gray-900 leading-relaxed">
+                          <p className="text-sm sm:text-base text-foreground leading-relaxed">
                             {myth.myth}
                           </p>
                         </div>
@@ -148,7 +148,7 @@ export default function MythBusters() {
                         <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mt-0.5 flex-shrink-0" />
                         <div className="flex-1">
                           <p className="text-xs text-green-600 font-medium uppercase tracking-wide mb-1">Truth</p>
-                          <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                          <p className="text-sm sm:text-base text-foreground leading-relaxed">
                             {myth.truth}
                           </p>
                         </div>
@@ -164,7 +164,7 @@ export default function MythBusters() {
                       animate={{ rotate: isExpanded ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Info className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                      <Info className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                     </motion.div>
                   </div>
                 </div>
@@ -177,10 +177,10 @@ export default function MythBusters() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="border-t border-gray-200"
+                    className="border-t border-border"
                   >
-                    <div className="p-3 sm:p-4 bg-gray-50">
-                      <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
+                    <div className="p-3 sm:p-4 bg-muted">
+                      <p className="text-xs sm:text-sm text-foreground leading-relaxed">
                         {myth.explanation}
                       </p>
                     </div>
@@ -200,14 +200,14 @@ export default function MythBusters() {
             disabled={currentPage === 0}
             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
               currentPage === 0
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
                 : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
             }`}
           >
             Previous
           </button>
           
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             Page {currentPage + 1} of {Math.ceil(myths.length / mythsPerPage)}
           </span>
           
@@ -216,7 +216,7 @@ export default function MythBusters() {
             disabled={currentPage >= Math.ceil(myths.length / mythsPerPage) - 1}
             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
               currentPage >= Math.ceil(myths.length / mythsPerPage) - 1
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
                 : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
             }`}
           >

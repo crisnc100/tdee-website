@@ -190,24 +190,24 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
       {/* Phase 1: Foundation (Required) */}
       <div className="space-y-6">
         <div className="border-l-4 border-orange-500 pl-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Phase 1: Foundation</h3>
-          <p className="text-sm text-gray-600">Core requirements for BMR calculation</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Phase 1: Foundation</h3>
+          <p className="text-sm text-muted-foreground">Core requirements for BMR calculation</p>
         </div>
 
         {/* 1. Units Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Units System
           </label>
           <div className="flex justify-center">
-            <div className="bg-gray-200 rounded-lg p-1 flex w-fit">
+            <div className="bg-muted rounded-lg p-1 flex w-fit">
               <button
                 type="button"
                 onClick={() => handleUnitsChange('metric')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   userData.units === 'metric'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-300'
+                    ? 'bg-accent text-accent-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card'
                 }`}
               >
                 Metric (kg/cm)
@@ -217,8 +217,8 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                 onClick={() => handleUnitsChange('imperial')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   userData.units === 'imperial'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-300'
+                    ? 'bg-accent text-accent-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card'
                 }`}
               >
                 Imperial (lbs/in)
@@ -230,7 +230,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
         {/* 2. Basic Demographics */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="age" className="block text-sm font-medium text-foreground mb-2">
               Age
             </label>
             <input
@@ -242,7 +242,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
               onBlur={() => setTouched((t) => ({ ...t, age: true }))}
               aria-invalid={showAgeError}
               aria-describedby={showAgeError ? 'age-error' : undefined}
-              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showAgeError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showAgeError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
               min="15"
               max="80"
               placeholder="e.g., 30"
@@ -254,14 +254,14 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
           </div>
 
           <div>
-            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="gender" className="block text-sm font-medium text-foreground mb-2">
               Gender
             </label>
             <select
               value={userData.gender}
               onChange={(e) => handleInputChange('gender', e.target.value)}
               id="gender"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -271,7 +271,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={userData.units === 'metric' ? 'height-cm' : 'height-feet'}>
+            <label className="block text-sm font-medium text-foreground mb-2" htmlFor={userData.units === 'metric' ? 'height-cm' : 'height-feet'}>
               Height {userData.units === 'metric' ? '(cm)' : '(feet & inches)'}
             </label>
             {userData.units === 'metric' ? (
@@ -284,7 +284,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                 onBlur={() => setTouched((t) => ({ ...t, heightCm: true }))}
                 aria-invalid={showHeightMetricError}
                 aria-describedby={showHeightMetricError ? 'height-error' : undefined}
-                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightMetricError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightMetricError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
                 min="120"
                 max="220"
                 step="1"
@@ -306,13 +306,13 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                     onBlur={() => setTouched((t) => ({ ...t, heightFeet: true }))}
                     aria-invalid={showHeightFeetError}
                     aria-describedby={showHeightFeetError ? 'height-feet-error' : undefined}
-                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightFeetError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightFeetError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
                     min="4"
                     max="7"
                     placeholder="5"
                     required
                   />
-                  <label className="block text-xs text-gray-500 mt-1 text-center">feet</label>
+                  <label className="block text-xs text-muted-foreground mt-1 text-center">feet</label>
                   {showHeightFeetError && (
                     <p id="height-feet-error" className="mt-1 text-xs text-red-600 text-center">Feet must be between 4–7.</p>
                   )}
@@ -330,13 +330,13 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                     onBlur={() => setTouched((t) => ({ ...t, heightInches: true }))}
                     aria-invalid={showHeightInchesError}
                     aria-describedby={showHeightInchesError ? 'height-inches-error' : undefined}
-                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightInchesError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showHeightInchesError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
                     min="0"
                     max="11"
                     placeholder="9"
                     required
                   />
-                  <label className="block text-xs text-gray-500 mt-1 text-center">inches</label>
+                  <label className="block text-xs text-muted-foreground mt-1 text-center">inches</label>
                   {showHeightInchesError && (
                     <p id="height-inches-error" className="mt-1 text-xs text-red-600 text-center">Inches must be 0–11.</p>
                   )}
@@ -349,7 +349,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
           </div>
 
           <div>
-            <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="weight" className="block text-sm font-medium text-foreground mb-2">
               Weight ({userData.units === 'metric' ? 'kg' : 'lbs'})
             </label>
             <input
@@ -361,7 +361,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
               onBlur={() => setTouched((t) => ({ ...t, weight: true }))}
               aria-invalid={showWeightError}
               aria-describedby={showWeightError ? 'weight-error' : undefined}
-              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showWeightError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showWeightError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
               min={userData.units === 'metric' ? "30" : "66"}
               max={userData.units === 'metric' ? "200" : "440"}
               step="0.1"
@@ -380,20 +380,20 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
       {/* Phase 2: Lifestyle Context (Required) */}
       <div className="space-y-6">
         <div className="border-l-4 border-orange-500 pl-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Phase 2: Lifestyle Context</h3>
-          <p className="text-sm text-gray-600">Daily occupational and movement patterns</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Phase 2: Lifestyle Context</h3>
+          <p className="text-sm text-muted-foreground">Daily occupational and movement patterns</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="job-activity" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="job-activity" className="block text-sm font-medium text-foreground mb-2">
               Job Activity Level
             </label>
             <select
               value={userData.jobActivity}
               onChange={(e) => handleInputChange('jobActivity', e.target.value)}
               id="job-activity"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
               <option value="desk">Desk Job (mostly sitting)</option>
               <option value="standing">Standing Job (retail, teaching)</option>
@@ -404,7 +404,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
           </div>
 
           <div>
-            <label htmlFor="steps" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="steps" className="block text-sm font-medium text-foreground mb-2">
               Daily Steps
             </label>
             <input
@@ -416,12 +416,12 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
               onBlur={() => setTouched((t) => ({ ...t, steps: true }))}
               aria-invalid={showStepsError}
               aria-describedby={showStepsError ? 'steps-error' : undefined}
-              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showStepsError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+              className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${showStepsError ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
               min="1000"
               max="30000"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Average daily steps from phone/watch
             </p>
             {showStepsError && (
@@ -434,24 +434,24 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
       {/* Phase 3: Exercise Details (Required) */}
       <div className="space-y-6">
         <div className="border-l-4 border-orange-500 pl-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Phase 3: Exercise Details</h3>
-          <p className="text-sm text-gray-600">Choose your preferred tracking method</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Phase 3: Exercise Details</h3>
+          <p className="text-sm text-muted-foreground">Choose your preferred tracking method</p>
         </div>
 
         {/* Exercise Input Method Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Exercise Input Method
           </label>
           <div className="flex justify-center">
-            <div className="bg-gray-200 rounded-lg p-1 flex w-fit">
+            <div className="bg-muted rounded-lg p-1 flex w-fit">
               <button
                 type="button"
                 onClick={() => handleInputChange('calculatorMode', 'simple')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   userData.calculatorMode === 'simple'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-300'
+                    ? 'bg-accent text-accent-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card'
                 }`}
               >
                 Simple (Preset Levels)
@@ -461,8 +461,8 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                 onClick={() => handleInputChange('calculatorMode', 'advanced')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   userData.calculatorMode === 'advanced'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-300'
+                    ? 'bg-accent text-accent-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card'
                 }`}
               >
                 Advanced (Detailed)
@@ -474,14 +474,14 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
         {/* Simple Exercise Input */}
         {userData.calculatorMode === 'simple' && (
           <div>
-            <label htmlFor="simple-exercise-level" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="simple-exercise-level" className="block text-sm font-medium text-foreground mb-2">
               Exercise Level
             </label>
             <select
               value={userData.simpleExerciseLevel || 'none'}
               onChange={(e) => handleInputChange('simpleExerciseLevel', e.target.value)}
               id="simple-exercise-level"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
               <option value="none">No regular exercise</option>
               <option value="very_light">Very Light - 1 light exercise a week</option>
@@ -504,9 +504,9 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             {/* Exercises List */}
             <div className="space-y-4">
               {(userData.exercises || []).map((exercise, index) => (
-                <div key={exercise.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div key={exercise.id} className="p-4 border border-border rounded-lg bg-muted">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">Exercise {index + 1}</h4>
+                    <h4 className="font-medium text-foreground">Exercise {index + 1}</h4>
                     <button
                       type="button"
                       onClick={() => removeExercise(exercise.id)}
@@ -519,12 +519,12 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                   
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
-                      <label htmlFor={`ex-type-${exercise.id}`} className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                      <label htmlFor={`ex-type-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Type</label>
                       <select
                         value={exercise.type}
                         onChange={(e) => updateExercise(exercise.id, 'type', e.target.value)}
                         id={`ex-type-${exercise.id}`}
-                        className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm rounded-md border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
                         <option value="weight_lifting">Weight Lifting</option>
                         <option value="cardio">Cardio</option>
@@ -535,12 +535,12 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                     </div>
                     
                     <div>
-                      <label htmlFor={`ex-intensity-${exercise.id}`} className="block text-xs font-medium text-gray-700 mb-1">Intensity</label>
+                      <label htmlFor={`ex-intensity-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Intensity</label>
                       <select
                         value={exercise.intensity}
                         onChange={(e) => updateExercise(exercise.id, 'intensity', e.target.value)}
                         id={`ex-intensity-${exercise.id}`}
-                        className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm rounded-md border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
                         {intensityDescriptions[exercise.type].map(option => (
                           <option key={option.value} value={option.value}>
@@ -548,13 +548,13 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                           </option>
                         ))}
                       </select>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {intensityDescriptions[exercise.type].find(opt => opt.value === exercise.intensity)?.description}
                       </p>
                     </div>
                     
                     <div>
-                      <label htmlFor={`ex-min-${exercise.id}`} className="block text-xs font-medium text-gray-700 mb-1">Minutes/Session</label>
+                      <label htmlFor={`ex-min-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Minutes/Session</label>
                       <input
                         type="number"
                         value={exercise.minutes === 0 ? '' : exercise.minutes}
@@ -569,7 +569,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                         inputMode="numeric"
                         aria-invalid={exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300)}
                         aria-describedby={exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) ? `ex-min-err-${exercise.id}` : undefined}
-                        className={`w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:border-transparent ${exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+                        className={`w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:border-transparent ${exercise.minutes !== 0 && (exercise.minutes < 5 || exercise.minutes > 300) ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
                         min="5"
                         max="300"
                         placeholder="60"
@@ -580,7 +580,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                     </div>
                     
                     <div>
-                      <label htmlFor={`ex-freq-${exercise.id}`} className="block text-xs font-medium text-gray-700 mb-1">Days/Week</label>
+                      <label htmlFor={`ex-freq-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Days/Week</label>
                       <input
                         type="number"
                         value={exercise.frequency === 0 ? '' : exercise.frequency}
@@ -595,7 +595,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                         inputMode="numeric"
                         aria-invalid={exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7)}
                         aria-describedby={exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) ? `ex-freq-err-${exercise.id}` : undefined}
-                        className={`w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:border-transparent ${exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+                        className={`w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:border-transparent ${exercise.frequency !== 0 && (exercise.frequency < 1 || exercise.frequency > 7) ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
                         min="1"
                         max="7"
                         placeholder="3"
@@ -626,14 +626,14 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
       {/* Phase 4: Optimization (Optional but Important) */}
       <div className="space-y-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
         <div className="border-l-4 border-orange-500 pl-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Phase 4: Optimization</h3>
-          <p className="text-sm text-gray-600">Optional settings for enhanced accuracy</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Phase 4: Optimization</h3>
+          <p className="text-sm text-muted-foreground">Optional settings for enhanced accuracy</p>
         </div>
 
         {/* Body Fat Percentage */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Body Fat % (optional - improves accuracy)
             </label>
             <button
@@ -654,7 +654,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             inputMode="numeric"
             aria-invalid={!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50)}
             aria-describedby={!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) ? 'body-fat-error' : undefined}
-            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
+            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-colors ${!!userData.bodyFat && (userData.bodyFat < 5 || userData.bodyFat > 50) ? 'border-red-500 focus:ring-red-500' : 'border-input focus:ring-orange-500'}`}
             min="5"
             max="50"
             step="0.1"
@@ -680,9 +680,9 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="mt-4 p-4 bg-white rounded-lg border border-gray-200"
+              className="mt-4 p-4 bg-card rounded-lg border border-border"
             >
-              <h4 className="font-medium text-gray-900 mb-3 text-center">
+              <h4 className="font-medium text-foreground mb-3 text-center">
                 Body Fat Percentage Visual Guide - {userData.gender === 'male' ? 'Male' : 'Female'}
               </h4>
               
@@ -705,15 +705,15 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                         <Eye className="w-6 h-6 text-white" />
                       </div>
                     </div>
-                    <p className="text-xs text-gray-600 leading-tight">
+                    <p className="text-xs text-muted-foreground leading-tight">
                       {item.description}
                     </p>
                   </div>
                 ))}
               </div>
               
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-600 text-center">
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="text-xs text-muted-foreground text-center">
                   <strong>Note:</strong> These are visual approximations. For accuracy, use professional measurement methods (DEXA, BodPod, calipers).
                 </p>
               </div>
@@ -724,7 +724,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
         {/* Error Margin Preference */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Error Margin Preference
             </label>
             <div className="relative">
@@ -732,7 +732,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                 type="button"
                 onMouseEnter={() => setShowErrorMarginInfo(true)}
                 onMouseLeave={() => setShowErrorMarginInfo(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Info className="w-4 h-4" />
               </button>
@@ -748,8 +748,8 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
           
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Conservative (safer)</span>
-              <span className="text-sm text-gray-600">Precise (tighter)</span>
+              <span className="text-sm text-muted-foreground">Conservative (safer)</span>
+              <span className="text-sm text-muted-foreground">Precise (tighter)</span>
             </div>
             
             <div className="relative">
@@ -761,12 +761,12 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                 value={userData.errorMarginPreference || 7}
                 onChange={(e) => handleInputChange('errorMarginPreference', parseInt(e.target.value))}
                 id="error-margin"
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
                 style={{
-                  background: `linear-gradient(to right, #f97316 0%, #f97316 ${((userData.errorMarginPreference || 7) - 3) * 11.11}%, #e5e7eb ${((userData.errorMarginPreference || 7) - 3) * 11.11}%, #e5e7eb 100%)`
+                  background: `linear-gradient(to right, var(--color-accent) 0%, var(--color-accent) ${((userData.errorMarginPreference || 7) - 3) * 11.11}%, var(--color-border) ${((userData.errorMarginPreference || 7) - 3) * 11.11}%, var(--color-border) 100%)`
                 }}
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>3%</span>
                 <span>7%</span>
                 <span>12%</span>
@@ -777,7 +777,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
                 ±{userData.errorMarginPreference || 7}% Error Margin
               </span>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {userData.errorMarginPreference === 3 && "Very tight range - for precise trackers"}
                 {userData.errorMarginPreference === 7 && "Recommended - good balance of accuracy and safety"}
                 {userData.errorMarginPreference === 12 && "Wide range - safer buffer for casual tracking"}
@@ -792,7 +792,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
         type="submit"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 px-6 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3 hover:from-orange-600 hover:to-orange-700 cursor-pointer"
+        className="w-full bg-accent text-accent-foreground py-4 px-6 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3 hover:bg-accent/90 cursor-pointer"
       >
         <Calculator className="w-5 h-5" />
         Calculate My TDEE
@@ -804,20 +804,20 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
           onClick={() => setSelectedBodyFatImage(null)}
         >
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-auto relative shadow-2xl border border-gray-200"
+            className="bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-auto relative shadow-2xl border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={() => setSelectedBodyFatImage(null)}
-              className="absolute top-4 right-4 bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-800 rounded-full p-2 z-10 shadow-lg border border-gray-200 transition-colors"
+              className="absolute top-4 right-4 bg-card hover:bg-muted text-muted-foreground hover:text-foreground rounded-full p-2 z-10 shadow-lg border border-border transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -825,15 +825,15 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             {/* Large Image */}
             <div className="p-8">
               <div className="text-center mb-6">
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">
+                <h3 className="text-3xl font-bold text-foreground mb-2">
                   {selectedBodyFatImage.range} Body Fat
                 </h3>
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-muted-foreground">
                   {userData.gender === 'male' ? 'Male' : 'Female'} Reference
                 </p>
               </div>
               
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 mb-6">
+              <div className="bg-muted rounded-xl p-4 mb-6">
                 <img
                   src={selectedBodyFatImage.image}
                   alt={`${userData.gender} ${selectedBodyFatImage.range} body fat`}
@@ -843,7 +843,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
               
               {/* Image Info */}
               <div className="space-y-4">
-                <p className="text-gray-700 text-lg leading-relaxed">
+                <p className="text-foreground text-lg leading-relaxed">
                   {selectedBodyFatImage.description}
                 </p>
                 <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">

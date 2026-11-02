@@ -1,33 +1,25 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import { Shield, Database, Lock, Cookie, Mail, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="py-12">
       <div className="max-w-4xl mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white rounded-lg shadow-lg p-8"
-        >
+        <div className="bg-card rounded-lg shadow-lg p-8 border border-border">
           <div className="flex items-center gap-3 mb-6">
-            <Shield className="w-8 h-8 text-purple-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Privacy Policy</h1>
+            <Shield className="w-8 h-8 text-accent" />
+            <h1 className="text-3xl font-bold text-foreground">Privacy Policy</h1>
           </div>
           
-          <p className="text-gray-600 mb-8">
+          <p className="text-muted-foreground mb-8">
             Last updated: December {new Date().getFullYear()}
           </p>
 
-          <div className="space-y-8 text-gray-700">
+          <div className="space-y-8 text-foreground">
             {/* Introduction */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Globe className="w-5 h-5 text-purple-600" />
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-accent" />
                 Introduction
               </h2>
               <p className="leading-relaxed">
@@ -39,8 +31,8 @@ export default function PrivacyPolicy() {
 
             {/* Data Collection */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Database className="w-5 h-5 text-purple-600" />
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Database className="w-5 h-5 text-accent" />
                 Information We Collect
               </h2>
               <div className="space-y-3">
@@ -64,8 +56,8 @@ export default function PrivacyPolicy() {
 
             {/* Data Storage */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Lock className="w-5 h-5 text-purple-600" />
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-accent" />
                 How We Store Your Data
               </h2>
               <ul className="space-y-2 list-disc list-inside">
@@ -78,7 +70,7 @@ export default function PrivacyPolicy() {
 
             {/* Third-Party Services */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Third-Party Services
               </h2>
               <div className="space-y-3">
@@ -96,8 +88,8 @@ export default function PrivacyPolicy() {
 
             {/* Cookies */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Cookie className="w-5 h-5 text-purple-600" />
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Cookie className="w-5 h-5 text-accent" />
                 Cookies
               </h2>
               <p className="leading-relaxed">
@@ -114,7 +106,7 @@ export default function PrivacyPolicy() {
 
             {/* Your Rights */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Your Rights
               </h2>
               <p className="leading-relaxed mb-3">
@@ -129,7 +121,7 @@ export default function PrivacyPolicy() {
 
             {/* Updates */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-foreground mb-3">
                 Policy Updates
               </h2>
               <p className="leading-relaxed">
@@ -140,8 +132,8 @@ export default function PrivacyPolicy() {
 
             {/* Contact */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Mail className="w-5 h-5 text-purple-600" />
+              <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Mail className="w-5 h-5 text-accent" />
                 Contact Us
               </h2>
               <p className="leading-relaxed">
@@ -151,15 +143,15 @@ export default function PrivacyPolicy() {
             </section>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="mt-12 pt-8 border-t border-border">
             <Link 
               href="/"
-              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+              className="inline-flex items-center gap-2 text-accent hover:underline font-medium"
             >
               ← Back to Calculator
             </Link>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
