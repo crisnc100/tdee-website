@@ -2,17 +2,14 @@
 
 import { motion } from 'framer-motion';
 import { TDEEResult } from '@/types/calculator';
-import { Target, TrendingUp, TrendingDown, Minus, Activity, Zap } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, Activity, Zap } from 'lucide-react';
 import ComponentExplainer from '../education/ComponentExplainer';
-import { useCoachingModal } from '@/hooks/useCoachingModal';
-import CoachingModal from '@/components/coaching/CoachingModal';
 
 interface TDEEResultsProps {
   result: TDEEResult;
 }
 
 export default function TDEEResults({ result }: TDEEResultsProps) {
-  const { isOpen, source, openModal, closeModal } = useCoachingModal();
   const plusMinus = result.errorMargin.upper - result.tdee;
   
   const recommendations = [
@@ -174,30 +171,6 @@ export default function TDEEResults({ result }: TDEEResultsProps) {
           can be 300-500 calories more accurate than generic formulas.
         </p>
       </motion.div>
-
-      {/* Subtle Coaching Note */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.7 }}
-        className="text-center"
-      >
-        <p className="text-xs text-muted-foreground">
-          Questions about implementing these numbers? 
-          <button
-            onClick={() => openModal('results')}
-            className="text-accent hover:underline ml-1 font-medium underline cursor-pointer"
-          >
-            I offer personalized guidance
-          </button>
-        </p>
-      </motion.div>
-      
-      <CoachingModal 
-        isOpen={isOpen}
-        onClose={closeModal}
-        source={source as "footer" | "results" | "other"}
-      />
     </div>
   );
 }

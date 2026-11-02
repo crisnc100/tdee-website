@@ -104,8 +104,8 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
           
           setIsVisible(true);
         }
-      } catch (error) {
-        // console.error('Error reading stored results:', error);
+      } catch {
+        // Ignore unreadable stored results
       }
     };
 
@@ -201,12 +201,6 @@ export default function QuickAccess({ onViewResults, onRecalculate }: QuickAcces
                   <RefreshCw className="w-4 h-4" />
                   Recalculate
                 </motion.button>
-              </div>
-
-              <div className="mt-4 flex items-center justify-center">
-                <p className="text-xs text-muted-foreground">
-                  Want to track your progress? Check your results and use our weekly check-in system!
-                </p>
               </div>
             </div>
           </div>

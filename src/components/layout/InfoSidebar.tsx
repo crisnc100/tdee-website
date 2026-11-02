@@ -10,28 +10,26 @@ export default function InfoSidebar() {
           <h3 className="font-semibold text-foreground">Privacy First</h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          No accounts required. All calculations and tracking happen locally in your browser. 
-          Your data never leaves your device.
+          No accounts required. Calculations run in your browser, and your inputs are saved only in
+          this device&apos;s local storage.
         </p>
       </div>
 
-      {/* About Creator */}
+      {/* About */}
       <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
         <div className="flex items-center gap-3 mb-4">
           <Target className="w-5 h-5 text-accent" />
-          <h3 className="font-semibold text-foreground">About MyCalorieLog</h3>
+          <h3 className="font-semibold text-foreground">About This Calculator</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-3">
-          I created this calculator because understanding your calorie needs is fundamental to achieving any fitness goal. 
-          Most online calculators are inaccurate, with studies showing error margins of 20-40%. These false numbers can derail your progress.
+          Many calorie calculators multiply your BMR by a single activity factor, which can miss a lot of
+          individual variation.
         </p>
-        <p className="text-sm text-muted-foreground mb-3">
-          While no calculator is perfect, I've minimized the error margin by accounting for factors others ignore. 
-          This helps anyone, anywhere get a more accurate foundation for their fitness journey.
+        <p className="text-sm text-muted-foreground">
+          This one adds up separate parts instead: your BMR, job activity, daily steps, exercise and recovery,
+          and shows a range rather than one exact number. Treat the result as a starting point and adjust it
+          against your real weight trend.
         </p>
-        <div className="text-xs bg-muted text-foreground px-3 py-2 rounded-lg">
-          <strong>Created by:</strong> Cristian Ortega, CPT (NASM-CPT, Precision Nutrition Level 1)
-        </div>
       </div>
 
       {/* How It Works */}

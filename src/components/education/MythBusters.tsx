@@ -229,7 +229,7 @@ export default function MythBusters() {
         <p className="text-sm text-amber-800">
           <span className="font-semibold">💡 The Truth:</span> 90% of fitness advice is marketing BS. The science is simple: 
           maintain a moderate calorie deficit (15-25%), eat 0.7-1g protein per pound, lift weights 3-4x weekly, 
-          sleep 7-9 hours, and be patient. That's literally it. Everything else is noise designed to sell you something.
+          sleep 7-9 hours, and be patient. That&apos;s literally it. Everything else is noise designed to sell you something.
         </p>
       </div>
     </div>

@@ -92,7 +92,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
   const showWeightError = (touched.weight || submitted) && ((userData.units === 'metric' ? invalidWeightMetric : invalidWeightImperial));
   const showStepsError = (touched.steps || submitted) && invalidSteps;
 
-  const handleInputChange = (field: keyof UserData, value: any) => {
+  const handleInputChange = <K extends keyof UserData>(field: K, value: UserData[K]) => {
     onChange({ ...userData, [field]: value });
   };
 
@@ -120,7 +120,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
     });
   };
 
-  const updateExercise = (id: string, field: keyof Exercise, value: any) => {
+  const updateExercise = <K extends keyof Exercise>(id: string, field: K, value: Exercise[K]) => {
     const exercises = userData.exercises || [];
     const updatedExercises = exercises.map(ex => 
       ex.id === id ? { ...ex, [field]: value } : ex
@@ -259,7 +259,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             </label>
             <select
               value={userData.gender}
-              onChange={(e) => handleInputChange('gender', e.target.value)}
+              onChange={(e) => handleInputChange('gender', e.target.value as UserData['gender'])}
               id="gender"
               className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
@@ -391,7 +391,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             </label>
             <select
               value={userData.jobActivity}
-              onChange={(e) => handleInputChange('jobActivity', e.target.value)}
+              onChange={(e) => handleInputChange('jobActivity', e.target.value as UserData['jobActivity'])}
               id="job-activity"
               className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
@@ -479,7 +479,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
             </label>
             <select
               value={userData.simpleExerciseLevel || 'none'}
-              onChange={(e) => handleInputChange('simpleExerciseLevel', e.target.value)}
+              onChange={(e) => handleInputChange('simpleExerciseLevel', e.target.value as UserData['simpleExerciseLevel'])}
               id="simple-exercise-level"
               className="w-full px-4 py-3 rounded-lg border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
             >
@@ -522,7 +522,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                       <label htmlFor={`ex-type-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Type</label>
                       <select
                         value={exercise.type}
-                        onChange={(e) => updateExercise(exercise.id, 'type', e.target.value)}
+                        onChange={(e) => updateExercise(exercise.id, 'type', e.target.value as Exercise['type'])}
                         id={`ex-type-${exercise.id}`}
                         className="w-full px-3 py-2 text-sm rounded-md border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
@@ -538,7 +538,7 @@ export default function TDEEForm({ userData, onChange, onCalculate }: TDEEFormPr
                       <label htmlFor={`ex-intensity-${exercise.id}`} className="block text-xs font-medium text-foreground mb-1">Intensity</label>
                       <select
                         value={exercise.intensity}
-                        onChange={(e) => updateExercise(exercise.id, 'intensity', e.target.value)}
+                        onChange={(e) => updateExercise(exercise.id, 'intensity', e.target.value as Exercise['intensity'])}
                         id={`ex-intensity-${exercise.id}`}
                         className="w-full px-3 py-2 text-sm rounded-md border border-input focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
