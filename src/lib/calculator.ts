@@ -282,9 +282,9 @@ export function calculateComparison(userData: UserData): ComparisonData {
     // For advanced mode, calculate total weekly exercise sessions
     const weeklyExerciseSessions = userData.exercises?.reduce((total, ex) => total + daysPerWeek(ex.frequency), 0) || 0;
     const jobIsActive = userData.jobActivity === 'physical' || userData.jobActivity === 'heavy_physical';
-    const highSteps = userData.steps >= 10000;
-    
-    if (weeklyExerciseSessions === 0 && !jobIsActive && userData.steps < 5000) {
+    const steps = nonNegative(userData.steps);
+
+    if (weeklyExerciseSessions === 0 && !jobIsActive && steps < 5000) {
       activityLevel = 'sedentary';
     } else if (weeklyExerciseSessions <= 3 && !jobIsActive) {
       activityLevel = 'lightly_active'; 

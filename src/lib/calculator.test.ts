@@ -652,6 +652,15 @@ describe('calculateComparison: standard activity multipliers', () => {
     expect(c.myFitnessPal).toBe(1614);
   });
 
+  it('treats blank (NaN) steps as 0 steps: desk job, no exercises maps to sedentary', () => {
+    const base = { ...woman, calculatorMode: 'advanced' as const, jobActivity: 'desk' as const, exercises: [] };
+    const blank = calculateComparison(user({ ...base, steps: parseInt('', 10) }));
+    const zero = calculateComparison(user({ ...base, steps: 0 }));
+    expect(blank.myFitnessPal).toBe(1614); // x1.2
+    expect(blank.myFitnessPal).toBe(zero.myFitnessPal);
+    expect(blank.tdeeCalculatorNet).toBe(zero.tdeeCalculatorNet);
+  });
+
   it('ignores body fat at or above 100%', () => {
     const c = calculateComparison(user({ ...woman, bodyFat: 150 }));
     expect(c.calculatorNet).toBe(1614);
