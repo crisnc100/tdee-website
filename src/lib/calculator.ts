@@ -472,7 +472,7 @@ export function calculateMacros(rawCalories: number, type: MacroSplit['type'], u
       fatsPercentage = 70;
       break;
     case 'custom':
-      // Smart logic for MyCalorieLog recommendation
+      // Smart split based on calories and the user's profile
       const smartMacros = calculateSmartMacros(calories, userData);
       proteinPercentage = smartMacros.protein;
       carbsPercentage = smartMacros.carbs;

@@ -19,18 +19,10 @@ const eslintConfig = [
   {
     files: [
       "src/app/privacy/page.tsx",
-      "src/components/SimplePWA.tsx",
-      "src/components/ai/AICoachComingSoon.tsx",
-      "src/components/coaching/CoachingModal.tsx",
       "src/components/education/MythBusters.tsx",
       "src/components/layout/InfoSidebar.tsx",
-      "src/components/tracking/ProgressTracker.tsx",
     ],
     rules: { "react/no-unescaped-entities": "off" },
-  },
-  {
-    files: ["src/components/SimplePWA.tsx", "src/components/tracking/ProgressTracker.tsx"],
-    rules: { "@typescript-eslint/no-explicit-any": "off" },
   },
 ];
 
