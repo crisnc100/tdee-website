@@ -73,6 +73,13 @@ describe('/lab page', () => {
     expect(page).toContain('47/80/96% at day 7');
   });
 
+  it('says skipped overeating days push the estimate low (direction pinned in missingIntake.test.ts)', async () => {
+    const page = text((await render()).html);
+    expect(page).toContain('Skipping the days you overeat hides those calories');
+    expect(page).toContain('so the estimate reads low');
+    expect(page).not.toMatch(/read(s)? (slightly )?high/);
+  });
+
   it('links the engine README on GitHub, main branch, and gives the commands', async () => {
     const { html } = await render();
     expect(html).toContain('href="https://github.com/crisnc100/tdee-website/blob/main/src/lib/engine/README.md"');

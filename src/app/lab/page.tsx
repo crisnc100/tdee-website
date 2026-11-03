@@ -227,8 +227,9 @@ export default function LabPage() {
             </>,
             <>
               A day without logged calories is filled in from the <N>{config.engineParams.intakeMemoryDays}</N>-day average
-              of what was logged, with a wide allowance. Someone who skips logging on the days they overeat will read
-              slightly high.
+              of what was logged. Skipping the days you overeat hides those calories: your weight rises more than the log
+              explains, so the estimate reads low, by about the skipped calories spread over every day, much as
+              under-logging does.
             </>,
           ]}
         />
