@@ -155,6 +155,6 @@ Numbers are rounded to 4 decimal places. Change the schema only together with `S
 ## Limitations
 
 - The energy density ρ is fixed. For a person whose tissue differs from 7700 kcal/kg, the error in the estimate scales with the size of their deficit.
-- Unlogged days are imputed from the logged average. Someone who skips logging on days they overeat will read slightly high.
+- Unlogged days are imputed from the 14-day average of logged intake. Skipping the days you overeat hides those calories, so weight rises more than the log explains and the estimate reads low, by about the skipped calories spread over every day. In a controlled run (`missingIntake.test.ts`) with a true expenditure of 2400 kcal and one unlogged 3600 kcal day a week, it settles at 2214, about 8% low. Skipping low days reads high in the same way.
 - The prior assumes a mean logging bias of 10%. The gate covers mean biases of 0-15%; at 20% the early bands are at the edge (47/80/96% at day 7), and beyond that they will be too narrow until the weigh-ins catch up. See the sweep.
 - The diet-onset glycogen drop is absorbed by the water state and the conservative tuning, not modelled explicitly. An explicit onset term measured no gain on the simulated cohort.
