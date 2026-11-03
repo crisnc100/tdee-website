@@ -80,7 +80,7 @@ export function createEngine(prior: EnginePrior, params: Readonly<EngineParams> 
   const variances = [0, 0, 0];
   variances[W] = params.initialWeightSdKg ** 2;
   variances[E] = prior.expenditureSdKcal ** 2;
-  variances[U] = params.onsetWaterSdKg ** 2;
+  variances[U] = params.waterSdKg ** 2; // stationary distribution of the AR(1)
   return { day: 0, mean, cov: diag(variances), intakeAverage: null, loggedIntakeDays: 0, params };
 }
 

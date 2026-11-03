@@ -78,12 +78,6 @@ export interface EngineParams {
   waterPersistence: number;
   /** Stationary SD of the water component (glycogen, sodium, gut contents). */
   waterSdKg: number;
-  /**
-   * SD of the water component on day 0. Larger than `waterSdKg` because tracking
-   * usually starts with a diet change, and the glycogen/water shift that follows
-   * is a decaying offset relative to the new tissue trend.
-   */
-  onsetWaterSdKg: number;
   /** Independent scale noise per weigh-in. */
   scaleSdKg: number;
   /** SD of a day's true intake when it was not logged (imputed from recent logs). */
@@ -105,7 +99,6 @@ export const DEFAULT_PARAMS: Readonly<EngineParams> = Object.freeze({
   expenditureDriftKcal: 12,
   waterPersistence: 0.75,
   waterSdKg: 0.45,
-  onsetWaterSdKg: 1.0,
   scaleSdKg: 0.35,
   missingIntakeSdKcal: 800,
   intakeMemoryDays: 14,
