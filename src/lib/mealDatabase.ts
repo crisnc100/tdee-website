@@ -60,12 +60,6 @@ export function getMealImagePath(mealName: string, goal: 'lose' | 'maintain' | '
     "Protein Coffee": "snacks/protienCoffee.jpg",
     "Celery Sticks and Baby Carrots": "snacks/celeryBabyCarrots.jpg",
     "Greek Yogurt Protein Ranch Dip": "snacks/proteinDipRanch.jpg",
-    
-    // Oatmeal variations
-    "Power Oatmeal Bowl": "balancedRecipes/powerOatmeal.png",
-    "Overnight Protein Oats": "balancedRecipes/overnightOats.png",
-    "Quick Protein Oats (Microwave)": "balancedRecipes/quickOats.jpg",
-    "Protein Oatmeal Dessert": "balancedRecipes/oatmealDessert.jpg",
   };
   
   // Check if we have a specific image for this meal
@@ -762,7 +756,7 @@ export function filterMealsByRange(options: {
   const { minCalories, maxCalories, limit } = options;
 
   // Inclusive range
-  let filtered = mealDatabase.filter((m) => m.calories >= minCalories && m.calories <= maxCalories);
+  const filtered = mealDatabase.filter((m) => m.calories >= minCalories && m.calories <= maxCalories);
 
   // Sort primarily by calories ascending, then by protein density, then quicker prep
   filtered.sort((a, b) => {

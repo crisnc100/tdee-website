@@ -1,7 +1,3 @@
-// vitest runs through `npx vitest` and is not in devDependencies yet, so tsc
-// cannot resolve it. Drop these two comment lines once vitest is installed.
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { describe, expect, it } from 'vitest';
 import { calculateComparison, calculateMacros, calculateTDEE } from './calculator';
 import type { Exercise, MacroSplit, TDEEResult, UserData } from '../types/calculator';
