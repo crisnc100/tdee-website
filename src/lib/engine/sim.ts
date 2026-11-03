@@ -46,6 +46,8 @@ export interface SimulatedPerson {
   meanLoggingGapKcal: number;
   /** The same gap as a share of true intake. */
   meanLoggingGapShare: number;
+  /** First day of a 7-day logging break (no weigh-ins, no intake), or null if none. */
+  vacationStartDay: number | null;
 }
 
 const KG_PER_LB = 1 / 2.20462;
@@ -159,7 +161,7 @@ export function simulatePerson(seed: number, scenario: Scenario, horizonDays: nu
   const missWeighIn = rng.uniform(0, 0.4);
   const missIntake = scenario === 'noLogs' ? 1 : rng.uniform(0, 0.25);
   const outlierRate = rng.uniform(0, 0.03);
-  const vacationStart = rng.bernoulli(0.15) ? Math.floor(rng.uniform(10, 45)) : -1;
+  const vacationStart: number | null = rng.bernoulli(0.15) ? Math.floor(rng.uniform(10, 45)) : null;
 
   const plannedTrueIntake = loggedTarget / (1 - loggingBias);
   const initialDeficit = scenario === 'maintainer' ? 0 : baseExpenditure - plannedTrueIntake;
@@ -192,7 +194,8 @@ export function simulatePerson(seed: number, scenario: Scenario, horizonDays: nu
     if (rng.bernoulli(outlierRate)) scale += (rng.bernoulli(0.5) ? 1 : -1) * rng.uniform(2, 10);
     if (rng.bernoulli(0.002)) scale /= KG_PER_LB; // entered in pounds
 
-    const gap = (day >= vacationStart && day < vacationStart + 7) || (scenario === 'missingWeeks' && day >= 14 && day < 28);
+    const onVacation = vacationStart !== null && day >= vacationStart && day < vacationStart + 7;
+    const gap = onVacation || (scenario === 'missingWeeks' && day >= 14 && day < 28);
     days.push({
       weightKg: gap || rng.bernoulli(missWeighIn) ? undefined : Math.round(scale * 10) / 10,
       intakeKcal: gap || rng.bernoulli(missIntake) ? undefined : Math.round(wouldLog),
@@ -214,5 +217,6 @@ export function simulatePerson(seed: number, scenario: Scenario, horizonDays: nu
     expenditureAsLoggedKcal: smoothExpenditure.map((x) => x - meanLoggingGapKcal),
     meanLoggingGapKcal,
     meanLoggingGapShare: intakeSum > 0 ? gapSum / intakeSum : 0,
+    vacationStartDay: vacationStart,
   };
 }

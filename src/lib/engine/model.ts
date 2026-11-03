@@ -76,8 +76,8 @@ export const LOGGING_BIAS_SD = 0.1;
  * 16-20% in women on average (31-36% and 34-38% on food-frequency questionnaires).
  * The paper does not give 10%: it is a discount below its lowest figure, on our
  * assumption (not the paper's) that daily app logging is better than recall.
- * Centring at 12% was tried and fails the early-coverage gate for honest
- * loggers (see README).
+ * Centring at 12% was tried and fails the realistic cohort's coverage gate at
+ * day 7 (see README).
  */
 export const LOGGING_BIAS_MEAN = 0.1;
 
@@ -146,7 +146,7 @@ export const DEFAULT_PARAMS: Readonly<EngineParams> = Object.freeze({
   kcalPerKg: KCAL_PER_KG,
   trendSdKg: 0.02,
   expenditureDriftKcal: 12,
-  waterPersistence: 0.75,
+  waterPersistence: 0.85,
   waterSdKg: 0.45,
   scaleSdKg: 0.35,
   missingIntakeSdKcal: 800,

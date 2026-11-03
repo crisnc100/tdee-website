@@ -52,6 +52,31 @@ describe('simulatePerson', () => {
     expect(simulatePerson(3, 'accurateLogger', 56).meanLoggingGapKcal).toBeCloseTo(0, 9);
   });
 
+  // Regression: the no-vacation sentinel used to be -1, which blanked days 0-5.
+  it('keeps days 0-5 for people with no vacation, and blanks exactly the vacation week otherwise', () => {
+    let withoutVacation = 0;
+    let withVacation = 0;
+    for (let seed = 0; seed < 300; seed += 1) {
+      const person = simulatePerson(seed, 'realistic', 56);
+      const start = person.vacationStartDay;
+      if (start === null) {
+        withoutVacation += 1;
+        // Only random misses remain: a weigh-in miss rate up to 40% and an intake miss
+        // rate up to 25% make six fully blank days vanishingly unlikely for any person.
+        const firstWeek = person.days.slice(0, 6);
+        expect(firstWeek.some((d) => d.weightKg !== undefined), `seed ${seed} weigh-ins`).toBe(true);
+        expect(firstWeek.some((d) => d.intakeKcal !== undefined), `seed ${seed} intake`).toBe(true);
+      } else {
+        withVacation += 1;
+        expect(start).toBeGreaterThanOrEqual(10);
+        const week = person.days.slice(start, start + 7);
+        expect(week.every((d) => d.weightKg === undefined && d.intakeKcal === undefined), `seed ${seed}`).toBe(true);
+      }
+    }
+    expect(withoutVacation).toBeGreaterThan(200);
+    expect(withVacation).toBeGreaterThan(10);
+  });
+
   it('never logs intake in the no-logs cohort, and blanks days 14-27 in the missing-weeks cohort', () => {
     expect(simulatePerson(4, 'noLogs', 56).days.every((d) => d.intakeKcal === undefined)).toBe(true);
     const gap = simulatePerson(5, 'missingWeeks', 56).days.slice(14, 28);

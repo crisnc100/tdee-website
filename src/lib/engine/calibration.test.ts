@@ -148,7 +148,7 @@ describe('calibration gate', () => {
 
 describe('calibration gate: early weeks across logging-bias levels', () => {
   // Mean logging bias 0-15%, the range the chosen prior is expected to handle.
-  // At 20% the 50% interval covers about 42% at day 7: a stated limitation (README).
+  // 20% is outside the asserted range: its early bands sit at the edge (README).
   const GATED_BIAS_MEANS = SWEEP_BIAS_MEANS.filter((b) => b <= 0.15);
   const sweep = runSweep(7, 1000, [DEFAULT_PRIOR_VARIANT])[DEFAULT_PRIOR_VARIANT];
   if (!sweep) throw new Error('sweep did not run');

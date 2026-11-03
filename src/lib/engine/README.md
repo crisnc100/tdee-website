@@ -43,12 +43,12 @@ The model is a linear-Gaussian state-space model with three states, solved exact
 | --- | --- | --- |
 | W | trend (tissue) weight, kg | `W + (intake − E)/ρ + noise(0.02 kg)` |
 | E | expenditure as logged, kcal/day | random walk, SD 12 kcal/day, so the estimate can follow adaptation |
-| U | water, glycogen and gut contents, kg | AR(1): `0.75·U + noise`, stationary SD 0.45 kg |
+| U | water, glycogen and gut contents, kg | AR(1): `0.85·U + noise`, stationary SD 0.45 kg |
 
 Each weigh-in observes `W + U + scale noise(0.35 kg)`. The constant ρ = 7700 kcal/kg is the usual rounding of 3500 kcal/lb.
 
 - **Prior.** `E₀ ~ N(0.90 × formula, (14.1% of formula)²)`. See the next section for why it is wider than the formula's own error. The calculator's error-margin slider is display-only and is not used.
-- **Why a water state.** Day-to-day water swings persist for days. A filter that treats them as independent noise counts each day as fresh evidence and becomes overconfident. Measured on the realistic cohort with the water state replaced by independent noise of the same total size, the 50/80/95% intervals cover only 46/75/90% at day 56, against 55/83/95% with it (measured with the schema-v1 prior, centred on the formula).
+- **Why a water state.** Day-to-day water swings persist for days. A filter that treats them as independent noise counts each day as fresh evidence and becomes overconfident. Measured on the realistic cohort with the water state replaced by independent noise of the same total size, the 50/80/95% intervals cover only 44/72/88% at day 56, against 52/81/94% with it.
 - **Missing weigh-in.** The filter predicts only.
 - **Missing intake.** The day's intake is modelled as N(14-day moving average of logged intake, 800²). That widens W's noise by (800/ρ)², so the day says little about E. Before the first log there is no average, so the transition drops its dependence on E: weight changes on those days teach the engine nothing about expenditure.
 - **Outliers.** A Huber-style gate applies at 3 SD of the innovation. A weigh-in beyond it is not rejected; its noise is inflated until it sits exactly at the gate. A single typo moves the estimate by a bounded amount, while a real, lasting shift still comes through over a few days.
@@ -65,37 +65,37 @@ sd   = formula × √(0.10² + σ_b²)   σ_b = 10%  between-person spread of un
 
 Neither number is fitted to the simulator, and neither is taken directly from a paper:
 
-- **b̄ = 10% is a discount below the published figures.** Subar et al. (2003) measured 484 adults aged 40-69 against doubly labelled water: on 24-hour recalls, energy intake was under-reported by 12-14% in men and 16-20% in women on average (by 31-36% and 34-38% on food-frequency questionnaires). The paper does not support 10%; its lowest group mean is 12%. We go below it on the assumption, ours and not the paper's, that daily app logging is better than a recall. Centring at 12% was also run: the honest-logger (0% bias) cohort's 50% interval then covers 44% at day 7 on the full sweep and 42.8% on the CI cohort, below the gate's 44% floor, so 10% is kept.
+- **b̄ = 10% is a discount below the published figures.** Subar et al. (2003) measured 484 adults aged 40-69 against doubly labelled water: on 24-hour recalls, energy intake was under-reported by 12-14% in men and 16-20% in women on average (by 31-36% and 34-38% on food-frequency questionnaires). The paper does not support 10%; its lowest group mean is 12%. We go below it on the assumption, ours and not the paper's, that daily app logging is better than a recall. Centring at 12% was also run: the realistic cohort's 50% interval at day 7 then sits further from nominal than the prior's by more than the gate's 3-point allowance (by 0.75 points on the CI cohort, and on two of three other seeds), so 10% is kept.
 - **σ_b = 10% is a judgment.** The paper's abstract reports group means only, not the spread between people.
 
 Reference: Subar AF, Kipnis V, Troiano RP, Midthune D, Schoeller DA, Bingham S, Sharbaugh CO, Trabulsi J, Runswick S, Ballard-Barbash R, Sunshine J, Schatzkin A. Using intake biomarkers to evaluate the extent of dietary misreporting in a large sample of adults: the OPEN study. *Am J Epidemiol* 2003;158(1):1-13. doi:10.1093/aje/kwg092. Checked against the PubMed abstract (PMID 12835280); the full text was not accessible.
 
 Two variants were evaluated on a sweep of cohorts whose mean logging bias is 0, 5, 10, 15 and 20% (2000 people each, same people for both variants). The table shows 50/80/95% coverage. The measured mean logging gap of each cohort is within 0.5 points of its nominal level.
 
-**(a) Widen only** (centre at formula, SD 14.1%). Worst deviation from nominal: 41 points.
+**(a) Widen only** (centre at formula, SD 14.1%). Worst deviation from nominal: 33.5 points.
 
 | Mean bias | Day 7 | Day 14 | Day 28 | Day 56 |
 | --- | --- | --- | --- | --- |
-| 0% | 72/96/100 | 66/93/99 | 57/85/96 | 56/85/96 |
-| 5% | 62/92/99 | 61/91/98 | 56/84/96 | 57/84/96 |
-| 10% | 44/79/97 | 46/80/96 | 50/82/95 | 56/84/95 |
-| 15% | 28/62/90 | 34/68/92 | 48/77/94 | 55/84/95 |
-| 20% | 13/39/72 | 17/47/79 | 37/69/90 | 53/83/95 |
+| 0% | 66/94/100 | 54/85/98 | 49/80/95 | 50/81/95 |
+| 5% | 59/90/99 | 53/84/96 | 48/80/94 | 52/81/95 |
+| 10% | 45/80/97 | 46/77/95 | 48/79/94 | 51/80/94 |
+| 15% | 31/67/93 | 41/73/93 | 49/79/93 | 52/81/94 |
+| 20% | 17/47/81 | 28/59/87 | 44/74/92 | 49/79/93 |
 
-**(b) Widen and recentre by 10%** (the default). Worst deviation from nominal: 18 points.
+**(b) Widen and recentre by 10%** (the default). Worst deviation from nominal: 17.5 points.
 
 | Mean bias | Day 7 | Day 14 | Day 28 | Day 56 |
 | --- | --- | --- | --- | --- |
-| 0% | 52/84/98 | 53/84/97 | 54/82/95 | 57/85/96 |
-| 5% | 65/93/99 | 67/91/99 | 57/86/97 | 59/85/96 |
-| 10% | 68/95/100 | 66/93/99 | 58/86/96 | 56/84/95 |
-| 15% | 60/89/99 | 60/89/98 | 59/85/97 | 58/85/95 |
-| 20% | 42/73/92 | 46/77/94 | 52/83/95 | 54/83/95 |
+| 0% | 57/88/98 | 54/85/96 | 52/81/95 | 53/82/95 |
+| 5% | 66/93/99 | 61/88/97 | 52/83/95 | 53/82/95 |
+| 10% | 68/94/99 | 60/89/97 | 52/83/95 | 52/80/94 |
+| 15% | 62/91/99 | 61/88/97 | 56/83/95 | 53/81/94 |
+| 20% | 47/80/96 | 51/81/96 | 52/82/95 | 49/79/93 |
 
 Variant (b) is the default because its worst case is closer to nominal. The CI gate asserts that, for a mean bias of 0-15%, its bands at days 7 and 14 are never more than 6 points under nominal, and that at day 56 every level from 0 to 20% is within 6 points under and 12 over. Its remaining errors in the first two weeks:
 
 - **Mid-range bias over-covers** (up to 68% on the 50% interval). A prior that must allow for any bias in the range is wider than needed for any one level. This is the price of not knowing the bias, and it fades as the weigh-ins arrive.
-- **At 20% mean bias the early bands are overconfident** (42/73/92% at day 7, 46/77/94% at day 14). This is a stated limitation, and the gate deliberately excludes it: users who under-log by a fifth on average get bands that are too narrow until about day 28 (52/83/95%).
+- **At 20% mean bias the early bands sit at the edge of the range** (47/80/96% at day 7, 51/81/96% at day 14): within 6 points of nominal on this sweep, but outside the range the gate asserts, so this is not guaranteed. A larger bias than 20% will give early bands that are too narrow.
 
 ## The simulator: what reality adds
 
@@ -120,18 +120,18 @@ Realistic cohort (5000 people):
 
 | Day | 50% interval | 80% interval | 95% interval | Median abs. error, engine | Median abs. error, formula | Median abs. error, prior |
 | --- | --- | --- | --- | --- | --- | --- |
-| 7 | 69% | 94% | 100% | 131 kcal | 185 kcal | 132 kcal |
-| 14 | 66% | 93% | 99% | 132 kcal | 184 kcal | 127 kcal |
-| 28 | 60% | 86% | 96% | 103 kcal | 184 kcal | 122 kcal |
-| 56 | 57% | 85% | 96% | 59 kcal | 189 kcal | 114 kcal |
+| 7 | 69% | 94% | 99% | 125 kcal | 185 kcal | 131 kcal |
+| 14 | 60% | 89% | 97% | 132 kcal | 184 kcal | 127 kcal |
+| 28 | 53% | 82% | 95% | 109 kcal | 185 kcal | 121 kcal |
+| 56 | 52% | 81% | 94% | 68 kcal | 189 kcal | 113 kcal |
 
 The percentage columns are interval coverage: the share of people whose true value fell inside the interval. There are two baselines: `formula` is the raw calculator TDEE, `prior` is the engine's prior mean (0.90 × formula). Neither is ever updated.
 
 How to read it:
 
-- **Early weeks show the prior, and the prior is wide.** Simulated users under-log by about 8% on average, inside the range the prior allows for, so its bands over-cover early (69% on the 50% interval at day 7). See the sweep above for how this changes with the logging bias. The `accurateLogger` cohort, the same population logging honestly, covers 55/82/95% at day 28 and 56/83/94% at day 56. For those users the recentred prior sits about 200 kcal low, so the engine's error only matches the raw formula's around day 28 (112 against 108 kcal) and beats it by day 56 (62 against 113).
-- **By day 56 the data dominate.** Coverage is at nominal, the posterior SD is about a third of day 7's, and the error is under a third of the raw formula's.
-- **The filter leans conservative.** The expenditure drift of 12 kcal/day was chosen between 6, where day-56 coverage falls under nominal (49/78/93%), and 20, where intervals stay needlessly wide (64/90/98%); both measured with the schema-v1 prior. Maintainers, whose expenditure does not adapt, therefore get slightly wide intervals (65/88/97% at day 56).
+- **Early weeks show the prior, and the prior is wide.** Simulated users under-log by about 8% on average, inside the range the prior allows for, so its bands over-cover early (69% on the 50% interval at day 7). See the sweep above for how this changes with the logging bias. The `accurateLogger` cohort, the same population logging honestly, covers 51/81/96% at day 28 and 49/82/95% at day 56. For those users the recentred prior sits about 200 kcal low, so the engine's error only matches the raw formula's around day 28 (111 against 109 kcal) and beats it by day 56 (72 against 113).
+- **By day 56 the data dominate.** Coverage is at nominal, the posterior SD is about a third of day 7's (105 against 286 kcal), and the error is about a third of the raw formula's.
+- **The filter leans conservative.** The expenditure drift of 12 kcal/day was chosen between 6, where day-56 coverage falls under nominal (47/75/91%), and 20, where intervals stay needlessly wide (61/88/98%). Maintainers, whose expenditure does not adapt, therefore get wide intervals (70/93/98% at day 56). The water persistence of 0.85 sits at the persistent end of the simulator's 0.5-0.9 range, so each weigh-in counts as a little less fresh evidence. At 0.75 the engine's day-7 50% interval over-covered by more than the prior's distance from nominal plus 3 points on two of four seeds; 0.85 passes every gate on the CI seed, the full seed and three other seeds with at least 1.6 points to spare.
 - **Edge cohorts.** With no intake logged, the estimate stays exactly on the prior mean, as it must. With days 14-27 missing, the engine stalls during the gap and recovers by day 56.
 
 ### `calibration.json` schema (version 2)
@@ -156,5 +156,5 @@ Numbers are rounded to 4 decimal places. Change the schema only together with `S
 
 - The energy density ρ is fixed. For a person whose tissue differs from 7700 kcal/kg, the error in the estimate scales with the size of their deficit.
 - Unlogged days are imputed from the logged average. Someone who skips logging on days they overeat will read slightly high.
-- The prior assumes a mean logging bias of 10%. Users who under-log by about 20% on average get early bands that are too narrow (42/73/92% at day 7) until about day 28; see the sweep.
+- The prior assumes a mean logging bias of 10%. The gate covers mean biases of 0-15%; at 20% the early bands are at the edge (47/80/96% at day 7), and beyond that they will be too narrow until the weigh-ins catch up. See the sweep.
 - The diet-onset glycogen drop is absorbed by the water state and the conservative tuning, not modelled explicitly. An explicit onset term measured no gain on the simulated cohort.
