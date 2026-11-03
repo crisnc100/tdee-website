@@ -6,6 +6,12 @@ interface TDEEGaugeProps {
   displayValue: number;
   lower: number;
   upper: number;
+  /**
+   * The log's estimate and its 80% band. When set, the dial reads it: the arc
+   * sweeps to it, its band lights the scale, and the formula keeps its needle
+   * and range bracket as the reference.
+   */
+  measured?: { mean: number; lower: number; upper: number };
 }
 
 // Dial geometry in viewBox units. Angles are degrees clockwise from 12 o'clock;
@@ -37,13 +43,16 @@ function radial(angle: number, r1: number, r2: number) {
   return { x1: a.x, y1: a.y, x2: b.x, y2: b.y };
 }
 
+/** Fill opacity of the measured band on the scale ring; decorative, its bounds carry solid end caps. */
+const MEASURED_BAND_OPACITY = 0.45;
+
 /** Scale top: the next 1,000 above 1.2x the upper bound, never below 3,000. */
 function scaleMax(upper: number) {
   return Math.max(3000, Math.ceil((upper * 1.2) / 1000) * 1000);
 }
 
-export default function TDEEGauge({ tdee, displayValue, lower, upper }: TDEEGaugeProps) {
-  const max = scaleMax(upper);
+export default function TDEEGauge({ tdee, displayValue, lower, upper, measured }: TDEEGaugeProps) {
+  const max = scaleMax(measured ? Math.max(upper, measured.upper) : upper);
   const fraction = (v: number) => Math.min(1, Math.max(0, v / max));
   const angleOf = (v: number) => START + fraction(v) * SWEEP;
 
@@ -54,11 +63,16 @@ export default function TDEEGauge({ tdee, displayValue, lower, upper }: TDEEGaug
   const valueAngle = angleOf(tdee);
   const lowAngle = angleOf(lower);
   const highAngle = angleOf(upper);
+  const reading = measured ? measured.mean : tdee;
   const sweepStyle = {
     strokeDasharray: `${ARC_LENGTH} ${ARC_LENGTH}`,
-    strokeDashoffset: ARC_LENGTH * (1 - fraction(tdee)),
+    strokeDashoffset: ARC_LENGTH * (1 - fraction(reading)),
     '--sweep-from': ARC_LENGTH,
   } as CSSProperties;
+  const round = (v: number) => Math.round(v).toLocaleString();
+  const label = measured
+    ? `Gauge: expenditure as you log it, ${round(measured.mean)} calories per day, 80% band ${round(measured.lower)} to ${round(measured.upper)}, against the formula's ${tdee.toLocaleString()} with its likely range of ${lower.toLocaleString()} to ${upper.toLocaleString()}, on a scale of 0 to ${max.toLocaleString()}.`
+    : `Gauge: ${tdee.toLocaleString()} calories per day on a scale of 0 to ${max.toLocaleString()}, with the likely range of ${lower.toLocaleString()} to ${upper.toLocaleString()} marked.`;
 
   return (
     <figure className="relative w-full max-w-[22rem] mx-auto">
@@ -66,8 +80,23 @@ export default function TDEEGauge({ tdee, displayValue, lower, upper }: TDEEGaug
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         className="block w-full h-auto"
         role="img"
-        aria-label={`Gauge: ${tdee.toLocaleString()} calories per day on a scale of 0 to ${max.toLocaleString()}, with the likely range of ${lower.toLocaleString()} to ${upper.toLocaleString()} marked.`}
+        aria-label={label}
       >
+        {/* Measured band: lights the scale ring behind the ticks, with an end cap at each bound */}
+        {measured && (
+          <g>
+            <path
+              d={arcPath(angleOf(measured.lower), angleOf(measured.upper), R + 14)}
+              fill="none"
+              strokeWidth={9}
+              className="stroke-accent"
+              strokeOpacity={MEASURED_BAND_OPACITY}
+            />
+            <line {...radial(angleOf(measured.lower), R + 9, R + 19)} strokeWidth={2} className="stroke-accent-ink" />
+            <line {...radial(angleOf(measured.upper), R + 9, R + 19)} strokeWidth={2} className="stroke-accent-ink" />
+          </g>
+        )}
+
         {/* Scale ticks and labels, outside the dial */}
         {ticks.map(({ value, major }) => {
           const angle = angleOf(value);
@@ -102,7 +131,7 @@ export default function TDEEGauge({ tdee, displayValue, lower, upper }: TDEEGaug
           d={arcPath(START, START + SWEEP, R)}
           fill="none"
           strokeWidth={12}
-          className="stroke-accent-ink lab-sweep"
+          className={`stroke-accent-ink lab-sweep${measured ? ' transition-[stroke-dashoffset] duration-700 ease-out' : ''}`}
           style={sweepStyle}
         />
 
@@ -119,14 +148,18 @@ export default function TDEEGauge({ tdee, displayValue, lower, upper }: TDEEGaug
       {/* Centre readout. The counting number is hidden from screen readers;
           the sr-only line carries the final value. */}
       <figcaption className="absolute left-1/2 top-[61.5%] -translate-x-1/2 -translate-y-1/2 text-center">
-        <span className="block label-caps text-muted-foreground">TDEE</span>
+        <span className="block label-caps text-muted-foreground">{measured ? 'As logged' : 'TDEE'}</span>
         <span
           aria-hidden="true"
           className="block readout text-4xl sm:text-5xl font-semibold leading-none text-accent-ink mt-1"
         >
-          {displayValue.toLocaleString()}
+          {measured ? round(measured.mean) : displayValue.toLocaleString()}
         </span>
-        <span className="sr-only">Your TDEE: {tdee.toLocaleString()} calories per day.</span>
+        <span className="sr-only">
+          {measured
+            ? `Expenditure as you log it: ${round(measured.mean)} calories per day.`
+            : `Your TDEE: ${tdee.toLocaleString()} calories per day.`}
+        </span>
         <span aria-hidden="true" className="block label-caps text-muted-foreground mt-1.5">
           kcal / day
         </span>

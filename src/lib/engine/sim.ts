@@ -122,11 +122,18 @@ export interface SimOptions {
    * is switched off, so the cohort's mean logging gap is about this share.
    */
   loggingBiasMean?: number;
+  /**
+   * Uses these calculator inputs instead of random ones, for a demo matched to
+   * a real user. The random inputs are still drawn and discarded, so the same
+   * seed gives the same physiology and behaviour either way.
+   */
+  userData?: UserData;
 }
 
 export function simulatePerson(seed: number, scenario: Scenario, horizonDays: number, options: SimOptions = {}): SimulatedPerson {
   const rng = createRng(seed);
-  const userData = randomUserData(rng);
+  const drawnUserData = randomUserData(rng);
+  const userData = options.userData ?? drawnUserData;
   const prior = priorFromUserData(userData);
   const formula = calculateTDEE(userData).tdee;
 

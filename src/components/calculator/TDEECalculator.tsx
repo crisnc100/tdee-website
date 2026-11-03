@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Calculator, BookOpen, RotateCcw, UtensilsCrossed, Activity } from 'lucide-react';
+import { Calculator, BookOpen, RotateCcw, UtensilsCrossed, Activity, FlaskConical, X } from 'lucide-react';
 import { UserData, TDEEResult } from '@/types/calculator';
 import { calculateTDEE } from '@/lib/calculator';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useDailyLog } from '@/hooks/useDailyLog';
-import { kgFromDisplay, localToday, type WeightUnit } from '@/lib/log/entries';
+import { addDays, kgFromDisplay, localToday, type WeightUnit } from '@/lib/log/entries';
 import { runLogEngine } from '@/lib/log/engine';
+import { buildSample, SAMPLE_DAYS, type SampleLog } from '@/lib/log/sample';
 import TrackPanel from '@/components/track/TrackPanel';
+import { primaryButton } from '@/components/track/shared';
 import TDEEForm from './TDEEForm';
 import TDEEResults from './TDEEResults';
 import ResultHero from './ResultHero';
@@ -58,18 +60,46 @@ export default function TDEECalculator() {
   // null: the default tab, which is Track once the log has entries.
   const [activeTab, setActiveTab] = useState<Tab | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const sampleToggle = useRef<HTMLButtonElement>(null);
   const [displayTdee, setDisplayTdee] = useState<number>(0);
   const log = useDailyLog();
+  // Sample mode: a synthetic log held in memory only. The saved log is never read or written while it is on.
+  const [sample, setSample] = useState<SampleLog | null>(null);
 
   const weightUnit: WeightUnit = userData.units === 'imperial' ? 'lbs' : 'kg';
-  const userWeightKg = kgFromDisplay(userData.weight, weightUnit);
-  const formulaTdee = result?.tdee ?? 0;
-  // Pure and deterministic; a year of daily entries takes a few milliseconds.
+  // An unmatched sample is someone else, so the hero shows that person's formula result.
+  const sampleResult = useMemo(() => (sample && !sample.matched ? calculateTDEE(sample.userData) : null), [sample]);
+  const heroResult = sampleResult ?? result;
+  const viewEntries = sample ? sample.entries : log.entries;
+  const engineUser = sample ? sample.userData : userData;
+  const engineWeightKg = kgFromDisplay(engineUser.weight, engineUser.units === 'imperial' ? 'lbs' : 'kg');
+  const formulaTdee = heroResult?.tdee ?? 0;
+  // Pure and deterministic; a year of daily entries takes about 2 ms.
   const engine = useMemo(
-    () => (formulaTdee > 0 ? runLogEngine(log.entries, { formulaTdeeKcal: formulaTdee, weightKg: userWeightKg }) : null),
-    [log.entries, formulaTdee, userWeightKg],
+    () => (formulaTdee > 0 ? runLogEngine(viewEntries, { formulaTdeeKcal: formulaTdee, weightKg: engineWeightKg }) : null),
+    [viewEntries, formulaTdee, engineWeightKg],
   );
-  const currentTab: Tab = activeTab ?? (log.entries.length > 0 ? 'track' : 'calculator');
+  // The sample's true value for each engine day, for the chart; undefined unless every day has one.
+  const truthKcal = useMemo(() => {
+    if (!sample || !engine) return undefined;
+    const byDate = new Map(sample.truth.map((t) => [t.date, t.kcal]));
+    const values = engine.run.days.map((d) => byDate.get(addDays(engine.startDate, d.day)));
+    return values.every((v): v is number => v !== undefined) ? values : undefined;
+  }, [sample, engine]);
+  const currentTab: Tab = activeTab ?? (viewEntries.length > 0 ? 'track' : 'calculator');
+
+  const loadSample = () => {
+    if (!result) return;
+    setSample(buildSample({ userData, formulaTdeeKcal: result.tdee, today: localToday() }));
+    setActiveTab('track');
+  };
+
+  // Exit can come from the Track tab, whose button then disappears; the header toggle is where focus goes.
+  const exitSample = () => {
+    setSample(null);
+    setActiveTab(null);
+    sampleToggle.current?.focus();
+  };
 
   const handleCalculate = () => {
     const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -172,12 +202,14 @@ export default function TDEECalculator() {
     setShowResults(false);
     setResult(null);
     setActiveTab(null);
+    setSample(null);
   };
 
   const handleQuickAccessViewResults = (storedResult: TDEEResult) => {
     setResult(storedResult);
     setShowResults(true);
     setActiveTab(null);
+    setSample(null);
   };
 
   const handleQuickAccessRecalculate = () => {
@@ -185,6 +217,7 @@ export default function TDEECalculator() {
     setShowResults(false);
     setResult(null);
     setActiveTab(null);
+    setSample(null);
   };
 
   return (
@@ -228,20 +261,48 @@ export default function TDEECalculator() {
                 <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Your TDEE Results</h2>
                 <p className="text-sm text-muted-foreground mt-1">Personalized for your body and lifestyle</p>
               </div>
-              <button
-                type="button"
-                onClick={handleRecalculate}
-                className="min-h-11 px-4 border border-input rounded-[3px] text-foreground hover:bg-muted hover:border-foreground transition-colors flex items-center gap-2 label-caps cursor-pointer"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Recalculate
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {/* One button that toggles, so focus stays put when the mode changes */}
+                <button ref={sampleToggle} type="button" onClick={sample ? exitSample : loadSample} className={primaryButton}>
+                  {sample ? (
+                    <X aria-hidden="true" className="w-4 h-4" />
+                  ) : (
+                    <FlaskConical aria-hidden="true" className="w-4 h-4" />
+                  )}
+                  {sample ? 'Exit sample' : 'Load sample weeks'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRecalculate}
+                  className="min-h-11 px-4 border border-input rounded-[3px] text-foreground hover:bg-muted hover:border-foreground transition-colors flex items-center gap-2 label-caps cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Recalculate
+                </button>
+              </div>
             </div>
 
-            {result && (
+            <div role="status">
+              {sample && (
+                <div className="mb-6 bg-accent text-accent-foreground rounded-[3px] px-4 py-3 lab-enter">
+                  <p className="text-sm leading-relaxed">
+                    <span className="label-caps mr-2">Sample mode</span>
+                    {SAMPLE_DAYS / 7} weeks of a synthetic person{sample.matched ? ' with your inputs' : ''}, made on this
+                    device by the engine&apos;s own simulator. Nothing is saved, and your own log
+                    {log.entries.length > 0 ? ` (${log.entries.length.toLocaleString()} entries)` : ''} is untouched.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {result && heroResult && (
               <div className="space-y-8">
                 {/* Main TDEE Display: gauge, error margin and goal targets */}
-                <ResultHero result={result} displayTdee={displayTdee} />
+                <ResultHero
+                  result={heroResult}
+                  displayTdee={sampleResult ? sampleResult.tdee : displayTdee}
+                  measured={engine ? { engine, truthKcal, sample: sample !== null } : undefined}
+                />
 
                 {/* Quick Tips */}
                 <QuickTips userData={userData} />
@@ -292,11 +353,23 @@ export default function TDEECalculator() {
                   {currentTab === 'track' && (
                     <div key="track-tab" className="lab-enter">
                       <TrackPanel
-                        entries={log.entries}
+                        entries={viewEntries}
                         engine={engine}
                         unit={weightUnit}
                         today={localToday()}
                         log={log}
+                        sample={
+                          sample
+                            ? {
+                                matched: sample.matched,
+                                meanLoggingGapKcal: sample.meanLoggingGapKcal,
+                                truthTodayKcal: sample.truth[sample.truth.length - 1].kcal,
+                                savedEntries: log.entries.length,
+                                onExit: exitSample,
+                              }
+                            : null
+                        }
+                        onLoadSample={loadSample}
                       />
                     </div>
                   )}
