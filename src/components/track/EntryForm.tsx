@@ -10,6 +10,7 @@ import {
   type LogEntry,
   type WeightUnit,
 } from '@/lib/log/entries';
+import { usePendingGuard } from '@/hooks/usePendingGuard';
 import { UnitCell, errorClass, formatDay, groupedFieldClass, hintClass, labelClass, primaryButton, secondaryButton } from './shared';
 
 interface EntryFormProps {
@@ -28,7 +29,7 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
     editing ? draftFromEntry(editing, unit) : { date: today, weight: '', calories: '' },
   );
   const [error, setError] = useState<{ message: string; field?: EntryField } | null>(null);
-  const saving = useRef(false);
+  const [saving, guard] = usePendingGuard();
   const fields = {
     date: useRef<HTMLInputElement>(null),
     weight: useRef<HTMLInputElement>(null),
@@ -43,16 +44,17 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    // A second Enter while the first save waits for the lock would save the same draft twice.
-    if (saving.current) return;
+    // While a save waits for the log's lock the fields are read-only and the button says so; a second Enter is ignored.
+    if (guard.pending) return;
     const parsed = entryFromDraft(draft, unit, today);
     if (!parsed.ok) {
       setError({ message: parsed.error, field: parsed.field });
       fields[parsed.field ?? 'weight'].current?.focus();
       return;
     }
-    saving.current = true;
-    const failure = await onSave(parsed.value, editing?.date ?? null).finally(() => (saving.current = false));
+    const saved = await guard.run(() => onSave(parsed.value, editing?.date ?? null));
+    if (!saved.ran) return;
+    const failure = saved.value;
     if (failure) {
       setError({ message: failure, field: 'date' });
       fields.date.current?.focus();
@@ -67,13 +69,14 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
   const unitLabel = unit === 'kg' ? 'kg' : 'lbs';
 
   return (
-    <form onSubmit={submit} noValidate aria-labelledby="log-form-heading" className="space-y-4">
+    <form onSubmit={submit} noValidate aria-busy={saving} aria-labelledby="log-form-heading" className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label htmlFor="log-date" className={labelClass}>
             Date
           </label>
           <input
+            readOnly={saving}
             ref={fields.date}
             id="log-date"
             type="date"
@@ -93,6 +96,7 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
           </label>
           <div className="flex">
             <input
+              readOnly={saving}
               ref={fields.weight}
               id="log-weight"
               type="text"
@@ -117,6 +121,7 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
           </label>
           <div className="flex">
             <input
+              readOnly={saving}
               ref={fields.calories}
               id="log-calories"
               type="text"
@@ -152,9 +157,7 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
       )}
 
       <div className="flex flex-wrap gap-2">
-        <button type="submit" className={primaryButton}>
-          {editing ? 'Save changes' : 'Save entry'}
-        </button>
+        <SubmitButton saving={saving} editing={editing !== null} />
         {editing && (
           <button type="button" className={secondaryButton} onClick={onCancelEdit}>
             Cancel
@@ -162,5 +165,14 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
         )}
       </div>
     </form>
+  );
+}
+
+/** While a save is pending it stays focusable, so focus is not lost, but says it is saving and does nothing. */
+export function SubmitButton({ saving, editing }: { saving: boolean; editing: boolean }) {
+  return (
+    <button type="submit" aria-disabled={saving} className={`${primaryButton} aria-disabled:cursor-wait aria-disabled:opacity-70`}>
+      {saving ? 'Saving…' : editing ? 'Save changes' : 'Save entry'}
+    </button>
   );
 }

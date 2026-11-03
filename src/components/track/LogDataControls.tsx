@@ -5,6 +5,7 @@ import { Download, Upload } from 'lucide-react';
 import { mergeEntries, type LogEntry, type MergeSummary, type Result } from '@/lib/log/entries';
 import { MAX_IMPORT_BYTES, exportFileName, parseImportText, serializeExport } from '@/lib/log/schema';
 import type { LogUpdate } from '@/lib/log/storage';
+import { usePendingGuard } from '@/hooks/usePendingGuard';
 import { errorClass, formatDay, primaryButton, secondaryButton } from './shared';
 
 interface LogDataControlsProps {
@@ -30,6 +31,10 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // An import waits for the log's lock. Until it settles every import control
+  // does nothing, so a second Replace cannot queue up and later wipe out what
+  // another tab saved in between, and the panel cannot close under it.
+  const [importing, guard] = usePendingGuard();
 
   // The warning takes focus so it is read first; the destructive button is one Tab away, never focused for you.
   useEffect(() => {
@@ -39,12 +44,14 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
   }, [confirmReplace]);
 
   const back = () => {
+    if (guard.pending) return;
     returnToReplace.current = true;
     setConfirmReplace(false);
   };
 
   /** Closes the import panel and puts focus back where it started. */
   const close = () => {
+    if (guard.pending) return;
     setPending(null);
     setConfirmReplace(false);
     importButton.current?.focus();
@@ -64,6 +71,7 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
   };
 
   const chooseFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (guard.pending) return;
     const file = event.target.files?.[0];
     event.target.value = ''; // so choosing the same file again still fires
     setPending(null);
@@ -99,11 +107,15 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
     if (!pending) return;
     // The update can run more than once if another tab saves meanwhile; the last run is the one saved.
     let summary: MergeSummary = { added: 0, replaced: 0, kept: 0 };
-    const result = await onCommit((current) => {
-      const merged = mergeEntries(current, pending.entries);
-      summary = merged.summary;
-      return merged.entries;
-    });
+    const committed = await guard.run(() =>
+      onCommit((current) => {
+        const merged = mergeEntries(current, pending.entries);
+        summary = merged.summary;
+        return merged.entries;
+      }),
+    );
+    if (!committed.ran) return;
+    const result = committed.value;
     if (!result.ok) {
       setError(`Nothing was imported. ${result.error}`);
       return;
@@ -117,7 +129,9 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
 
   const replace = async () => {
     if (!pending) return;
-    const result = await onCommit(() => pending.entries);
+    const committed = await guard.run(() => onCommit(() => pending.entries));
+    if (!committed.ran) return;
+    const result = committed.value;
     if (!result.ok) {
       setError(`Nothing was imported. ${result.error}`);
       return;
@@ -136,7 +150,13 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
           <Download aria-hidden="true" className="w-4 h-4" />
           Export JSON
         </button>
-        <button ref={importButton} type="button" className={secondaryButton} onClick={() => fileInput.current?.click()}>
+        <button
+          ref={importButton}
+          type="button"
+          aria-disabled={importing}
+          className={busyButton(secondaryButton)}
+          onClick={() => !guard.pending && fileInput.current?.click()}
+        >
           <Upload aria-hidden="true" className="w-4 h-4" />
           Import JSON…
         </button>
@@ -147,6 +167,7 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
           aria-label="Choose a daily log file to import"
           tabIndex={-1}
           className="sr-only"
+          disabled={importing}
           onChange={chooseFile}
         />
       </div>
@@ -178,15 +199,21 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
                   : `Merge adds ${preview.added}, replaces ${preview.replaced} on dates both have (the file wins), and keeps your other ${preview.kept}. Replace keeps only the file.`}
               </p>
               <div className="flex flex-wrap gap-2">
-                <button type="button" className={primaryButton} onClick={merge}>
-                  {entries.length === 0 ? 'Import' : 'Merge'}
+                <button type="button" aria-disabled={importing} className={busyButton(primaryButton)} onClick={merge}>
+                  {importing ? 'Importing…' : entries.length === 0 ? 'Import' : 'Merge'}
                 </button>
                 {entries.length > 0 && (
-                  <button ref={replaceButton} type="button" className={secondaryButton} onClick={() => setConfirmReplace(true)}>
+                  <button
+                    ref={replaceButton}
+                    type="button"
+                    aria-disabled={importing}
+                    className={busyButton(secondaryButton)}
+                    onClick={() => !guard.pending && setConfirmReplace(true)}
+                  >
                     Replace…
                   </button>
                 )}
-                <button type="button" className={secondaryButton} onClick={close}>
+                <button type="button" aria-disabled={importing} className={busyButton(secondaryButton)} onClick={close}>
                   Cancel
                 </button>
               </div>
@@ -200,12 +227,15 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="min-h-11 px-4 border border-danger text-danger rounded-[3px] inline-flex items-center justify-center label-caps hover:bg-muted transition-colors cursor-pointer"
+                  aria-disabled={importing}
+                  className={busyButton(
+                    'min-h-11 px-4 border border-danger text-danger rounded-[3px] inline-flex items-center justify-center label-caps hover:bg-muted transition-colors cursor-pointer',
+                  )}
                   onClick={replace}
                 >
-                  Yes, replace my log
+                  {importing ? 'Replacing…' : 'Yes, replace my log'}
                 </button>
-                <button type="button" className={secondaryButton} onClick={back}>
+                <button type="button" aria-disabled={importing} className={busyButton(secondaryButton)} onClick={back}>
                   Back
                 </button>
               </div>
@@ -215,6 +245,11 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
       )}
     </div>
   );
+}
+
+/** Import controls stay focusable while an import is pending, so focus is not lost, but look and act inert. */
+function busyButton(className: string): string {
+  return `${className} aria-disabled:cursor-wait aria-disabled:opacity-70`;
 }
 
 function entriesText(n: number): string {
