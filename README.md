@@ -25,5 +25,6 @@ Then open http://localhost:3000.
 | `npm run lint` | Run ESLint over the project |
 | `npm run typecheck` | Type-check with `tsc --noEmit` |
 | `npm test` | Run unit tests with Vitest |
+| `npm run calibrate` | Re-run the adaptive engine's simulation cohort and rewrite `src/lib/engine/calibration.json` (see `src/lib/engine/README.md`) |
 
 CI runs lint, typecheck, test and build on every push and pull request (`.github/workflows/ci.yml`).
