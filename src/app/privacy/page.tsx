@@ -24,6 +24,7 @@ export default function PrivacyPolicy() {
           items={[
             'The values you enter in the calculator',
             'Your most recent result and when you calculated it',
+            'Your daily log of weigh-ins and calories, if you keep one',
             'Your light or dark theme choice',
           ]}
         />
@@ -36,6 +37,7 @@ export default function PrivacyPolicy() {
         <DashList
           items={[
             <>Clear this site&apos;s data in your browser settings to delete everything it saved</>,
+            'Export your daily log from the Track tab to keep a copy; importing a file reads it on your device and uploads nothing',
             'Use a private or incognito window if you do not want anything saved',
           ]}
         />

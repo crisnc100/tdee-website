@@ -64,6 +64,15 @@ const pairs = [
   ['ring', 'card', UI, 'focus ring on card'],
   ['ring', 'background', UI, 'focus ring on page'],
   ['accent', 'background', 1, 'button fill vs page (info only)'],
+  // Daily log: Track tab, measured gauge, estimate chart, sample mode.
+  ['accent-ink', 'card', UI, 'chart estimate line, gauge measured-band end caps'],
+  ['muted-foreground', 'card', UI, 'chart formula reference line'],
+  ['foreground', 'card', UI, 'chart sample truth line'],
+  ['warning', 'card', UI, 'outlier chip border, chart outlier ticks'],
+  ['warning', 'muted', TEXT, 'outlier chip on the highlighted (editing) row'],
+  ['accent-foreground', 'accent', UI, 'sample banner: Exit button border and focus ring'],
+  ['danger', 'muted', UI, 'log notice border on inset surface'],
+  ['danger', 'card', UI, 'replace-confirm border and button'],
 ];
 
 // Text drawn with reduced opacity. The opacity is read from the source, so a
@@ -76,6 +85,8 @@ const placeholderOpacity = placeholderRule
 const detailClass = lab.match(/option\.detail && \(?\s*<span className=\{`([^`]*)`\}/)?.[1] ?? '';
 const detailBranches = detailClass.match(/\$\{selected \? '([^']*)' : '([^']*)'\}/);
 const twOpacity = (cls) => Number(cls.match(/(?:^|\s)opacity-(\d+)/)?.[1] ?? 100) / 100;
+const chart = readFileSync(new URL('../src/components/calculator/EstimateChart.tsx', import.meta.url), 'utf8');
+const bandEdgeOpacity = Number(chart.match(/const BAND_EDGE_OPACITY = ([\d.]+);/)?.[1] ?? NaN);
 const [detailSelected, detailUnselected] = detailBranches
   ? [twOpacity(detailBranches[1]), twOpacity(detailBranches[2])]
   : [NaN, NaN];
@@ -86,6 +97,8 @@ const alphaPairs = [
   ['muted-foreground', 'background', detailUnselected, TEXT, 'segmented detail, unselected'],
   ['foreground', 'muted', detailUnselected, TEXT, 'segmented detail, unselected hover'],
   ['background', 'foreground', detailSelected, TEXT, 'segmented detail, selected'],
+  ['accent-ink', 'card', bandEdgeOpacity, UI, 'chart 80% band edges (EstimateChart BAND_EDGE_OPACITY)'],
+  ['accent-ink', 'background', bandEdgeOpacity, UI, 'chart 80% band edges, if drawn on the page'],
 ];
 
 // The app icon (src/app/icon.svg) is drawn in fixed colours on its own dark
