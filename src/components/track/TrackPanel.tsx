@@ -3,15 +3,17 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { FlaskConical, X } from 'lucide-react';
 import { SectionHeading } from '@/components/ui/lab';
-import { addEntry, deleteEntry, updateEntry, type LogEntry, type WeightUnit } from '@/lib/log/entries';
+import { addEntry, deleteEntry, updateEntry, type LogEntry, type Result, type WeightUnit } from '@/lib/log/entries';
 import type { LogEngineResult } from '@/lib/log/engine';
+import type { LogUpdate } from '@/lib/log/storage';
 import EntryForm from './EntryForm';
 import EntryList from './EntryList';
 import LogDataControls from './LogDataControls';
 import { band80, formatDay, kcal, primaryButton } from './shared';
 
 export interface LogControls {
-  commit: (update: (entries: LogEntry[]) => LogEntry[]) => LogEntry[];
+  /** Applies a change to the latest saved entries; a failed Result means nothing changed. */
+  commit: (update: LogUpdate) => Result<LogEntry[]>;
   notice: string | null;
   saveError: string | null;
 }
@@ -32,23 +34,36 @@ interface TrackPanelProps {
   unit: WeightUnit;
   today: string;
   log: LogControls;
+  /** The status line, kept by the parent so a Delete's Undo outlives this panel being unmounted. */
+  status: TrackStatus | null;
+  onStatus: (status: TrackStatus | null) => void;
   /** Set in sample mode: the panel is read-only and the saved log is not touched. */
   sample: SampleInfo | null;
   onLoadSample: () => void;
 }
 
-interface Status {
+export interface TrackStatus {
   message: string;
   /** The entry a Delete removed, offered back by Undo. */
   undo?: LogEntry;
 }
 
-export default function TrackPanel({ entries, engine, unit, today, log, sample, onLoadSample }: TrackPanelProps) {
+export default function TrackPanel({
+  entries,
+  engine,
+  unit,
+  today,
+  log,
+  status,
+  onStatus,
+  sample,
+  onLoadSample,
+}: TrackPanelProps) {
   const [editing, setEditing] = useState<LogEntry | null>(null);
-  const [status, setStatus] = useState<Status | null>(null);
   const undoButton = useRef<HTMLButtonElement>(null);
   const exitButton = useRef<HTMLButtonElement>(null);
   const focusAfterEdit = useRef(false);
+  const focusUndo = useRef(false);
   const focusExitAfterLoad = useRef(false);
 
   // Loading the sample from here removes the button that did it, so focus goes to Exit sample.
@@ -62,20 +77,22 @@ export default function TrackPanel({ entries, engine, unit, today, log, sample, 
     if (editing && focusAfterEdit.current) document.getElementById('log-weight')?.focus();
     focusAfterEdit.current = false;
   }, [editing]);
+  // Only right after a Delete: a status kept from before this panel mounted must not pull focus.
   useEffect(() => {
-    if (status?.undo) undoButton.current?.focus();
+    if (focusUndo.current && status?.undo) undoButton.current?.focus();
+    focusUndo.current = false;
   }, [status]);
 
   const save = (entry: LogEntry, originalDate: string | null): string | null => {
+    const result = originalDate
+      ? log.commit((current) => updateEntry(current, originalDate, entry))
+      : log.commit((current) => addEntry(current, entry));
+    if (!result.ok) return result.error;
     if (originalDate) {
-      const updated = updateEntry(entries, originalDate, entry);
-      if (!updated.ok) return updated.error;
-      log.commit(() => updated.value);
       setEditing(null);
-      setStatus({ message: `Updated the entry for ${formatDay(entry.date, true)}.` });
+      onStatus({ message: `Updated the entry for ${formatDay(entry.date, true)}.` });
     } else {
-      log.commit((current) => addEntry(current, entry));
-      setStatus({ message: `Saved ${formatDay(entry.date, true)}.` });
+      onStatus({ message: `Saved ${formatDay(entry.date, true)}.` });
     }
     return null;
   };
@@ -83,23 +100,29 @@ export default function TrackPanel({ entries, engine, unit, today, log, sample, 
   const edit = (entry: LogEntry) => {
     focusAfterEdit.current = true;
     setEditing(entry);
-    setStatus(null);
+    onStatus(null);
   };
 
   const remove = (entry: LogEntry) => {
-    log.commit((current) => deleteEntry(current, entry.date));
+    const result = log.commit((current) => deleteEntry(current, entry.date));
+    if (!result.ok) {
+      onStatus({ message: result.error });
+      return;
+    }
     if (editing?.date === entry.date) setEditing(null);
-    setStatus({ message: `Deleted the entry for ${formatDay(entry.date, true)}.`, undo: entry });
+    focusUndo.current = true;
+    onStatus({ message: `Deleted the entry for ${formatDay(entry.date, true)}.`, undo: entry });
   };
 
   const undo = (entry: LogEntry) => {
-    log.commit((current) => addEntry(current, entry));
-    setStatus({ message: `Restored the entry for ${formatDay(entry.date, true)}.` });
+    const result = log.commit((current) => addEntry(current, entry));
+    onStatus(result.ok ? { message: `Restored the entry for ${formatDay(entry.date, true)}.` } : { message: result.error, undo: entry });
   };
 
-  const replaceAll = (next: LogEntry[]) => {
-    log.commit(() => next);
-    setEditing(null);
+  const commitImport = (update: LogUpdate) => {
+    const result = log.commit(update);
+    if (result.ok) setEditing(null);
+    return result;
   };
 
   if (sample) {
@@ -206,7 +229,7 @@ export default function TrackPanel({ entries, engine, unit, today, log, sample, 
 
       <section aria-labelledby="log-data-heading" className="space-y-4">
         <SectionHeading index="06" title="Your data" id="log-data-heading" hideIndex />
-        <LogDataControls entries={entries} today={today} onReplace={replaceAll} onStatus={(message) => setStatus({ message })} />
+        <LogDataControls entries={entries} today={today} onCommit={commitImport} onStatus={(message) => onStatus({ message })} />
       </section>
     </div>
   );

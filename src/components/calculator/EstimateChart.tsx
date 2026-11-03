@@ -4,6 +4,7 @@ import { useState, type PointerEvent } from 'react';
 import type { LogEngineResult } from '@/lib/log/engine';
 import { addDays } from '@/lib/log/entries';
 import { band80, formatDay, kcal } from '@/components/track/shared';
+import { plottedRange } from './estimateRange';
 
 // Opacity of the band's edge lines. scripts/check-contrast.mjs reads this value
 // and checks the composited colour against the card at the 3:1 UI minimum.
@@ -35,10 +36,7 @@ export default function EstimateChart({ engine, formulaTdee, truthKcal }: Estima
     return <p className="text-xs text-muted-foreground">The chart of the estimate appears from the second day.</p>;
   }
 
-  const values = days.flatMap((d) => [d.expenditure.intervals.p80.lower, d.expenditure.intervals.p80.upper]);
-  values.push(formulaTdee, ...(truthKcal ?? []));
-  const lo = Math.min(...values);
-  const hi = Math.max(...values);
+  const { lo, hi } = plottedRange(days, formulaTdee, truthKcal);
   const span = Math.max(hi - lo, 100);
   const yMin = lo - span * 0.06;
   const yMax = hi + span * 0.06;

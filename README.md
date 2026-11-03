@@ -40,4 +40,4 @@ Export writes, and import reads, a versioned JSON file (`src/lib/log/schema.ts`)
   "entries": [{ "date": "2026-11-03", "weightKg": 81.6, "intakeKcal": 2140 }] }
 ```
 
-Weight is always stored in kg. Import is strict: an unknown version, a malformed row, an unknown field or a repeated date rejects the whole file.
+Weight is always stored in kg. Import is strict: an unknown version, a malformed row, an unknown field, a repeated date, a date more than two days ahead, or a log spanning more than ten years rejects the whole file. A saved log with dates outside that window still opens: those entries are left out, with a notice, after a copy of the saved log is kept under `tdee-daily-log-set-aside`. Each change re-reads the saved log and applies to that, so two open tabs never overwrite each other's entries.

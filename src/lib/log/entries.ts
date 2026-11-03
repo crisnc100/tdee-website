@@ -24,6 +24,14 @@ export const WEIGHT_RANGE_KG: readonly [number, number] = DEFAULT_PARAMS.plausib
 export const INTAKE_RANGE_KCAL: readonly [number, number] = DEFAULT_PARAMS.plausibleIntakeKcal;
 /** Earliest date the log accepts; keeps a typo'd year from creating a decades-long run. */
 export const MIN_DATE = '2000-01-01';
+/** How far past today an imported or saved date may be: room for time zones and a clock a day off. */
+export const FUTURE_ALLOWANCE_DAYS = 2;
+/**
+ * The longest log accepted, first date to last inclusive: ten years. The engine
+ * runs one step per day across the whole span, so this bounds its work. It is
+ * long enough that daily logging does not reach it for a decade.
+ */
+export const MAX_SPAN_DAYS = 3653;
 
 const LBS_PER_KG = 2.20462; // same factor as calculator.ts
 const DAY_MS = 86_400_000;
@@ -50,6 +58,31 @@ export function isoFromDayNumber(day: number): string {
 
 export function addDays(isoDay: string, days: number): string {
   return isoFromDayNumber(dayNumber(isoDay) + days);
+}
+
+/** The latest date an imported or saved entry may have. */
+export function latestAcceptedDate(today: string): string {
+  return addDays(today, FUTURE_ALLOWANCE_DAYS);
+}
+
+/** Passes the log through unless its dates span more than MAX_SPAN_DAYS. */
+export function checkSpan(entries: LogEntry[]): Result<LogEntry[]> {
+  if (entries.length === 0) return { ok: true, value: entries };
+  let first = entries[0].date;
+  let last = first;
+  for (const { date } of entries) {
+    if (date < first) first = date;
+    if (date > last) last = date;
+  }
+  const days = dayNumber(last) - dayNumber(first) + 1;
+  if (days <= MAX_SPAN_DAYS) return { ok: true, value: entries };
+  return {
+    ok: false,
+    error:
+      `The log would run from ${first} to ${last}, ${days.toLocaleString('en-US')} days; it can cover at most ` +
+      `${MAX_SPAN_DAYS.toLocaleString('en-US')} days (ten years). Check for a mistyped year.`,
+    field: 'date',
+  };
 }
 
 /** Today's date in the device's own time zone. */

@@ -2,15 +2,16 @@
 
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Download, Upload } from 'lucide-react';
-import { mergeEntries, type LogEntry } from '@/lib/log/entries';
+import { mergeEntries, type LogEntry, type MergeSummary, type Result } from '@/lib/log/entries';
 import { MAX_IMPORT_BYTES, exportFileName, parseImportText, serializeExport } from '@/lib/log/schema';
+import type { LogUpdate } from '@/lib/log/storage';
 import { errorClass, formatDay, primaryButton, secondaryButton } from './shared';
 
 interface LogDataControlsProps {
   entries: readonly LogEntry[];
   today: string;
-  /** Replaces the whole log. */
-  onReplace: (entries: LogEntry[]) => void;
+  /** Applies a change to the latest saved entries; a failed Result means nothing changed. */
+  onCommit: (update: LogUpdate) => Result<LogEntry[]>;
   /** Announces an outcome in the Track tab's status line. */
   onStatus: (message: string) => void;
 }
@@ -20,7 +21,7 @@ interface PendingImport {
   entries: LogEntry[];
 }
 
-export default function LogDataControls({ entries, today, onReplace, onStatus }: LogDataControlsProps) {
+export default function LogDataControls({ entries, today, onCommit, onStatus }: LogDataControlsProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const importButton = useRef<HTMLButtonElement>(null);
   const replaceWarning = useRef<HTMLParagraphElement>(null);
@@ -80,7 +81,7 @@ export default function LogDataControls({ entries, today, onReplace, onStatus }:
       setError('Nothing was imported. The file could not be read.');
       return;
     }
-    const parsed = parseImportText(text);
+    const parsed = parseImportText(text, { today });
     if (!parsed.ok) {
       setError(`Nothing was imported. ${parsed.error}`);
       return;
@@ -93,10 +94,20 @@ export default function LogDataControls({ entries, today, onReplace, onStatus }:
     onStatus(`Read ${file.name}: ${entriesText(parsed.value.length)}. Choose how to import it below.`);
   };
 
+  // Merged into the log as saved at this moment, which another tab may have changed since the preview.
   const merge = () => {
     if (!pending) return;
-    const { entries: merged, summary } = mergeEntries(entries, pending.entries);
-    onReplace(merged);
+    let summary: MergeSummary = { added: 0, replaced: 0, kept: 0 };
+    const result = onCommit((current) => {
+      const merged = mergeEntries(current, pending.entries);
+      summary = merged.summary;
+      return merged.entries;
+    });
+    if (!result.ok) {
+      setError(`Nothing was imported. ${result.error}`);
+      return;
+    }
+    setError(null);
     close();
     onStatus(
       `Imported ${pending.fileName}: ${summary.added} added, ${summary.replaced} replaced on shared dates, ${summary.kept} kept.`,
@@ -105,7 +116,12 @@ export default function LogDataControls({ entries, today, onReplace, onStatus }:
 
   const replace = () => {
     if (!pending) return;
-    onReplace(pending.entries);
+    const result = onCommit(() => pending.entries);
+    if (!result.ok) {
+      setError(`Nothing was imported. ${result.error}`);
+      return;
+    }
+    setError(null);
     close();
     onStatus(`Replaced the log with ${pending.fileName}: ${entriesText(pending.entries.length)}.`);
   };

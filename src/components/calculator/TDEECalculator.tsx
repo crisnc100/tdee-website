@@ -9,7 +9,7 @@ import { useDailyLog } from '@/hooks/useDailyLog';
 import { addDays, kgFromDisplay, localToday, type WeightUnit } from '@/lib/log/entries';
 import { runLogEngine } from '@/lib/log/engine';
 import { buildSample, SAMPLE_DAYS, type SampleLog } from '@/lib/log/sample';
-import TrackPanel from '@/components/track/TrackPanel';
+import TrackPanel, { type TrackStatus } from '@/components/track/TrackPanel';
 import { primaryButton } from '@/components/track/shared';
 import TDEEForm from './TDEEForm';
 import TDEEResults from './TDEEResults';
@@ -19,8 +19,7 @@ import MythBusters from '../education/MythBusters';
 import QuickTips from '../education/QuickTips';
 import QuickAccess from './QuickAccess';
 import { StatusLamp } from '@/components/ui/lab';
-
-type Tab = 'calculator' | 'meals' | 'education' | 'track';
+import { resolveTab, settleTab, type Tab } from './tabs';
 
 const tabs: { id: Tab; label: string; icon: typeof Calculator }[] = [
   { id: 'calculator', label: 'Breakdown', icon: Calculator },
@@ -57,8 +56,10 @@ export default function TDEECalculator() {
   const [userData, setUserData] = useLocalStorage<UserData>('tdee-user-data', initialUserData);
   const [result, setResult] = useState<TDEEResult | null>(null);
   const [showResults, setShowResults] = useState(false);
-  // null: the default tab, which is Track once the log has entries.
+  // null: the default tab, which is Track once the log has entries. Fixed as the choice once results show (tabs.ts).
   const [activeTab, setActiveTab] = useState<Tab | null>(null);
+  // The Track tab's status line lives here so a Delete's Undo survives the panel unmounting.
+  const [trackStatus, setTrackStatus] = useState<TrackStatus | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const sampleToggle = useRef<HTMLButtonElement>(null);
   const [displayTdee, setDisplayTdee] = useState<number>(0);
@@ -86,7 +87,11 @@ export default function TDEECalculator() {
     const values = engine.run.days.map((d) => byDate.get(addDays(engine.startDate, d.day)));
     return values.every((v): v is number => v !== undefined) ? values : undefined;
   }, [sample, engine]);
-  const currentTab: Tab = activeTab ?? (viewEntries.length > 0 ? 'track' : 'calculator');
+  const hasEntries = viewEntries.length > 0;
+  const settledTab = settleTab(activeTab, hasEntries, showResults && log.loaded);
+  // Set during render: React's documented way to adjust state when other values change.
+  if (settledTab !== activeTab) setActiveTab(settledTab);
+  const currentTab = resolveTab(settledTab, hasEntries);
 
   const loadSample = () => {
     if (!result) return;
@@ -358,6 +363,8 @@ export default function TDEECalculator() {
                         unit={weightUnit}
                         today={localToday()}
                         log={log}
+                        status={trackStatus}
+                        onStatus={setTrackStatus}
                         sample={
                           sample
                             ? {
