@@ -6,7 +6,7 @@ export interface ScoredPerson {
   run: EngineRun;
   /** Ground truth expenditure as logged, one per day, aligned with run.days. */
   truthKcal: readonly number[];
-  /** The formula-only baseline: the prior mean, never updated. */
+  /** The raw calculator TDEE, never updated. The prior baseline is `run.prior`. */
   formulaKcal: number;
 }
 
@@ -17,15 +17,22 @@ export const NOMINAL: Readonly<Record<Level, number>> = { p50: 0.5, p80: 0.8, p9
 /** Absolute error (kcal/day) below which a person counts as converged. */
 export const CONVERGENCE_TOLERANCE_KCAL = 150;
 
+export interface Baselines {
+  engine: number;
+  formula: number;
+  prior: number;
+}
+
 export interface CheckpointMetrics {
   day: number;
   /** Share of people whose truth lies inside the engine's interval. */
   coverage: Record<Level, number>;
-  /** The same for the static formula prior's interval: what the bands would cover with no data. */
-  formulaCoverage: Record<Level, number>;
-  medianAbsErrorKcal: { engine: number; formula: number };
+  /** The same for the static prior's interval: what the bands would cover with no data. */
+  priorCoverage: Record<Level, number>;
+  /** `formula` is the raw calculator TDEE; `prior` is the engine's prior mean, never updated. */
+  medianAbsErrorKcal: Baselines;
   /** Mean signed error (estimate - truth): systematic bias, if any. */
-  meanErrorKcal: { engine: number; formula: number };
+  meanErrorKcal: Baselines;
   medianPosteriorSdKcal: number;
 }
 
@@ -34,10 +41,10 @@ export interface CohortMetrics {
   checkpoints: CheckpointMetrics[];
   /** Per-day curves, index = day. */
   daily: {
-    medianAbsErrorKcal: { engine: number[]; formula: number[] };
+    medianAbsErrorKcal: { engine: number[]; formula: number[]; prior: number[] };
     coverage: Record<Level, number[]>;
   };
-  /** First day from which the engine's median absolute error stays below the formula's; null if never. */
+  /** First day from which the engine's median absolute error stays below the raw formula's; null if never. */
   crossoverDay: number | null;
   convergence: {
     toleranceKcal: number;
@@ -87,13 +94,15 @@ export function scoreCohort(people: readonly ScoredPerson[], checkpoints: readon
   const dayIndices = Array.from({ length: horizon + 1 }, (_, t) => t);
   const engineErrors = dayIndices.map((t) => people.map((p) => p.run.days[t].expenditure.mean - p.truthKcal[t]));
   const formulaErrors = dayIndices.map((t) => people.map((p) => p.formulaKcal - p.truthKcal[t]));
+  const priorErrors = dayIndices.map((t) => people.map((p) => p.run.prior.mean - p.truthKcal[t]));
   const coverageAt = (t: number, level: Level) =>
     people.filter((p) => covers(p.run.days[t].expenditure, level, p.truthKcal[t])).length / people.length;
-  const formulaCoverageAt = (t: number, level: Level) =>
+  const priorCoverageAt = (t: number, level: Level) =>
     people.filter((p) => covers(p.run.prior, level, p.truthKcal[t])).length / people.length;
 
   const engineMae = engineErrors.map((errs) => median(errs.map(Math.abs)));
   const formulaMae = formulaErrors.map((errs) => median(errs.map(Math.abs)));
+  const priorMae = priorErrors.map((errs) => median(errs.map(Math.abs)));
 
   let crossoverDay: number | null = null;
   for (let t = horizon; t >= 0 && engineMae[t] < formulaMae[t]; t -= 1) crossoverDay = t;
@@ -108,13 +117,13 @@ export function scoreCohort(people: readonly ScoredPerson[], checkpoints: readon
     checkpoints: checkpoints.map((day) => ({
       day,
       coverage: { p50: coverageAt(day, 'p50'), p80: coverageAt(day, 'p80'), p95: coverageAt(day, 'p95') },
-      formulaCoverage: { p50: formulaCoverageAt(day, 'p50'), p80: formulaCoverageAt(day, 'p80'), p95: formulaCoverageAt(day, 'p95') },
-      medianAbsErrorKcal: { engine: engineMae[day], formula: formulaMae[day] },
-      meanErrorKcal: { engine: mean(engineErrors[day]), formula: mean(formulaErrors[day]) },
+      priorCoverage: { p50: priorCoverageAt(day, 'p50'), p80: priorCoverageAt(day, 'p80'), p95: priorCoverageAt(day, 'p95') },
+      medianAbsErrorKcal: { engine: engineMae[day], formula: formulaMae[day], prior: priorMae[day] },
+      meanErrorKcal: { engine: mean(engineErrors[day]), formula: mean(formulaErrors[day]), prior: mean(priorErrors[day]) },
       medianPosteriorSdKcal: median(people.map((p) => p.run.days[day].expenditure.sd)),
     })),
     daily: {
-      medianAbsErrorKcal: { engine: engineMae, formula: formulaMae },
+      medianAbsErrorKcal: { engine: engineMae, formula: formulaMae, prior: priorMae },
       coverage: {
         p50: dayIndices.map((t) => coverageAt(t, 'p50')),
         p80: dayIndices.map((t) => coverageAt(t, 'p80')),

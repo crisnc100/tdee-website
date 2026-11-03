@@ -44,6 +44,8 @@ export interface SimulatedPerson {
   expenditureAsLoggedKcal: number[];
   /** Mean of (true intake - what the person would log) over all days, kcal/day. */
   meanLoggingGapKcal: number;
+  /** The same gap as a share of true intake. */
+  meanLoggingGapShare: number;
 }
 
 const KG_PER_LB = 1 / 2.20462;
@@ -111,7 +113,16 @@ export function randomUserData(rng: Rng): UserData {
  * Then logged intake minus expenditure as logged equals true intake minus true
  * expenditure on average, which is exactly what the engine's model claims.
  */
-export function simulatePerson(seed: number, scenario: Scenario, horizonDays: number): SimulatedPerson {
+export interface SimOptions {
+  /**
+   * Overrides the logging behaviour for a sensitivity sweep: the person-level
+   * bias is drawn around this mean (same 5-point SD) and weekend under-logging
+   * is switched off, so the cohort's mean logging gap is about this share.
+   */
+  loggingBiasMean?: number;
+}
+
+export function simulatePerson(seed: number, scenario: Scenario, horizonDays: number, options: SimOptions = {}): SimulatedPerson {
   const rng = createRng(seed);
   const userData = randomUserData(rng);
   const prior = priorFromUserData(userData);
@@ -133,8 +144,12 @@ export function simulatePerson(seed: number, scenario: Scenario, horizonDays: nu
 
   // Behaviour, fixed per person.
   const accurate = scenario === 'accurateLogger';
-  const loggingBias = accurate ? 0 : clamp(rng.normal(0.04, 0.05), -0.05, 0.3); // share of intake never logged
-  const weekendUnderLog = accurate ? 0 : rng.uniform(0, 0.25); // extra share missed on Saturday/Sunday
+  const sweep = options.loggingBiasMean;
+  const biasDraw = rng.normal(0, 0.05);
+  const weekendDraw = rng.uniform(0, 0.25);
+  // Share of intake never logged, and the extra share missed on Saturday/Sunday.
+  const loggingBias = accurate ? 0 : sweep !== undefined ? clamp(sweep + biasDraw, -0.05, 0.45) : clamp(0.04 + biasDraw, -0.05, 0.3);
+  const weekendUnderLog = accurate || sweep !== undefined ? 0 : weekendDraw;
   const weekendEatMore = 1.1;
   const intakeNoise = 0.12;
   const goal = scenario === 'maintainer' ? 'maintain' : rng.weighted([['lose', 55], ['maintain', 25], ['gain', 20]] as const);
@@ -159,6 +174,7 @@ export function simulatePerson(seed: number, scenario: Scenario, horizonDays: nu
   const days: DayLog[] = [];
   const smoothExpenditure: number[] = [];
   let gapSum = 0;
+  let intakeSum = 0;
 
   for (let day = 0; day <= horizonDays; day += 1) {
     const dayOfWeek = (day + startDayOfWeek) % 7;
@@ -170,6 +186,7 @@ export function simulatePerson(seed: number, scenario: Scenario, horizonDays: nu
     const trueIntake = Math.max(0, meanIntake * (1 + rng.normal(0, intakeNoise)));
     const wouldLog = trueIntake * (1 - loggingBias) * (weekend ? 1 - weekendUnderLog : 1);
     gapSum += trueIntake - wouldLog;
+    intakeSum += trueIntake;
 
     let scale = tissue + glycogen + water + (dayOfWeek === 0 ? weekendWaterKg : 0) + rng.normal(0, scaleSd);
     if (rng.bernoulli(outlierRate)) scale += (rng.bernoulli(0.5) ? 1 : -1) * rng.uniform(2, 10);
@@ -196,5 +213,6 @@ export function simulatePerson(seed: number, scenario: Scenario, horizonDays: nu
     days,
     expenditureAsLoggedKcal: smoothExpenditure.map((x) => x - meanLoggingGapKcal),
     meanLoggingGapKcal,
+    meanLoggingGapShare: intakeSum > 0 ? gapSum / intakeSum : 0,
   };
 }

@@ -33,7 +33,7 @@ export const U = 2;
 export const KCAL_PER_KG = 7700;
 
 /**
- * Relative SD of the formula prior on expenditure.
+ * Relative SD of the formula's own error as a prediction of TRUE TDEE.
  * Basis: Frankenfield, Roth-Yousey & Compher (2005, J Am Diet Assoc 105:775-789)
  * found Mifflin-St Jeor predicts resting metabolic rate within +/-10% of measured
  * values in about 82% of non-obese and 70% of obese adults, i.e. an SD of about
@@ -42,6 +42,56 @@ export const KCAL_PER_KG = 7700;
  * preference and is intentionally not used here.
  */
 export const PRIOR_RELATIVE_SD = 0.1;
+
+/**
+ * How the engine's prior on expenditure AS LOGGED is built from the formula.
+ * The formula predicts true TDEE; E is true TDEE minus the user's mean logging
+ * gap, which the formula knows nothing about. So E's prior is
+ *   mean = formula * (1 - loggingBiasMean)
+ *   sd   = formula * sqrt(formulaRelativeSd^2 + loggingBiasSd^2)
+ * treating the two errors as independent.
+ */
+export interface LoggingBiasPrior {
+  formulaRelativeSd: number;
+  /** Assumed mean share of true intake that goes unlogged. */
+  loggingBiasMean: number;
+  /** Between-person SD of that share. */
+  loggingBiasSd: number;
+}
+
+/**
+ * Between-person SD of logging bias: 10 percentage points. This is a judgment,
+ * not a published figure. Subar et al. (2003, below) report group means only in
+ * their abstract; the spread between people is not quantified there.
+ */
+export const LOGGING_BIAS_SD = 0.1;
+
+/**
+ * Mean logging bias for the recentred variant: 10%.
+ * Source: Subar AF, Kipnis V, Troiano RP, et al. Using intake biomarkers to
+ * evaluate the extent of dietary misreporting in a large sample of adults: the
+ * OPEN study. Am J Epidemiol 2003;158(1):1-13. doi:10.1093/aje/kwg092.
+ * In 484 adults aged 40-69, energy intake on 24-hour recalls was under-reported
+ * against doubly-labelled-water total energy expenditure by 12-14% in men and
+ * 16-20% in women on average (31-36% and 34-38% on food-frequency questionnaires).
+ * The paper does not give 10%: it is a discount below its lowest figure, on our
+ * assumption (not the paper's) that daily app logging is better than recall.
+ * Centring at 12% was tried and fails the early-coverage gate for honest
+ * loggers (see README).
+ */
+export const LOGGING_BIAS_MEAN = 0.1;
+
+export const PRIOR_VARIANTS = Object.freeze({
+  /** (a) Keep the centre at the formula TDEE; widen for unknown logging bias. */
+  widen: Object.freeze({ formulaRelativeSd: PRIOR_RELATIVE_SD, loggingBiasMean: 0, loggingBiasSd: LOGGING_BIAS_SD }),
+  /** (b) Widen, and recentre by the cited mean under-reporting. */
+  widenAndRecentre: Object.freeze({ formulaRelativeSd: PRIOR_RELATIVE_SD, loggingBiasMean: LOGGING_BIAS_MEAN, loggingBiasSd: LOGGING_BIAS_SD }),
+}) satisfies Record<string, Readonly<LoggingBiasPrior>>;
+
+export type PriorVariant = keyof typeof PRIOR_VARIANTS;
+
+/** Chosen by the calibration sweep across logging-bias levels; see README. */
+export const DEFAULT_PRIOR_VARIANT: PriorVariant = 'widenAndRecentre';
 
 /**
  * One day of user data. Days are consecutive; a gap is a day with fields omitted.
@@ -55,10 +105,9 @@ export interface DayLog {
 }
 
 /**
- * Prior for a new user.
- * `expenditureKcal` is the formula TDEE, used as the prior mean of
- * "expenditure as logged" (see EngineState). `weightKg` seeds the trend weight
- * loosely; the first weigh-in replaces it.
+ * Prior for a new user: mean and SD of the starting expenditure (see
+ * `expenditureAsLoggedPrior` for how it is built from the formula). `weightKg`
+ * seeds the trend weight loosely; the first weigh-in replaces it.
  */
 export interface EnginePrior {
   expenditureKcal: number;
@@ -152,7 +201,7 @@ export function gaussianEstimate(mean: number, sd: number): Estimate {
   return { mean, sd, intervals: { p50: interval(Z.p50), p80: interval(Z.p80), p95: interval(Z.p95) } };
 }
 
-/** Prior from a formula TDEE (kcal/day) and a starting weight (kg). */
+/** The formula's prior on true TDEE (kcal/day, 10% SD) and a starting weight (kg). */
 export function priorFromFormula(formulaTdeeKcal: number, weightKg: number): EnginePrior {
   return {
     expenditureKcal: formulaTdeeKcal,
@@ -163,8 +212,30 @@ export function priorFromFormula(formulaTdeeKcal: number, weightKg: number): Eng
 
 const KG_PER_LB = 1 / 2.20462; // same factor as calculator.ts
 
-/** Prior from the calculator's own inputs, via the frozen formula. */
+/**
+ * The formula's prior on TRUE TDEE from the calculator's own inputs. The engine
+ * estimates expenditure as logged, so pass this through `expenditureAsLoggedPrior`
+ * (or use `enginePriorFromUserData`) before running the engine.
+ */
 export function priorFromUserData(userData: UserData): EnginePrior {
   const weightKg = userData.units === 'imperial' ? userData.weight * KG_PER_LB : userData.weight;
   return priorFromFormula(calculateTDEE(userData).tdee, weightKg);
+}
+
+/** Converts a formula prior on true TDEE into the engine's prior on expenditure as logged. */
+export function expenditureAsLoggedPrior(
+  formulaPrior: EnginePrior,
+  spec: Readonly<LoggingBiasPrior> = PRIOR_VARIANTS[DEFAULT_PRIOR_VARIANT],
+): EnginePrior {
+  const formula = formulaPrior.expenditureKcal;
+  return {
+    expenditureKcal: formula * (1 - spec.loggingBiasMean),
+    expenditureSdKcal: formula * Math.hypot(spec.formulaRelativeSd, spec.loggingBiasSd),
+    weightKg: formulaPrior.weightKg,
+  };
+}
+
+/** The prior the engine should run with for a calculator user. */
+export function enginePriorFromUserData(userData: UserData): EnginePrior {
+  return expenditureAsLoggedPrior(priorFromUserData(userData));
 }

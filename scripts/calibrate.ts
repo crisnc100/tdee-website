@@ -3,7 +3,7 @@
 import { writeFileSync } from 'node:fs';
 import { runCalibration, serializeReport } from '../src/lib/engine/calibration';
 
-const FULL_COHORT = { seed: 20261103, people: 5000, edgePeople: 1000 };
+const FULL_COHORT = { seed: 20261103, people: 5000, edgePeople: 1000, sweepPeople: 2000 };
 
 const out = new URL('../src/lib/engine/calibration.json', import.meta.url);
 const report = runCalibration(FULL_COHORT);
@@ -14,7 +14,17 @@ for (const c of r.checkpoints) {
   const cov = `${(c.coverage.p50 * 100).toFixed(1)} / ${(c.coverage.p80 * 100).toFixed(1)} / ${(c.coverage.p95 * 100).toFixed(1)}`;
   console.log(
     `day ${String(c.day).padStart(2)}  coverage 50/80/95: ${cov}  ` +
-      `median |err| engine ${c.medianAbsErrorKcal.engine.toFixed(0)} vs formula ${c.medianAbsErrorKcal.formula.toFixed(0)} kcal`,
+      `median |err| engine ${c.medianAbsErrorKcal.engine.toFixed(0)} vs formula ${c.medianAbsErrorKcal.formula.toFixed(0)}` +
+      ` vs prior ${c.medianAbsErrorKcal.prior.toFixed(0)} kcal`,
   );
+}
+
+const pct = (x: number) => (x * 100).toFixed(0);
+for (const [variant, sweep] of Object.entries(report.sweep.variants)) {
+  console.log(`\nsweep ${variant}: worst |coverage - nominal| ${pct(sweep.worstCoverageDeviation)} points`);
+  for (const level of sweep.levels) {
+    const cells = level.checkpoints.map((c) => `d${c.day} ${pct(c.coverage.p50)}/${pct(c.coverage.p80)}/${pct(c.coverage.p95)}`);
+    console.log(`  bias ${pct(level.loggingBiasMean).padStart(2)}%  ${cells.join('  ')}`);
+  }
 }
 console.log(`wrote ${out.pathname}`);

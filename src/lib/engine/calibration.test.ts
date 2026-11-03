@@ -11,14 +11,14 @@
 // staying uselessly wide.
 //
 // Why days 7-28 of the realistic cohort are not held to nominal: until the data
-// dominate, the bands are the formula prior's, and the prior is centred on the
-// formula TDEE while the truth is expenditure AS LOGGED. Simulated users
-// under-log by about 8% on average, so the prior sits roughly 170 kcal high and
-// its 50% band covers only about 40%. The engine cannot learn that offset
-// faster than the data allow; the gate instead requires that the engine is
-// never further from nominal coverage than the prior alone (plus 3 points), and
-// the accurate-logger cohort (same people, honest logs) shows the filter itself
-// is calibrated.
+// dominate, the bands are the prior's. The formula predicts true TDEE while the
+// engine estimates expenditure AS LOGGED, which also absorbs an unknown logging
+// bias, so the prior is widened and modestly recentred (model.ts). The gate
+// requires that the engine is never further from nominal coverage than the
+// prior alone (plus 3 points), and the accurate-logger cohort (same people,
+// honest logs) shows the filter itself is calibrated. Early coverage of the
+// prior itself is gated across a sweep of mean logging bias from 0 to 15%:
+// see the sweep block below, and README for the 20% level.
 //
 // Two baselines: `formula` is the raw calculator TDEE, `prior` is the engine's
 // prior mean and interval. Error-reduction claims are measured against the raw
@@ -26,9 +26,18 @@
 
 import { describe, expect, it } from 'vitest';
 import committed from './calibration.json';
-import { CHECKPOINT_DAYS, HORIZON_DAYS, SCENARIOS, SCHEMA_VERSION, runCalibration, type CalibrationReport } from './calibration';
+import {
+  CHECKPOINT_DAYS,
+  HORIZON_DAYS,
+  SCENARIOS,
+  SCHEMA_VERSION,
+  SWEEP_BIAS_MEANS,
+  runCalibration,
+  runSweep,
+  type CalibrationReport,
+} from './calibration';
 import { LEVELS, NOMINAL, type CheckpointMetrics, type CohortMetrics, type Level } from './metrics';
-import { DEFAULT_PARAMS } from './model';
+import { DEFAULT_PARAMS, DEFAULT_PRIOR_VARIANT, PRIOR_VARIANTS } from './model';
 
 const UNDER_TOLERANCE = 0.06;
 const OVER_TOLERANCE = 0.12;
@@ -137,6 +146,41 @@ describe('calibration gate', () => {
   });
 });
 
+describe('calibration gate: early weeks across logging-bias levels', () => {
+  // Mean logging bias 0-15%, the range the chosen prior is expected to handle.
+  // At 20% the 50% interval covers about 42% at day 7: a stated limitation (README).
+  const GATED_BIAS_MEANS = SWEEP_BIAS_MEANS.filter((b) => b <= 0.15);
+  const sweep = runSweep(7, 1000, [DEFAULT_PRIOR_VARIANT])[DEFAULT_PRIOR_VARIANT];
+  if (!sweep) throw new Error('sweep did not run');
+
+  // Under-coverage only. A prior that must allow for any bias in this range is
+  // wider than needed at any single level, so mid-range cohorts over-cover early
+  // (about +19 points on the 50% interval at 10% bias). That is the cost of not
+  // knowing the bias, not overconfidence; the over bound is not applied here.
+  it.each(GATED_BIAS_MEANS)('mean bias %s: days 7 and 14 are not overconfident', (bias) => {
+    const level = sweep.levels.find((l) => l.loggingBiasMean === bias);
+    if (!level) throw new Error(`no sweep level ${bias}`);
+    for (const day of [7, 14]) {
+      const c = level.checkpoints.find((x) => x.day === day);
+      if (!c) throw new Error(`no checkpoint ${day}`);
+      for (const lv of LEVELS) {
+        expect(c.coverage[lv], `${lv} at day ${day}`).toBeGreaterThanOrEqual(NOMINAL[lv] - UNDER_TOLERANCE);
+      }
+    }
+  });
+
+  it('every sweep level is honest by day 56', () => {
+    for (const level of sweep.levels) {
+      const c = level.checkpoints.find((x) => x.day === 56);
+      if (!c) throw new Error('no day-56 checkpoint');
+      for (const lv of LEVELS) {
+        expect(c.coverage[lv], `${lv} at bias ${level.loggingBiasMean}`).toBeGreaterThanOrEqual(NOMINAL[lv] - UNDER_TOLERANCE);
+        expect(c.coverage[lv], `${lv} at bias ${level.loggingBiasMean}`).toBeLessThanOrEqual(NOMINAL[lv] + OVER_TOLERANCE);
+      }
+    }
+  });
+});
+
 describe('committed calibration.json', () => {
   const file = committed as unknown as CalibrationReport;
 
@@ -145,6 +189,8 @@ describe('committed calibration.json', () => {
     expect(file.config.horizonDays).toBe(HORIZON_DAYS);
     expect(file.config.checkpointDays).toEqual([...CHECKPOINT_DAYS]);
     expect(file.config.engineParams).toEqual(DEFAULT_PARAMS); // regenerate after any tuning
+    expect(file.config.priorVariant).toBe(DEFAULT_PRIOR_VARIANT);
+    expect(file.config.prior).toEqual(PRIOR_VARIANTS[DEFAULT_PRIOR_VARIANT]);
     expect(Object.keys(file.cohorts)).toEqual([...SCENARIOS]);
     for (const scenario of SCENARIOS) {
       const cohort = file.cohorts[scenario];
@@ -153,5 +199,19 @@ describe('committed calibration.json', () => {
       expect(cohort.daily.medianAbsErrorKcal.engine).toHaveLength(HORIZON_DAYS + 1);
       expect(cohort.nonFiniteValues).toBe(0);
     }
+  });
+});
+
+describe('committed sweep', () => {
+  const file = committed as unknown as CalibrationReport;
+
+  it('covers every bias level for both prior variants, and the default is the better worst case', () => {
+    const variants = Object.keys(PRIOR_VARIANTS) as (keyof typeof PRIOR_VARIANTS)[];
+    for (const v of variants) {
+      expect(file.sweep.variants[v]?.levels.map((l) => l.loggingBiasMean)).toEqual([...SWEEP_BIAS_MEANS]);
+    }
+    const worst = (v: keyof typeof PRIOR_VARIANTS) => file.sweep.variants[v]?.worstCoverageDeviation ?? Infinity;
+    const best = variants.reduce((a, b) => (worst(b) < worst(a) ? b : a));
+    expect(best).toBe(DEFAULT_PRIOR_VARIANT);
   });
 });
