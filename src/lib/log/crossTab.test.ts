@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { commitAcrossTabs, LOG_LOADING, type LogLocks, type LogTab } from './crossTab';
 import { addEntry, type LogEntry } from './entries';
+import { fakeLocks } from './fakeLocks.testkit';
 import { LOG_STORAGE_KEY, loadStored, serializeStored } from './schema';
 import { MAX_COMMIT_ATTEMPTS, openLogState, type KeyValueStore, type LogState } from './storage';
 
@@ -39,31 +40,6 @@ function sharedStore(initial: Record<string, string> = {}) {
     return { entries: loaded.entries, revision: loaded.status === 'ok' ? loaded.revision : undefined };
   };
   return { store, data, writes, saved, onNextRead: (hook: () => void) => (afterRead = hook) };
-}
-
-/** A lock manager that grants each name to one caller at a time, in request order, like navigator.locks. */
-function fakeLocks() {
-  const tails = new Map<string, Promise<unknown>>();
-  const names: string[] = [];
-  let held = 0;
-  let maxHeld = 0;
-  const locks: LogLocks = {
-    request(name, callback) {
-      names.push(name);
-      const granted = (tails.get(name) ?? Promise.resolve()).then(async () => {
-        held += 1;
-        maxHeld = Math.max(maxHeld, held);
-        try {
-          return await callback();
-        } finally {
-          held -= 1;
-        }
-      });
-      tails.set(name, granted.catch(() => {}));
-      return granted;
-    },
-  };
-  return { locks, names, maxHeld: () => maxHeld };
 }
 
 function tab(state: LogState): LogTab & { state: LogState } {
