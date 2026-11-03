@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import Link from 'next/link';
 import { FlaskConical, X } from 'lucide-react';
 import { SectionHeading } from '@/components/ui/lab';
 import { addEntry, deleteEntry, updateEntry, type LogEntry, type Result, type WeightUnit } from '@/lib/log/entries';
@@ -332,6 +333,14 @@ function LoggingExplainer() {
       <p className="text-sm text-muted-foreground leading-relaxed">
         It starts from the formula, lowered 10% for typical under-logging and with a wide band, and the band narrows as
         weigh-ins and calories come in.
+      </p>
+      <p>
+        <Link
+          href="/lab"
+          className="inline-flex items-center gap-1.5 min-h-11 -my-2 text-sm font-medium text-accent-ink underline underline-offset-4 hover:no-underline"
+        >
+          How accurate is this? <span aria-hidden="true">→</span>
+        </Link>
       </p>
     </div>
   );

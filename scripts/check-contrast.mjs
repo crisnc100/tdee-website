@@ -73,6 +73,14 @@ const pairs = [
   ['accent-foreground', 'accent', UI, 'sample banner: Exit button border and focus ring'],
   ['danger', 'muted', UI, 'log notice border on inset surface'],
   ['danger', 'card', UI, 'replace-confirm border and button'],
+  // Engine lab (/lab): charts, sweep table, links. The page sits on cards.
+  ['accent-ink', 'card', UI, 'lab charts: engine line, dots and stems; gated-range bar'],
+  ['muted-foreground', 'card', UI, 'lab charts: formula line, nominal reference lines'],
+  ['foreground', 'card', UI, 'lab accuracy chart: prior line'],
+  ['accent-ink', 'card', TEXT, 'lab links, disclosure toggles, gated label; footer and Track links to /lab'],
+  ['accent-ink', 'background', TEXT, 'lab summary stat values (on the page-coloured tiles)'],
+  ['warning', 'card', TEXT, 'lab sweep table: not-gated label'],
+  ['warning', 'card', UI, 'lab sweep table: not-gated bar'],
 ];
 
 // Text drawn with reduced opacity. The opacity is read from the source, so a
@@ -99,6 +107,25 @@ const alphaPairs = [
   ['background', 'foreground', detailSelected, TEXT, 'segmented detail, selected'],
   ['accent-ink', 'card', bandEdgeOpacity, UI, 'chart 80% band edges (EstimateChart BAND_EDGE_OPACITY)'],
   ['accent-ink', 'background', bandEdgeOpacity, UI, 'chart 80% band edges, if drawn on the page'],
+];
+
+// Text on a surface tinted with another token: the tint token mixed into the
+// surface at an opacity read from source, so a change there is checked here.
+// The lab sweep table's cell shading (src/components/lab/heat.ts) and the Track
+// explainer's bg-muted/NN panel, which holds the link to /lab.
+const heat = readFileSync(new URL('../src/components/lab/heat.ts', import.meta.url), 'utf8');
+const heatTint = (name) => Number(heat.match(new RegExp(`export const ${name} = ([\\d.]+);`))?.[1] ?? NaN);
+const [tintLight, tintStrong] = [heatTint('HEAT_TINT_LIGHT'), heatTint('HEAT_TINT_STRONG')];
+const track = readFileSync(new URL('../src/components/track/TrackPanel.tsx', import.meta.url), 'utf8');
+const explainerMuted = Number(track.match(/border-l-2 border-accent-ink bg-muted\/(\d+)/)?.[1] ?? NaN) / 100;
+
+// [text token, tint token, surface token, tint opacity, minimum ratio, what it is]
+const tintPairs = [
+  ['foreground', 'danger', 'card', tintLight, TEXT, 'lab sweep cell, 3-6 points too narrow (heat.ts HEAT_TINT_LIGHT)'],
+  ['foreground', 'danger', 'card', tintStrong, TEXT, 'lab sweep cell, past the gate floor (heat.ts HEAT_TINT_STRONG)'],
+  ['foreground', 'surplus', 'card', tintLight, TEXT, 'lab sweep cell, 3-12 points too wide (heat.ts HEAT_TINT_LIGHT)'],
+  ['foreground', 'surplus', 'card', tintStrong, TEXT, 'lab sweep cell, 12+ points too wide (heat.ts HEAT_TINT_STRONG)'],
+  ['accent-ink', 'muted', 'card', explainerMuted, TEXT, 'Track explainer link to /lab on bg-muted over the card'],
 ];
 
 // The app icon (src/app/icon.svg) is drawn in fixed colours on its own dark
@@ -137,6 +164,20 @@ for (const [name, theme] of [['light', light], ['dark', dark]]) {
     if (!ok) failed++;
     console.log(
       `  ${(ok ? 'pass' : 'FAIL').padEnd(4)}  ${r.toFixed(2).padStart(5)}:1  (min ${min})  ${fg} ${theme[fg]} @ ${alpha} = ${eff} on ${bg} ${theme[bg]}  - ${what}`
+    );
+  }
+  for (const [fg, tint, surface, alpha, min, what] of tintPairs) {
+    if (!theme[fg] || !theme[tint] || !theme[surface] || !(alpha >= 0 && alpha <= 1)) {
+      console.log(`  MISSING  ${fg} on ${tint} @ ${alpha} over ${surface} - ${what}; source pattern not found`);
+      failed++;
+      continue;
+    }
+    const bg = composite(theme[tint], theme[surface], alpha);
+    const r = ratio(theme[fg], bg);
+    const ok = r >= min;
+    if (!ok) failed++;
+    console.log(
+      `  ${(ok ? 'pass' : 'FAIL').padEnd(4)}  ${r.toFixed(2).padStart(5)}:1  (min ${min})  ${fg} ${theme[fg]} on ${tint} ${theme[tint]} @ ${alpha} over ${surface} = ${bg}  - ${what}`
     );
   }
 }

@@ -32,7 +32,15 @@ export default function Footer() {
         </dl>
 
         <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <p className="label-caps text-muted-foreground">Estimates only. Not medical advice.</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-x-4">
+            <p className="label-caps text-muted-foreground">Estimates only. Not medical advice.</p>
+            <Link
+              href="/lab"
+              className="label-caps text-accent-ink hover:underline underline-offset-4 inline-flex items-center gap-1.5 min-h-11 self-start sm:self-auto"
+            >
+              How accurate is this? <span aria-hidden="true">→</span>
+            </Link>
+          </div>
           <nav aria-label="Legal" className="flex items-center gap-1 -mx-2">
             <Link
               href="/privacy"
