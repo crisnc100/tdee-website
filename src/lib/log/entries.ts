@@ -14,7 +14,10 @@ export interface LogEntry {
 
 export type WeightUnit = 'kg' | 'lbs';
 
-export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
+/** Which form field an error belongs to, when it belongs to one. */
+export type EntryField = 'date' | 'weight' | 'calories';
+
+export type Result<T> = { ok: true; value: T } | { ok: false; error: string; field?: EntryField };
 
 /** The engine treats anything outside these as missing, so the log refuses them up front. */
 export const WEIGHT_RANGE_KG: readonly [number, number] = DEFAULT_PARAMS.plausibleWeightKg;
@@ -98,21 +101,23 @@ export interface EntryCheckOptions {
  */
 export function checkEntry(entry: LogEntry, options: EntryCheckOptions = {}): Result<LogEntry> {
   const unit = options.unit ?? 'kg';
-  if (!isIsoDay(entry.date)) return { ok: false, error: 'Enter a valid date.' };
-  if (entry.date < MIN_DATE) return { ok: false, error: `Dates before ${MIN_DATE} are not accepted.` };
-  if (options.maxDate && entry.date > options.maxDate) return { ok: false, error: 'That date is in the future.' };
+  if (!isIsoDay(entry.date)) return { ok: false, error: 'Enter a valid date.', field: 'date' };
+  if (entry.date < MIN_DATE) return { ok: false, error: `Dates before ${MIN_DATE} are not accepted.`, field: 'date' };
+  if (options.maxDate && entry.date > options.maxDate) {
+    return { ok: false, error: 'That date is in the future.', field: 'date' };
+  }
 
   const out: LogEntry = { date: entry.date };
   if (entry.weightKg !== undefined) {
     if (!inRange(entry.weightKg, WEIGHT_RANGE_KG)) {
-      return { ok: false, error: `Weight must be between ${weightRangeText(unit)}.` };
+      return { ok: false, error: `Weight must be between ${weightRangeText(unit)}.`, field: 'weight' };
     }
     out.weightKg = roundKg(entry.weightKg);
   }
   if (entry.intakeKcal !== undefined) {
     if (!inRange(entry.intakeKcal, INTAKE_RANGE_KCAL)) {
       const [lo, hi] = INTAKE_RANGE_KCAL;
-      return { ok: false, error: `Calories must be between ${lo}–${hi.toLocaleString('en-US')}.` };
+      return { ok: false, error: `Calories must be between ${lo}–${hi.toLocaleString('en-US')}.`, field: 'calories' };
     }
     out.intakeKcal = Math.round(entry.intakeKcal);
   }
@@ -129,19 +134,26 @@ export interface EntryDraft {
   calories: string;
 }
 
-function parseNumber(text: string): number | undefined | null {
-  const trimmed = text.trim();
+/**
+ * Blank is undefined, a number is a number, anything else is null. A comma is
+ * read as a decimal comma in weights ("80,5") and as a thousands separator in
+ * calories ("2,100"), the only readings that make sense for each.
+ */
+function parseNumber(text: string, comma: 'decimal' | 'thousands'): number | undefined | null {
+  let trimmed = text.trim();
   if (trimmed === '') return undefined;
+  if (comma === 'decimal' && /^\d+,\d+$/.test(trimmed)) trimmed = trimmed.replace(',', '.');
+  if (comma === 'thousands' && /^\d{1,2},\d{3}$/.test(trimmed)) trimmed = trimmed.replace(',', '');
   const value = Number(trimmed);
   return Number.isFinite(value) ? value : null;
 }
 
 /** Turns form text into a checked entry, converting the weight from the user's unit to kg. */
 export function entryFromDraft(draft: EntryDraft, unit: WeightUnit, maxDate?: string): Result<LogEntry> {
-  const weight = parseNumber(draft.weight);
-  const calories = parseNumber(draft.calories);
-  if (weight === null) return { ok: false, error: 'Weight must be a number.' };
-  if (calories === null) return { ok: false, error: 'Calories must be a number.' };
+  const weight = parseNumber(draft.weight, 'decimal');
+  const calories = parseNumber(draft.calories, 'thousands');
+  if (weight === null) return { ok: false, error: 'Weight must be a number.', field: 'weight' };
+  if (calories === null) return { ok: false, error: 'Calories must be a number.', field: 'calories' };
   return checkEntry(
     {
       date: draft.date,

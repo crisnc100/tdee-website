@@ -108,7 +108,17 @@ describe('form drafts', () => {
       ok: true,
       value: { date: '2026-11-03', intakeKcal: 1900 },
     });
-    expect(entryFromDraft({ date: '2026-11-03', weight: '80kg', calories: '' }, 'kg')).toMatchObject({ ok: false, error: 'Weight must be a number.' });
+    expect(entryFromDraft({ date: '2026-11-03', weight: '80,5', calories: '' }, 'kg')).toEqual({
+      ok: true,
+      value: { date: '2026-11-03', weightKg: 80.5 },
+    });
+    expect(entryFromDraft({ date: '2026-11-03', weight: '80kg', calories: '' }, 'kg')).toMatchObject({ ok: false, error: 'Weight must be a number.', field: 'weight' });
+    expect(entryFromDraft({ date: '2026-11-03', weight: '1,234,5', calories: '' }, 'kg')).toMatchObject({ ok: false, field: 'weight' });
+    expect(entryFromDraft({ date: '2026-11-03', weight: '', calories: '2,100' }, 'kg')).toEqual({
+      ok: true,
+      value: { date: '2026-11-03', intakeKcal: 2100 },
+    });
+    expect(entryFromDraft({ date: '2026-11-03', weight: '', calories: '2,1' }, 'kg')).toMatchObject({ ok: false, field: 'calories' });
     expect(entryFromDraft({ date: '2026-11-03', weight: '', calories: 'lots' }, 'kg')).toMatchObject({ ok: false, error: 'Calories must be a number.' });
     expect(entryFromDraft({ date: '2026-11-03', weight: '', calories: '' }, 'kg')).toMatchObject({ ok: false });
   });
