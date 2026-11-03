@@ -19,7 +19,7 @@ interface EntryFormProps {
   /** The entry being edited, or null to add. Remount (key) the form when it changes. */
   editing: LogEntry | null;
   /** Saves the entry; returns an error message to show, or null on success. */
-  onSave: (entry: LogEntry, originalDate: string | null) => string | null;
+  onSave: (entry: LogEntry, originalDate: string | null) => Promise<string | null>;
   onCancelEdit: () => void;
 }
 
@@ -28,6 +28,7 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
     editing ? draftFromEntry(editing, unit) : { date: today, weight: '', calories: '' },
   );
   const [error, setError] = useState<{ message: string; field?: EntryField } | null>(null);
+  const saving = useRef(false);
   const fields = {
     date: useRef<HTMLInputElement>(null),
     weight: useRef<HTMLInputElement>(null),
@@ -40,15 +41,18 @@ export default function EntryForm({ entries, unit, today, editing, onSave, onCan
     if (error) setError(null);
   };
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
+    // A second Enter while the first save waits for the lock would save the same draft twice.
+    if (saving.current) return;
     const parsed = entryFromDraft(draft, unit, today);
     if (!parsed.ok) {
       setError({ message: parsed.error, field: parsed.field });
       fields[parsed.field ?? 'weight'].current?.focus();
       return;
     }
-    const failure = onSave(parsed.value, editing?.date ?? null);
+    saving.current = true;
+    const failure = await onSave(parsed.value, editing?.date ?? null).finally(() => (saving.current = false));
     if (failure) {
       setError({ message: failure, field: 'date' });
       fields.date.current?.focus();

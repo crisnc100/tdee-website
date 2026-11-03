@@ -14,7 +14,7 @@ import { band80, formatDay, kcal, primaryButton } from './shared';
 
 export interface LogControls {
   /** Applies a change to the latest saved entries; a failed Result means nothing changed. */
-  commit: (update: LogUpdate) => Result<LogEntry[]>;
+  commit: (update: LogUpdate) => Promise<Result<LogEntry[]>>;
   notice: string | null;
   saveError: string | null;
 }
@@ -84,10 +84,10 @@ export default function TrackPanel({
     focusUndo.current = false;
   }, [status]);
 
-  const save = (entry: LogEntry, originalDate: string | null): string | null => {
-    const result = originalDate
+  const save = async (entry: LogEntry, originalDate: string | null): Promise<string | null> => {
+    const result = await (originalDate
       ? log.commit((current) => updateEntry(current, originalDate, entry))
-      : log.commit((current) => addEntry(current, entry));
+      : log.commit((current) => addEntry(current, entry)));
     if (!result.ok) return result.error;
     if (originalDate) {
       setEditing(null);
@@ -104,8 +104,8 @@ export default function TrackPanel({
     onStatus(null);
   };
 
-  const remove = (entry: LogEntry) => {
-    const result = log.commit((current) => deleteEntry(current, entry.date));
+  const remove = async (entry: LogEntry) => {
+    const result = await log.commit((current) => deleteEntry(current, entry.date));
     if (!result.ok) {
       onStatus({ message: result.error });
       return;
@@ -115,13 +115,13 @@ export default function TrackPanel({
     onStatus({ message: `Deleted the entry for ${formatDay(entry.date, true)}.`, undo: entry });
   };
 
-  const undo = (entry: LogEntry) => {
-    const result = log.commit((current) => addEntry(current, entry));
+  const undo = async (entry: LogEntry) => {
+    const result = await log.commit((current) => addEntry(current, entry));
     onStatus(result.ok ? { message: `Restored the entry for ${formatDay(entry.date, true)}.` } : { message: result.error, undo: entry });
   };
 
-  const commitImport = (update: LogUpdate) => {
-    const result = log.commit(update);
+  const commitImport = async (update: LogUpdate) => {
+    const result = await log.commit(update);
     if (result.ok) setEditing(null);
     return result;
   };

@@ -11,7 +11,7 @@ interface LogDataControlsProps {
   entries: readonly LogEntry[];
   today: string;
   /** Applies a change to the latest saved entries; a failed Result means nothing changed. */
-  onCommit: (update: LogUpdate) => Result<LogEntry[]>;
+  onCommit: (update: LogUpdate) => Promise<Result<LogEntry[]>>;
   /** Announces an outcome in the Track tab's status line. */
   onStatus: (message: string) => void;
 }
@@ -95,10 +95,11 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
   };
 
   // Merged into the log as saved at this moment, which another tab may have changed since the preview.
-  const merge = () => {
+  const merge = async () => {
     if (!pending) return;
+    // The update can run more than once if another tab saves meanwhile; the last run is the one saved.
     let summary: MergeSummary = { added: 0, replaced: 0, kept: 0 };
-    const result = onCommit((current) => {
+    const result = await onCommit((current) => {
       const merged = mergeEntries(current, pending.entries);
       summary = merged.summary;
       return merged.entries;
@@ -114,9 +115,9 @@ export default function LogDataControls({ entries, today, onCommit, onStatus }: 
     );
   };
 
-  const replace = () => {
+  const replace = async () => {
     if (!pending) return;
-    const result = onCommit(() => pending.entries);
+    const result = await onCommit(() => pending.entries);
     if (!result.ok) {
       setError(`Nothing was imported. ${result.error}`);
       return;
