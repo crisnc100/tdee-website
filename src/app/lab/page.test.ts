@@ -77,6 +77,8 @@ describe('/lab page', () => {
     const page = text((await render()).html);
     expect(page).toContain('Skipping the days you overeat hides those calories');
     expect(page).toContain('so the estimate reads low');
+    expect(page).toContain("by about the skipped days' surplus over your usual intake, spread over every day");
+    expect(page).not.toContain('the skipped calories spread over every day');
     expect(page).not.toMatch(/read(s)? (slightly )?high/);
   });
 

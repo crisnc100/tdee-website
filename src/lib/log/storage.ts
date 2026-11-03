@@ -4,8 +4,13 @@
 //
 // Several tabs can have the log open at once. A change is never applied to the
 // tab's own copy: commitLog re-reads what is saved and applies the change to
-// that, so one tab's save cannot wipe out another's. refreshLog lets a tab pick
-// up another tab's save when the browser reports it.
+// that, so one tab's save cannot wipe out another's. Just before writing it
+// checks the save is still the one it read, and starts over if not. refreshLog
+// lets a tab pick up another tab's save when the browser reports it.
+//
+// localStorage has no compare-and-swap, so that check narrows the window
+// between read and write but cannot close it. crossTab.ts closes it by running
+// commitLog under a Web Lock that every tab on this site takes.
 
 import { addDays, checkSpan, latestAcceptedDate, MAX_SPAN_DAYS, type LogEntry, type Result } from './entries';
 import { LOG_BACKUP_KEY, LOG_SET_ASIDE_KEY, LOG_STORAGE_KEY, loadStored, serializeStored } from './schema';
@@ -29,6 +34,12 @@ export const BLOCKED_STORAGE_NOTICE =
 
 const SAVE_FAILED =
   'The log could not be saved in this browser (storage may be full or blocked). Export it to keep a copy.';
+
+const CONTENDED =
+  'Another tab kept saving the log at the same moment, so this change was not made. Try again.';
+
+/** How many times commitLog starts over when the save changes under it. */
+export const MAX_COMMIT_ATTEMPTS = 3;
 
 const UNREADABLE_ELSEWHERE =
   'Another tab saved the log in a form this page cannot read, perhaps from a newer version of this site. This tab ' +
@@ -183,17 +194,19 @@ function commitUnsaved(state: LogState, update: LogUpdate): { state: LogState; r
   return { state: result.ok ? { ...state, entries: result.value } : state, result };
 }
 
-/**
- * Applies `update` to the log as saved right now, not to this tab's copy, and
- * saves the result with the next revision. A failed Result from `update`, or a
- * log that would span more than MAX_SPAN_DAYS, leaves the log unchanged and
- * comes back as the result. If the change cannot be saved, it is kept in this
- * tab only and the tab stops saving, so it never writes over a newer save.
- */
-export function commitLog(state: LogState, update: LogUpdate, today: string): { state: LogState; result: Result<LogEntry[]> } {
-  const { store } = state;
-  if (!store) return commitUnsaved(state, update);
+/** True while the saved log is still exactly `raw`, the save a commit read. */
+function stillSaved(store: KeyValueStore, raw: string | null): boolean {
+  try {
+    return store.getItem(LOG_STORAGE_KEY) === raw;
+  } catch {
+    return false;
+  }
+}
 
+type Committed = { state: LogState; result: Result<LogEntry[]> };
+
+/** One read-apply-write pass; 'stale' when another save landed after the read. */
+function commitOnce(state: LogState, store: KeyValueStore, update: LogUpdate, today: string): Committed | 'stale' {
   const read = readSaved(store, today);
   if (read.status === 'blocked') return commitUnsaved({ ...state, store: null, saveError: SAVE_FAILED }, update);
   if (read.status === 'unreadable' && read.raw !== state.discarded) {
@@ -211,6 +224,10 @@ export function commitLog(state: LogState, update: LogUpdate, today: string): { 
   const result = applyUpdate(base.entries, update);
   if (!result.ok) return { state: latest, result };
 
+  // The whole saved string, not just its revision: a save made before
+  // revisions existed, or the unreadable one backed up at open, has none.
+  if (!stillSaved(store, read.raw)) return 'stale';
+
   let notice = state.notice;
   if (read.status === 'ok' && read.setAside.length > 0) {
     const copied = copyTo(store, LOG_SET_ASIDE_KEY, read.raw ?? '');
@@ -222,4 +239,27 @@ export function commitLog(state: LogState, update: LogUpdate, today: string): { 
   const saveError = saveLog(store, result.value, revision);
   if (saveError) return { state: { ...latest, store: null, entries: result.value, notice, saveError }, result };
   return { state: { ...latest, entries: result.value, revision, discarded: null, notice, saveError: null }, result };
+}
+
+/**
+ * Applies `update` to the log as saved right now, not to this tab's copy, and
+ * saves the result with the next revision. A failed Result from `update`, or a
+ * log that would span more than MAX_SPAN_DAYS, leaves the log unchanged and
+ * comes back as the result. If the change cannot be saved, it is kept in this
+ * tab only and the tab stops saving, so it never writes over a newer save.
+ *
+ * If another tab saves between the read and the write, the read and `update`
+ * are run again on the newer save, up to MAX_COMMIT_ATTEMPTS times, so
+ * `update` must not depend on being called once. When every attempt is
+ * overtaken the change is not made and the result says so. Without a lock
+ * (crossTab.ts) a save can still land between the final check and the write.
+ */
+export function commitLog(state: LogState, update: LogUpdate, today: string): Committed {
+  const { store } = state;
+  if (!store) return commitUnsaved(state, update);
+  for (let attempt = 0; attempt < MAX_COMMIT_ATTEMPTS; attempt++) {
+    const committed = commitOnce(state, store, update, today);
+    if (committed !== 'stale') return committed;
+  }
+  return { state: refreshLog(state, today), result: { ok: false, error: CONTENDED } };
 }

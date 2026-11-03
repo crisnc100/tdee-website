@@ -18,7 +18,7 @@ describe('links to /lab', () => {
       engine: null,
       unit: 'kg' as const,
       today: '2026-11-03',
-      log: { commit: () => ({ ok: true as const, value: [] }), notice: null, saveError: null },
+      log: { commit: async () => ({ ok: true as const, value: [] }), notice: null, saveError: null },
       status: null,
       onStatus: () => {},
       onLoadSample: () => {},

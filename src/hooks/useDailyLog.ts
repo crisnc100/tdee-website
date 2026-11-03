@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { localToday, type LogEntry, type Result } from '@/lib/log/entries';
 import { LOG_STORAGE_KEY } from '@/lib/log/schema';
-import { commitLog, openLogState, refreshLog, type KeyValueStore, type LogState, type LogUpdate } from '@/lib/log/storage';
+import { browserLocks, commitAcrossTabs } from '@/lib/log/crossTab';
+import { openLogState, refreshLog, type KeyValueStore, type LogState, type LogUpdate } from '@/lib/log/storage';
 
 /** Reading window.localStorage itself throws when the browser blocks storage. */
 function browserStore(): KeyValueStore | null {
@@ -24,8 +25,10 @@ const EMPTY: LogView = { entries: [], notice: null, saveError: null };
 
 // The daily log, kept in localStorage. Like useLocalStorage it starts empty on
 // both server and client and loads after mount, so hydration never mismatches.
-// Every change is applied to what is saved at that moment (see storage.ts), and
-// a save in another tab shows up here through the storage event.
+// Every change is applied to what is saved at that moment, under a lock every
+// tab takes (see crossTab.ts), and a save in another tab shows up here through
+// the storage event. The view changes once, when the save is done, so it never
+// shows a change that storage then turns down.
 export function useDailyLog() {
   const [view, setView] = useState<LogView>(EMPTY);
   const [loaded, setLoaded] = useState(false);
@@ -53,12 +56,8 @@ export function useDailyLog() {
 
   /** Applies `update` to the latest saved entries and saves the result. A failed Result means nothing changed. */
   const commit = useCallback(
-    (update: LogUpdate): Result<LogEntry[]> => {
-      if (!state.current) return { ok: false, error: 'The log is still loading. Try again in a moment.' };
-      const { state: next, result } = commitLog(state.current, update, localToday());
-      show(next);
-      return result;
-    },
+    (update: LogUpdate): Promise<Result<LogEntry[]>> =>
+      commitAcrossTabs(browserLocks(), { get: () => state.current, set: show }, update, localToday),
     [show],
   );
 
