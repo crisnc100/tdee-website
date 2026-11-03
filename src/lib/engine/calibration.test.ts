@@ -15,14 +15,19 @@
 // formula TDEE while the truth is expenditure AS LOGGED. Simulated users
 // under-log by about 8% on average, so the prior sits roughly 170 kcal high and
 // its 50% band covers only about 40%. The engine cannot learn that offset
-// faster than the data allow; the gate instead requires that the engine never
-// covers worse than the prior alone, and the accurate-logger cohort (same
-// people, honest logs) shows the filter itself is calibrated.
+// faster than the data allow; the gate instead requires that the engine is
+// never further from nominal coverage than the prior alone (plus 3 points), and
+// the accurate-logger cohort (same people, honest logs) shows the filter itself
+// is calibrated.
+//
+// Two baselines: `formula` is the raw calculator TDEE, `prior` is the engine's
+// prior mean and interval. Error-reduction claims are measured against the raw
+// formula; only checks about the prior itself read `prior`.
 
 import { describe, expect, it } from 'vitest';
 import committed from './calibration.json';
 import { CHECKPOINT_DAYS, HORIZON_DAYS, SCENARIOS, SCHEMA_VERSION, runCalibration, type CalibrationReport } from './calibration';
-import { LEVELS, NOMINAL, type CheckpointMetrics, type CohortMetrics } from './metrics';
+import { LEVELS, NOMINAL, type CheckpointMetrics, type CohortMetrics, type Level } from './metrics';
 import { DEFAULT_PARAMS } from './model';
 
 const UNDER_TOLERANCE = 0.06;
@@ -35,6 +40,33 @@ function at(cohort: CohortMetrics, day: number): CheckpointMetrics {
   const checkpoint = cohort.checkpoints.find((c) => c.day === day);
   if (!checkpoint) throw new Error(`no checkpoint for day ${day}`);
   return checkpoint;
+}
+
+interface PriorBaseline {
+  coverage: Record<Level, number>;
+  medianAbsErrorKcal: number;
+  meanErrorKcal: number;
+}
+
+// Schema v1 reported one baseline: the prior, centred on the formula TDEE, as
+// `formula` / `formulaCoverage`. From v2 the prior is reported separately as
+// `prior` / `priorCoverage`, and must be present.
+function priorBaseline(checkpoint: CheckpointMetrics): PriorBaseline {
+  const c = checkpoint as unknown as {
+    formulaCoverage?: Record<Level, number>;
+    priorCoverage?: Record<Level, number>;
+    medianAbsErrorKcal: { formula: number; prior?: number };
+    meanErrorKcal: { formula: number; prior?: number };
+  };
+  if (SCHEMA_VERSION < 2) {
+    if (!c.formulaCoverage) throw new Error(`no prior coverage at day ${checkpoint.day}`);
+    return { coverage: c.formulaCoverage, medianAbsErrorKcal: c.medianAbsErrorKcal.formula, meanErrorKcal: c.meanErrorKcal.formula };
+  }
+  const { priorCoverage } = c;
+  const mae = c.medianAbsErrorKcal.prior;
+  const meanError = c.meanErrorKcal.prior;
+  if (!priorCoverage || mae === undefined || meanError === undefined) throw new Error(`no prior baseline at day ${checkpoint.day}`);
+  return { coverage: priorCoverage, medianAbsErrorKcal: mae, meanErrorKcal: meanError };
 }
 
 function expectHonestCoverage(cohort: CohortMetrics, day: number, { boundOver = true } = {}): void {
@@ -56,10 +88,13 @@ describe('calibration gate', () => {
     expect(at(report.cohorts.realistic, 56).medianPosteriorSdKcal).toBeLessThan(day7Sd / 2);
   });
 
-  it('realistic cohort: the engine never covers worse than the formula prior alone', () => {
+  it('realistic cohort: the engine is never further from nominal coverage than the prior alone', () => {
     for (const c of report.cohorts.realistic.checkpoints) {
+      const prior = priorBaseline(c);
       for (const level of LEVELS) {
-        expect(c.coverage[level], `${level} at day ${c.day}`).toBeGreaterThanOrEqual(c.formulaCoverage[level] - PRIOR_SLACK);
+        const engineDistance = Math.abs(c.coverage[level] - NOMINAL[level]);
+        const priorDistance = Math.abs(prior.coverage[level] - NOMINAL[level]);
+        expect(engineDistance, `${level} at day ${c.day}`).toBeLessThanOrEqual(priorDistance + PRIOR_SLACK);
       }
     }
   });
@@ -89,8 +124,9 @@ describe('calibration gate', () => {
 
   it('edge cohort: with no intake logged, the engine stays exactly on the prior', () => {
     for (const c of report.cohorts.noLogs.checkpoints) {
-      expect(c.medianAbsErrorKcal.engine).toBeCloseTo(c.medianAbsErrorKcal.formula, 6);
-      expect(c.meanErrorKcal.engine).toBeCloseTo(c.meanErrorKcal.formula, 6);
+      const prior = priorBaseline(c);
+      expect(c.medianAbsErrorKcal.engine).toBeCloseTo(prior.medianAbsErrorKcal, 6);
+      expect(c.meanErrorKcal.engine).toBeCloseTo(prior.meanErrorKcal, 6);
     }
   });
 
