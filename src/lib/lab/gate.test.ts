@@ -39,7 +39,9 @@ describe('gateChecks on the committed run', () => {
 
   it('reports the tightest: the realistic 80% band at day 7 against the prior alone', () => {
     const tightest = tightestCheck(report);
-    expect(tightest.label).toBe('realistic cohort, 80% band at day 7, against the prior alone');
+    expect(tightest.label).toBe(
+      "the realistic cohort's 80% band at day 7 may sit at most 3 points further from nominal than the prior alone",
+    );
     const c = report.cohorts.realistic.checkpoints[0];
     expect(tightest.slack).toBeCloseTo(Math.abs(c.priorCoverage.p80 - 0.8) + PRIOR_SLACK - Math.abs(c.coverage.p80 - 0.8), 12);
     expect(Math.min(...checks.map((x) => x.slack))).toBe(tightest.slack);
@@ -51,7 +53,7 @@ describe('gateChecks on the committed run', () => {
     if (!day56) throw new Error('fixture');
     day56.coverage.p50 = 0.43;
     const tightest = tightestCheck(broken);
-    expect(tightest.label).toBe('realistic cohort, 50% band at day 56, floor');
+    expect(tightest.label).toBe("the realistic cohort's 50% band at day 56 may sit at most 6 points under nominal");
     expect(tightest.slack).toBeCloseTo(-0.01, 12);
   });
 });

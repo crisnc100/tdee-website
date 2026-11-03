@@ -234,6 +234,17 @@ export function sweepGrid(report: CalibrationReport): SweepGrid {
   };
 }
 
+/** One sweep row's coverage at the three levels on `day`. */
+export function rowCoverage(row: SweepRow, day: number): Record<Level, number> {
+  const out = {} as Record<Level, number>;
+  for (const lv of row.levels) {
+    const cell = lv.cells.find((c) => c.day === day);
+    if (!cell) throw new Error(`calibration report: no sweep cell for day ${day}`);
+    out[lv.level] = cell.observed;
+  }
+  return out;
+}
+
 const VARIANT_LABELS: Record<PriorVariant, string> = {
   widen: 'widen only',
   widenAndRecentre: 'widen and recentre',
@@ -245,6 +256,13 @@ export function variantLabel(variant: PriorVariant): string {
 
 export const EDGE_SCENARIOS = ['accurateLogger', 'missingWeeks', 'maintainer', 'noLogs'] as const satisfies readonly Scenario[];
 export type EdgeScenario = (typeof EDGE_SCENARIOS)[number];
+
+export const EDGE_LABELS: Record<EdgeScenario, string> = {
+  accurateLogger: 'accurate loggers',
+  missingWeeks: 'missing weeks',
+  maintainer: 'maintainers',
+  noLogs: 'no logs',
+};
 
 export interface EdgeReadout {
   scenario: EdgeScenario;

@@ -15,6 +15,7 @@ import {
   heatBin,
   parseQuantity,
   readReport,
+  rowCoverage,
   samplingSd,
   sweepGrid,
   variantLabel,
@@ -181,6 +182,13 @@ describe('sweepGrid', () => {
         }
       }
     }
+  });
+
+  it('reads a row back as a coverage triple for one day', () => {
+    const top = grid.rows[grid.rows.length - 1];
+    const source = variant.levels[variant.levels.length - 1].checkpoints[0];
+    expect(rowCoverage(top, source.day)).toEqual(source.coverage);
+    expect(() => rowCoverage(top, 3)).toThrow(/no sweep cell for day 3/);
   });
 
   it('marks 0-15% as the gated range and 20% as outside it', () => {
